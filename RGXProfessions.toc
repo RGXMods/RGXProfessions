@@ -1,0 +1,78 @@
+## Interface: 16001
+## Title: |cff8B1538RGX|r |cffffffffProfessions|r
+## X-DisplayName: RGX Professions
+## Notes: The profession leveling bible for WoW Forever. Browse every leveling path, recipe, and reagent like a book.|n|r  |cff8B1538/prof|r to open. |n|r Derived from PLG by LirameiRav (guides from wow-professions.com).
+## Author: RealmGX, derived from PLG by LirameiRav and Keg
+## Category: RGX
+## Group: RGX
+## Email: donniedice@protonmail.com
+## Version: v0.1.0
+## RequiredDeps: RGX-Framework
+## SavedVariables: RGXProfSettings, RGXProfSimResults
+## IconTexture: Interface\AddOns\RGXProfessions\Media\PLGIcon.tga
+## LoadOnDemand: 0
+
+## X-Category: Professions
+## X-License: MIT
+
+Core/Utils.lua
+
+Data\Classic\NPCs\Trainers.lua
+Data\Classic\NPCs\Vendors.lua
+Data\Classic\NPCs\Quests.lua
+Data\Classic\ProfessionPaths\Tailoring.lua
+Data\Classic\ProfessionPaths\Blacksmithing.lua
+Data\Classic\ProfessionPaths\FirstAid.lua
+Data\Classic\ProfessionPaths\Alchemy.lua
+Data\Classic\ProfessionPaths\Cooking.lua
+Data\Classic\ProfessionPaths\Enchanting.lua
+Data\Classic\ProfessionPaths\Engineering.lua
+Data\Classic\ProfessionPaths\Leatherworking.lua
+Data\Classic\Recipes.lua
+Data\Classic\ZoneNames.lua
+
+Constants/Constants.lua
+
+Expansions\Expansions.lua
+Constants/Professions.lua
+
+Adapters/AddonAdapter.lua
+Adapters/NavigationAdapter.lua
+Adapters/TSMAdapter.lua
+Adapters/SkilletAdapter.lua
+Adapters/TradeskillAdapter.lua
+Adapters/CraftAdapter.lua
+Adapters/AdapterManager.lua
+
+Core/WowAPI.lua
+Core/Commands.lua
+Core/Events.lua
+Core/DataManager.lua
+Core/StateManager.lua
+Core/Core.lua
+
+Constants/Colors.lua
+Constants/SkillUpColors.lua
+Constants/Strings.lua
+
+UI/LayoutDefinitions.lua
+UI\LayoutDefinitions_Training.lua
+UI\LayoutDefinitions_MiniWindow.lua
+UI/LayoutDefinitions_MatsWindow.lua
+UI/FrameRegistry.lua
+UI/TooltipHandlers.lua
+UI/ClickHandlers.lua
+UI/TooltipManager.lua
+UI/LayoutManager.lua
+UI/MainWindow.lua
+UI/MiniWindow.lua
+UI/MatsWindow.lua
+UI/OptionsWindow.lua
+UI/BookWindow.lua
+
+Data/Training.lua
+
+UI/Sections/Instructions.lua
+UI/Sections/Recipes.lua
+UI/Sections/Reagents.lua
+UI/Sections/Footer.lua
