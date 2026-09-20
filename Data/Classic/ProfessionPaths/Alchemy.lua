@@ -1,0 +1,20 @@
+RGXProf.ClassicPaths = RGXProf.ClassicPaths or {}
+RGXProf.ClassicPaths.Alchemy = {
+  { keep = 1, minSkill = 1, maxSkill = 60, itemID = 118, spellID = 2330, name = "Minor Healing Potion" },
+  { keep = 0, minSkill = 60, maxSkill = 110, itemID = 858, spellID = 2337, name = "Lesser Healing Potion" },
+  { keep = 0, minSkill = 110, maxSkill = 140, itemID = 929, spellID = 3447, name = "Healing Potion" },
+  { keep = 0, minSkill = 140, maxSkill = 155, itemID = 3385, spellID = 3173, name = "Lesser Mana Potion" },
+  { keep = 0, minSkill = 140, maxSkill = 155, itemID = 6371, spellID = 7837, name = "Fire Oil", alternate = true },
+  { keep = 0, minSkill = 155, maxSkill = 185, itemID = 1710, spellID = 7181, name = "Greater Healing Potion" },
+  { keep = 0, minSkill = 155, maxSkill = 185, itemID = 6373, spellID = 7845, name = "Elixir of Firepower", alternate = true },
+  { keep = 0, minSkill = 185, maxSkill = 195, itemID = 8949, spellID = 11449, name = "Elixir of Agility" },
+  { keep = 0, minSkill = 185, maxSkill = 195, itemID = 3827, spellID = 3452, name = "Mana Potion", alternate = true },
+  { keep = 0, minSkill = 195, maxSkill = 210, itemID = 8949, spellID = 11449, name = "Elixir of Agility" },
+  { keep = 0, minSkill = 195, maxSkill = 210, itemID = 6052, spellID = 7259, name = "Nature Protection Potion", npcs = {5594, 2848, 8158, 8157}, alternate = true },
+  { keep = 0, minSkill = 210, maxSkill = 215, itemID = 8951, spellID = 11450, name = "Elixir of Greater Defense" },
+  { keep = 0, minSkill = 215, maxSkill = 230, itemID = 3928, spellID = 11457, name = "Superior Healing Potion" },
+  { keep = 0, minSkill = 230, maxSkill = 250, itemID = 9154, spellID = 11460, name = "Elixir of Detect Undead" },
+  { keep = 0, minSkill = 250, maxSkill = 265, itemID = 9187, spellID = 11467, name = "Elixir of Greater Agility" },
+  { keep = 0, minSkill = 265, maxSkill = 285, itemID = 13443, spellID = 17553, name = "Superior Mana Potion" },
+  { keep = 0, minSkill = 285, maxSkill = 300, itemID = 13446, spellID = 17556, name = "Major Healing Potion" },
+}
