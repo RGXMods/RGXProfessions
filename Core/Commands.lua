@@ -87,11 +87,11 @@ function RGXProf:HandleSlashCommand(msg)
     elseif command == "icon" then
         local sub = (args or ""):lower()
         if sub == "on" then
-            RGXProfSettings.minimapIconEnabled = true
+            RGXProf_Settings.minimapIconEnabled = true
             if RGXProf.minimapButton then RGXProf.minimapButton:SetVisible(true) end
             print("[RGXProf] Minimap icon |cff00ff00shown|r")
         elseif sub == "off" then
-            RGXProfSettings.minimapIconEnabled = false
+            RGXProf_Settings.minimapIconEnabled = false
             if RGXProf.minimapButton then RGXProf.minimapButton:SetVisible(false) end
             print("[RGXProf] Minimap icon |cffff0000hidden|r. Use |cffffffff/prof icon on|r to show it again.")
         else
@@ -107,10 +107,8 @@ function RGXProf:HandleSlashCommand(msg)
             else
                 print("|cffff0000[RGXProf]|r Unknown profession: " .. args)
             end
-        elseif adapter and adapter:isShown() then
-            RGXProf:TRADE_SHOW("COMMAND_SHOW", true)
         else
-            ShowProfessionMenu()
+            RGXProf.BookWindow:Show()
         end
     elseif command == "preview" then
         if args == "" then
