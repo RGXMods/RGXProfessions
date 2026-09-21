@@ -1,25 +1,21 @@
 --=====================================================================================
 -- RGXProfessions - UI/BookWindow.lua
--- The profession leveling bible: a book-style window with a button per
--- profession and next/previous page navigation through every leveling step.
+-- The profession leveling bible: a book-style window built on RGXDesign with a
+-- button per profession and next/previous page navigation through every step.
 --=====================================================================================
 
 RGXProf = RGXProf or {}
 RGXProf.BookWindow = RGXProf.BookWindow or {}
 
-local RGX = _G.RGXFramework
+local Design = _G.RGXDesign
 
 local BOOK_WIDTH = 560
-local BOOK_HEIGHT = 420
-local BUTTON_SIZE = 108
-local COLORS = {
-    bg = {0.05, 0.07, 0.10, 0.96},
-    header = {0.06, 0.10, 0.16, 0.98},
-    border = {0.16, 0.22, 0.30, 1.0},
-    accent = "|cff8B1538",
-    text = "|cffffffff",
-    dim = "|cff9aa4b0",
-}
+local BOOK_HEIGHT = 440
+local BUTTON_SIZE = 110
+
+local function Accent() return "|cff8B1538" end
+local function Text() return "|cffffffff" end
+local function Dim() return "|cff9aa4b0" end
 
 local function GetGuideProfessions()
     local list = {}
@@ -35,7 +31,7 @@ local function GetGuideProfessions()
 end
 
 function RGXProf.BookWindow:GetCurrentProfession()
-    local saved = RGXProfSettings.bookProfessionID
+    local saved = RGXProf_Settings.bookProfessionID
     if saved and RGXProf.currentExpansion.paths[saved] then
         return saved
     end
@@ -44,7 +40,7 @@ end
 
 function RGXProf.BookWindow:GetCurrentPage(professionID)
     local path = RGXProf.currentExpansion.paths[professionID]
-    local page = RGXProfSettings.bookPage
+    local page = RGXProf_Settings.bookPage
     if not page or page < 1 or page > #path then
         page = 1
         local skill = RGXProf.WowAPI.GetProfessionSkill and RGXProf.WowAPI:GetProfessionSkill(RGXProf.Constants.Professions[professionID].name) or nil
@@ -62,180 +58,164 @@ end
 
 function RGXProf.BookWindow:OpenProfession(professionID)
     if not RGXProf.currentExpansion.paths[professionID] then return end
-    RGXProfSettings.bookProfessionID = professionID
-    RGXProfSettings.bookPage = self:GetCurrentPage(professionID)
+    RGXProf_Settings.bookProfessionID = professionID
+    RGXProf_Settings.bookPage = self:GetCurrentPage(professionID)
     self:Show()
 end
 
 function RGXProf.BookWindow:EnsureFrame()
     if self.frame then return end
 
-    local f = CreateFrame("Frame", "RGXProfBookWindow", UIParent, "BackdropTemplate")
-    f:SetSize(BOOK_WIDTH, BOOK_HEIGHT)
+    local f = Design:CreateFrame(UIParent, {
+        width = BOOK_WIDTH,
+        height = BOOK_HEIGHT,
+        variant = "dark",
+    })
     f:SetPoint("CENTER")
     f:SetMovable(true)
     f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
     f:SetClampedToScreen(true)
-    f:SetScript("OnDragStart", f.StartMoving)
+    f:SetFrameStrata("HIGH")
+    f:SetToplevel(true)
+    f:SetScript("OnDragStart", function(self) self:StartMoving() end)
     f:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
-        RGXProfSettings.bookPosition = {self:GetPoint()}
+        local point, relFrame, relPoint, x, y = self:GetPoint()
+        RGXProf_Settings.bookPosition = { point, relFrame, relPoint, x, y }
     end)
-    f:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = 1,
-    })
-    f:SetBackdropColor(unpack(COLORS.bg, 1, 4))
-    f:SetBackdropBorderColor(unpack(COLORS.border, 1, 4))
-    f:SetFrameStrata("HIGH")
-    tinsert(UISpecialFrames, "RGXProfBookWindow")
+    tinsert(UISpecialFrames, f:GetName() or "RGXProfBookWindow")
 
-    f.header = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    f.header:SetPoint("TOP", 0, -14)
-    f.header:SetText(COLORS.accent .. "RGX|r Professions")
+    f.titleBar = Design:CreateSectionHeader(f, "RGX Professions", "Interface\\AddOns\\RGXProfessions\\Media\\PLGIcon.tga")
+    f.titleBar:SetPoint("TOPLEFT", 0, 0)
+    f.titleBar:SetPoint("TOPRIGHT", 0, 0)
 
     f.subHeader = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.subHeader:SetPoint("TOP", f.header, "BOTTOM", 0, -2)
+    f.subHeader:SetPoint("TOP", 0, -42)
 
     f.close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
-    f.close:SetPoint("TOPRIGHT", -6, -6)
+    f.close:SetPoint("TOPRIGHT", -4, -4)
 
-    f.landing = CreateFrame("Frame", nil, f)
-    f.landing:SetPoint("TOPLEFT", 12, -44)
+    f.landing = Design:CreateFrame(f, { variant = "dark", bgAlpha = 0.4 })
+    f.landing:SetPoint("TOPLEFT", 12, -56)
     f.landing:SetPoint("BOTTOMRIGHT", -12, 12)
 
-    f.guide = CreateFrame("Frame", nil, f)
-    f.guide:SetPoint("TOPLEFT", 12, -44)
+    f.guide = Design:CreateFrame(f, { variant = "dark", bgAlpha = 0.4 })
+    f.guide:SetPoint("TOPLEFT", 12, -56)
     f.guide:SetPoint("BOTTOMRIGHT", -12, 12)
     f.guide:Hide()
 
-    -- Guide page widgets
+    -- Guide widgets
     f.guide.recipeIcon = f.guide:CreateTexture(nil, "ARTWORK")
-    f.guide.recipeIcon:SetSize(34, 34)
-    f.guide.recipeIcon:SetPoint("TOPLEFT", 10, -10)
+    f.guide.recipeIcon:SetSize(36, 36)
+    f.guide.recipeIcon:SetPoint("TOPLEFT", 12, -12)
 
     f.guide.recipeLink = f.guide:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     f.guide.recipeLink:SetPoint("LEFT", f.guide.recipeIcon, "RIGHT", 10, 0)
     f.guide.recipeLink:SetJustifyH("LEFT")
 
     f.guide.pageLabel = f.guide:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    f.guide.pageLabel:SetPoint("TOPRIGHT", -10, -10)
+    f.guide.pageLabel:SetPoint("TOPRIGHT", -12, -14)
 
     f.guide.rangeLabel = f.guide:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    f.guide.rangeLabel:SetPoint("RIGHT", f.guide.pageLabel, "LEFT", -12, 0)
+    f.guide.rangeLabel:SetPoint("RIGHT", f.guide.pageLabel, "LEFT", -14, 0)
 
     f.guide.note = f.guide:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.guide.note:SetPoint("TOPLEFT", f.guide.recipeIcon, "BOTTOMLEFT", 0, -12)
-    f.guide.note:SetPoint("RIGHT", -10, 0)
+    f.guide.note:SetPoint("TOPLEFT", f.guide.recipeIcon, "BOTTOMLEFT", 0, -14)
+    f.guide.note:SetPoint("RIGHT", -12, 0)
     f.guide.note:SetJustifyH("LEFT")
     f.guide.note:SetWordWrap(true)
 
     f.guide.reagents = f.guide:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    f.guide.reagents:SetPoint("TOPLEFT", 10, -120)
-    f.guide.reagents:SetPoint("RIGHT", -10, 0)
+    f.guide.reagents:SetPoint("TOPLEFT", 12, -130)
+    f.guide.reagents:SetPoint("RIGHT", -12, 0)
     f.guide.reagents:SetJustifyH("LEFT")
     f.guide.reagents:SetWordWrap(true)
     f.guide.reagents:SetSpacing(4)
 
     f.guide.vendors = f.guide:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.guide.vendors:SetPoint("BOTTOMLEFT", 12, 44)
-    f.guide.vendors:SetPoint("RIGHT", -10, 0)
+    f.guide.vendors:SetPoint("BOTTOMLEFT", 14, 52)
+    f.guide.vendors:SetPoint("RIGHT", -12, 0)
     f.guide.vendors:SetJustifyH("LEFT")
     f.guide.vendors:SetWordWrap(true)
 
-    f.guide.back = CreateFrame("Button", nil, f.guide, "UIPanelButtonTemplate")
-    f.guide.back:SetPoint("BOTTOMLEFT", 12, 8)
-    f.guide.back:SetSize(110, 24)
-    f.guide.back:SetText("Professions")
+    f.guide.back = Design:CreateButton(f.guide, "Professions", 110, 24)
+    f.guide.back:SetPoint("BOTTOMLEFT", 14, 12)
+    f.guide.back:SetTooltip("Professions", "Back to the profession selection page.")
+
+    f.guide.prev = Design:CreateButton(f.guide, "< Prev", 90, 24)
+    f.guide.prev:SetPoint("BOTTOMRIGHT", -150, 12)
+    f.guide.prev:SetTooltip("Previous step", "Turn back one page in this leveling path.")
+
+    f.guide.next = Design:CreateButton(f.guide, "Next >", 90, 24)
+    f.guide.next:SetPoint("BOTTOMRIGHT", -14, 12)
+    f.guide.next:SetTooltip("Next step", "Turn forward one page in this leveling path.")
+
     f.guide.back:SetScript("OnClick", function()
-        RGXProfSettings.bookProfessionID = nil
+        RGXProf_Settings.bookProfessionID = nil
         RGXProf.BookWindow:Show()
     end)
-
-    f.guide.prev = CreateFrame("Button", nil, f.guide, "UIPanelButtonTemplate")
-    f.guide.prev:SetPoint("BOTTOMRIGHT", -138, 8)
-    f.guide.prev:SetSize(90, 24)
-    f.guide.prev:SetText("< Prev")
     f.guide.prev:SetScript("OnClick", function()
         local professionID = RGXProf.BookWindow:GetCurrentProfession()
         if not professionID then return end
         local path = RGXProf.currentExpansion.paths[professionID]
-        local page = RGXProfSettings.bookPage or 1
-        RGXProfSettings.bookPage = math.max(1, page - 1)
+        local page = RGXProf_Settings.bookPage or 1
+        RGXProf_Settings.bookPage = math.max(1, page - 1)
         RGXProf.BookWindow:Show()
     end)
-
-    f.guide.next = CreateFrame("Button", nil, f.guide, "UIPanelButtonTemplate")
-    f.guide.next:SetPoint("BOTTOMRIGHT", -12, 8)
-    f.guide.next:SetSize(90, 24)
-    f.guide.next:SetText("Next >")
     f.guide.next:SetScript("OnClick", function()
         local professionID = RGXProf.BookWindow:GetCurrentProfession()
         if not professionID then return end
         local path = RGXProf.currentExpansion.paths[professionID]
-        local page = RGXProfSettings.bookPage or 1
-        RGXProfSettings.bookPage = math.min(#path, page + 1)
+        local page = RGXProf_Settings.bookPage or 1
+        RGXProf_Settings.bookPage = math.min(#path, page + 1)
         RGXProf.BookWindow:Show()
     end)
 
     self.frame = f
-    self:BuildLanding()
 end
 
 function RGXProf.BookWindow:BuildLanding()
     local landing = self.frame.landing
     for _, child in ipairs({landing:GetChildren()}) do
-        child:Hide()
+        if child:IsObjectType("Button") then
+            child:Hide()
+        end
     end
 
     local professions = GetGuideProfessions()
     local columns = 4
     local rows = math.ceil(#professions / columns)
+    local colGap = 12
+    local rowGap = 12
+    local colWidth = BUTTON_SIZE + colGap
+    local rowHeight = BUTTON_SIZE + rowGap
 
     for index, professionID in ipairs(professions) do
         local prof = RGXProf.Constants.Professions[professionID]
-        local btn = CreateFrame("Button", nil, landing, "BackdropTemplate")
-        btn:SetSize(BUTTON_SIZE, BUTTON_SIZE)
+        local btn = Design:CreateButton(landing, nil, BUTTON_SIZE, BUTTON_SIZE)
         local row = math.floor((index - 1) / columns)
         local col = (index - 1) % columns
-        local colWidth = BUTTON_SIZE + 14
-        local rowHeight = BUTTON_SIZE + 14
-        local totalW = columns * colWidth
-        local totalH = rows * rowHeight
+        local totalW = columns * colWidth - colGap
+        local totalH = rows * rowHeight - rowGap
         btn:SetPoint("TOPLEFT", landing, "TOPLEFT", (landing:GetWidth() - totalW) / 2 + col * colWidth, -(landing:GetHeight() - totalH) / 2 - row * rowHeight)
 
-        btn:SetBackdrop({
-            bgFile = "Interface\\Buttons\\WHITE8x8",
-            edgeFile = "Interface\\Buttons\\WHITE8x8",
-            edgeSize = 1,
-        })
-        btn:SetBackdropColor(0.08, 0.11, 0.15, 0.95)
-        btn:SetBackdropBorderColor(unpack(COLORS.border, 1, 4))
-
         local icon = btn:CreateTexture(nil, "ARTWORK")
-        icon:SetSize(40, 40)
+        icon:SetSize(38, 38)
         icon:SetPoint("TOP", 0, -12)
         icon:SetTexture(prof.icon or 133741)
 
         local name = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         name:SetPoint("TOP", icon, "BOTTOM", 0, -6)
-        name:SetText(COLORS.text .. prof.name)
+        name:SetText(Text() .. prof.name)
 
         local skillText = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         skillText:SetPoint("TOP", name, "BOTTOM", 0, -2)
         local skill = RGXProf.WowAPI.GetProfessionSkill and RGXProf.WowAPI:GetProfessionSkill(prof.name) or nil
-        skillText:SetText(skill and (COLORS.dim .. "Skill " .. skill) or (COLORS.dim .. "Not learned"))
+        skillText:SetText(skill and (Dim() .. "Skill " .. skill) or (Dim() .. "Not learned"))
 
         btn:SetScript("OnClick", function()
             RGXProf.BookWindow:OpenProfession(professionID)
-        end)
-        btn:SetScript("OnEnter", function(self)
-            self:SetBackdropBorderColor(0.55, 0.10, 0.22, 1)
-        end)
-        btn:SetScript("OnLeave", function(self)
-            self:SetBackdropBorderColor(unpack(COLORS.border, 1, 4))
         end)
     end
 end
@@ -246,68 +226,67 @@ function RGXProf.BookWindow:RenderGuide()
     if not professionID then
         guide:Hide()
         self.frame.landing:Show()
-        self.frame.subHeader:SetText(COLORS.dim .. "Choose a profession")
+        self.frame.subHeader:SetText(Dim() .. "Choose a profession")
         return
     end
 
     local prof = RGXProf.Constants.Professions[professionID]
     local path = RGXProf.currentExpansion.paths[professionID]
-    local page = RGXProfSettings.bookPage or 1
+    local page = RGXProf_Settings.bookPage or 1
     local step = path[page]
     if not step then
         page = 1
         step = path[1]
-        RGXProfSettings.bookPage = 1
+        RGXProf_Settings.bookPage = 1
     end
 
     self.frame.landing:Hide()
     guide:Show()
 
-    self.frame.subHeader:SetText(COLORS.accent .. prof.name .. "|r  " .. COLORS.dim .. "Leveling Path")
+    self.frame.subHeader:SetText(Accent() .. prof.name .. "|r  " .. Dim() .. "Leveling Path")
 
     guide.recipeIcon:SetTexture(step.itemID and GetItemIcon(step.itemID) or "Interface\\Icons\\INV_Misc_QuestionMark")
 
     local display = RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
-    guide.recipeLink:SetText(display.link or (COLORS.text .. step.name))
+    guide.recipeLink:SetText(display.link or (Text() .. (step.name or "")))
 
-    local pageText = string.format("Page %d / %d", page, #path)
-    guide.pageLabel:SetText(COLORS.dim .. pageText)
+    guide.pageLabel:SetText(Dim() .. string.format("Page %d / %d", page, #path))
 
-    local rangeText = string.format("%sSkill %d - %d%s", COLORS.text, step.minSkill, step.maxSkill, step.alternate and ("  " .. COLORS.accent .. "(alternate route)") or "")
-    guide.rangeLabel:SetText(rangeText)
+    guide.rangeLabel:SetText(string.format("%sSkill %d - %d%s", Text(), step.minSkill, step.maxSkill, step.alternate and ("  " .. Accent() .. "(alternate route)") or ""))
 
     local noteText = ""
     if step.keep and step.keep > 0 then
-        noteText = noteText .. COLORS.dim .. "Keep the crafted items.\n"
+        noteText = noteText .. Dim() .. "Keep the crafted items.\n"
     end
     if step.note then
-        noteText = noteText .. COLORS.text .. step.note .. "\n"
+        noteText = noteText .. Text() .. step.note .. "\n"
     end
     if step.quests then
-        noteText = noteText .. COLORS.dim .. "Requires a quest (see the trainer list).\n"
+        noteText = noteText .. Dim() .. "Requires a quest (see the trainer list).\n"
     end
     guide.note:SetText(noteText)
 
     local crafts = math.max(1, step.maxSkill - step.minSkill)
     local reagents = RGXProf.DataManager:GetReagentListWithDetails(step.spellID, crafts)
     local lines = {}
-    table.insert(lines, COLORS.accent .. "Materials for " .. crafts .. " crafts:")
+    table.insert(lines, Accent() .. "Materials for " .. crafts .. " crafts:")
     for _, reagent in ipairs(reagents or {}) do
         local have = reagent.onHandCount or 0
-        local haveColor = (have >= (reagent.requiredCount or 0)) and "|cff00ff00" or "|cffff9900"
-        table.insert(lines, string.format("%s  %s %dx %s(%d/%d)", COLORS.text, reagent.icon or "", reagent.requiredCount or 0, reagent.name or tostring(reagent.itemID), haveColor, have, reagent.requiredCount or 0))
+        local need = reagent.requiredCount or 0
+        local haveColor = (have >= need) and "|cff2e7d32" or "|cffff9900"
+        table.insert(lines, string.format("%s  %s %dx %s(%d/%d)", Text(), reagent.icon or "", need, reagent.name or tostring(reagent.itemID), haveColor, have, need))
     end
     if #lines == 1 then
-        table.insert(lines, COLORS.dim .. "No material data for this step.")
+        table.insert(lines, Dim() .. "No material data for this step.")
     end
     guide.reagents:SetText(table.concat(lines, "\n"))
 
     local vendors = RGXProf.DataManager:GetVendors(step, RGXProf.WowAPI:GetPlayer().faction)
     local vendorLines = {}
     if #vendors > 0 then
-        table.insert(vendorLines, COLORS.accent .. "Vendors:")
+        table.insert(vendorLines, Accent() .. "Vendors:")
         for _, vendor in ipairs(vendors) do
-            table.insert(vendorLines, COLORS.text .. vendor.name)
+            table.insert(vendorLines, Text() .. vendor.name)
         end
     end
     guide.vendors:SetText(table.concat(vendorLines, "\n"))
@@ -318,25 +297,21 @@ end
 
 function RGXProf.BookWindow:Show()
     self:EnsureFrame()
-    if RGXProfSettings.bookPosition and self.frame:GetNumPoints() == 1 then
-        local pos = RGXProfSettings.bookPosition
-        local point, relFrame = pos[1], pos[2]
-        local relPoint, x, y = pos[3], pos[4], pos[5]
-        if relFrame == nil then relFrame = UIParent end
+    if RGXProf_Settings.bookPosition then
+        local pos = RGXProf_Settings.bookPosition
         pcall(function()
             self.frame:ClearAllPoints()
-            self.frame:SetPoint(point, relFrame, relPoint, x, y)
+            self.frame:SetPoint(pos[1], pos[2] or UIParent, pos[3], pos[4], pos[5])
         end)
     end
     local professionID = self:GetCurrentProfession()
     if professionID then
-        RGXProfSettings.bookPage = RGXProfSettings.bookPage or self:GetCurrentPage(professionID)
-        self.frame.subHeader:SetText("")
+        RGXProf_Settings.bookPage = RGXProf_Settings.bookPage or self:GetCurrentPage(professionID)
         self:RenderGuide()
     else
         self.frame.guide:Hide()
         self.frame.landing:Show()
-        self.frame.subHeader:SetText(COLORS.dim .. "Choose a profession")
+        self.frame.subHeader:SetText(Dim() .. "Choose a profession")
         self:BuildLanding()
     end
     self.frame:Show()
