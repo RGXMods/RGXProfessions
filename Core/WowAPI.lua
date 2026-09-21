@@ -123,16 +123,25 @@ function RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
 
 	local link, icon
 	if step.itemID then
-		_, link, _, _, _, _, _, _, _, icon = GetItemInfo(step.itemID)
+		if C_Item and C_Item.GetItemInfo then
+			local itemInfo = C_Item.GetItemInfo(step.itemID)
+			if itemInfo then
+				link = itemInfo.link
+				icon = itemInfo.icon
+			end
+		elseif GetItemInfo then
+			_, link, _, _, _, _, _, _, _, icon = GetItemInfo(step.itemID)
+		end
 		if not icon then self:QueueItemLoad(step.itemID) end
 	end
 
-	if not icon then
+	if not link then
 		link = string.format("|cff71d5ff|Hspell:%d|h[%s]|h|r", step.spellID, step.name)
 	end
+
 	return {
-		name = name or "Loading...",
-		link = link or "",
+		name = step.name or "Loading...",
+		link = link,
 		icon = icon or "Interface\\Icons\\INV_Misc_QuestionMark"
 	}
 end
