@@ -245,7 +245,15 @@ function RGXProf.BookWindow:RenderGuide()
 
     self.frame.subHeader:SetText(Accent() .. prof.name .. "|r  " .. Dim() .. "Leveling Path")
 
-    guide.recipeIcon:SetTexture(step.itemID and GetItemIcon(step.itemID) or "Interface\\Icons\\INV_Misc_QuestionMark")
+    local iconTexture
+    if step.itemID then
+        if C_Item and C_Item.GetItemIconByID then
+            iconTexture = C_Item.GetItemIconByID(step.itemID)
+        elseif GetItemIcon then
+            iconTexture = GetItemIcon(step.itemID)
+        end
+    end
+    guide.recipeIcon:SetTexture(iconTexture or "Interface\\Icons\\INV_Misc_QuestionMark")
 
     local display = RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
     guide.recipeLink:SetText(display.link or (Text() .. (step.name or "")))
