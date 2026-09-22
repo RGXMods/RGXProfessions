@@ -92,7 +92,12 @@ function RGXProf.StateManager:RequestRefresh(forceShow)
 
     if not self.RefreshPending then
         self.RefreshPending = true
-        local RGX = _G.RGXFramework; local afterFn = (RGX and RGX.After) or C_Timer.After; afterFn(0.2, function() self:PerformRefresh() end)
+        local RGX = _G.RGXFramework
+        if RGX and type(RGX.After) == "function" then
+            RGX:After(0.2, function() self:PerformRefresh() end, "RGXProf_RequestRefresh")
+        else
+            C_Timer.After(0.2, function() self:PerformRefresh() end)
+        end
     end
 end
 

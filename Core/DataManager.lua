@@ -616,7 +616,7 @@ function RGXProf.DataManager:GetRemainingMaterials(currentSkillLevel, profession
 
         local sorted = {}
         for itemID, count in pairs(bucket.mats or {}) do
-            local name = select(2, RGXProf.WowAPI:GetItemInfo(itemID)) or ("ItemID:" .. itemID)
+            local name = select(1, RGXProf.WowAPI:GetItemInfo(itemID)) or ("ItemID:" .. itemID)
             table.insert(sorted, { name = name, count = count, itemID = itemID })
         end
         table.sort(sorted, function(a, b) return a.name < b.name end)

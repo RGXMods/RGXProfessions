@@ -13,7 +13,25 @@ function RGXProf.WowAPI:GetPlayer()
 	}
 end
 
-function RGXProf.WowAPI:GetItemInfo(itemID) return GetItemInfo(itemID) end
+-- C_Item.GetItemInfo returns multiple values, never a table.
+-- Canonical order (matches legacy GetItemInfo / wow-ui-source ItemDocumentation):
+--   1 name, 2 link, 3 quality, 4 itemLevel, 5 itemMinLevel, 6 itemType,
+--   7 itemSubType, 8 itemStackCount, 9 itemEquipLoc, 10 icon, 11 sellPrice, ...
+function RGXProf.WowAPI:GetItemInfo(itemID)
+	if C_Item and C_Item.GetItemInfo then
+		local name, link, quality, itemLevel, itemMinLevel, itemType, itemSubType,
+		      itemStackCount, itemEquipLoc, icon, sellPrice = C_Item.GetItemInfo(itemID)
+		if name then
+			return name, link, quality, itemLevel, itemMinLevel, itemType, itemSubType,
+			       itemStackCount, itemEquipLoc, icon, sellPrice
+		end
+		pcall(C_Item.RequestLoadItemDataByID, itemID)
+	end
+	if GetItemInfo then
+		return GetItemInfo(itemID)
+	end
+	return nil
+end
 function RGXProf.WowAPI:GetSpellInfo(spellID)
 	if C_Spell and C_Spell.GetSpellInfo then
 		local info = C_Spell.GetSpellInfo(spellID)
@@ -74,7 +92,18 @@ function RGXProf.WowAPI:QueueItemLoad(itemID) return C_Item.RequestLoadItemDataB
 function RGXProf.WowAPI:GetTradeSkillReagentInfo(recipeIndex, reagentIndex) return GetTradeSkillReagentInfo(recipeIndex, reagentIndex) end
 function RGXProf.WowAPI:GetTradeSkillReagentItemLink(recipeIndex, reagentIndex) return GetTradeSkillReagentItemLink(recipeIndex, reagentIndex) end
 function RGXProf.WowAPI:GetBestMapForUnit(unit) return C_Map.GetBestMapForUnit(unit) end
-function RGXProf.WowAPI:GetItemIcon(link) return GetItemIcon(link) end
+function RGXProf.WowAPI:GetItemIcon(link)
+	if C_Item and C_Item.GetItemIconByID and type(link) == "number" then
+		return C_Item.GetItemIconByID(link)
+	end
+	if C_Item and C_Item.GetItemIcon and type(link) == "string" then
+		return C_Item.GetItemIcon(link)
+	end
+	if GetItemIcon then
+		return GetItemIcon(link)
+	end
+	return nil
+end
 
 
 ---------------------------------------------------------------------------------
@@ -100,7 +129,8 @@ print(debugstack(2, 1, 0))
 end
 
 function RGXProf.WowAPI:GetReagentInfoByItemID(itemID)
-    local name, link, icon = self:GetItemInfo(itemID)
+    -- GetItemInfo returns icon as the 10th value, not the 3rd.
+    local name, link, _, _, _, _, _, _, _, icon = self:GetItemInfo(itemID)
     local onHand = self:GetItemCount(itemID, false, false)
 
     if not name then
@@ -122,26 +152,66 @@ end
 function RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
 
 	local link, icon
+
 	if step.itemID then
-		if C_Item and C_Item.GetItemInfo then
-			local itemInfo = C_Item.GetItemInfo(step.itemID)
-			if itemInfo then
-				link = itemInfo.link
-				icon = itemInfo.icon
+		-- GetItemInfoInstant returns immediately (no cache wait).
+		-- Classic shape: itemID, itemType, itemSubType, equipLoc, icon, ...
+		-- Some builds also include itemLink — probe defensively.
+		if C_Item and C_Item.GetItemInfoInstant then
+			local ok, r1, r2, r3, r4, r5, r6, r7 = pcall(C_Item.GetItemInfoInstant, step.itemID)
+			if ok then
+				-- Prefer a string that looks like an item hyperlink among early returns.
+				for _, v in ipairs({ r1, r2, r3, r4 }) do
+					if type(v) == "string" and v:find("item:") then
+						link = v
+						break
+					end
+				end
+				-- Icon is typically r5 on classic, r5 on retail too (after equipLoc).
+				for _, v in ipairs({ r5, r4, r6 }) do
+					if type(v) == "number" then
+						icon = v
+						break
+					end
+				end
 			end
-		elseif GetItemInfo then
-			_, link, _, _, _, _, _, _, _, icon = GetItemInfo(step.itemID)
 		end
-		if not icon then self:QueueItemLoad(step.itemID) end
+
+		-- Full info (async). Multi-return only — never a table.
+		-- Slot 10 is icon/texture on both legacy and C_Item shapes.
+		local name, fullLink, _, _, _, _, _, _, _, fullIcon
+		if C_Item and C_Item.GetItemInfo then
+			name, fullLink, _, _, _, _, _, _, _, fullIcon = C_Item.GetItemInfo(step.itemID)
+		elseif GetItemInfo then
+			name, fullLink, _, _, _, _, _, _, _, fullIcon = GetItemInfo(step.itemID)
+		end
+		if fullLink then
+			link = fullLink
+		end
+		if fullIcon then
+			icon = fullIcon
+		end
+		if not name then
+			self:QueueItemLoad(step.itemID)
+		end
+
+		if not icon then
+			if C_Item and C_Item.GetItemIconByID then
+				icon = C_Item.GetItemIconByID(step.itemID)
+			elseif GetItemIcon then
+				icon = GetItemIcon(step.itemID)
+			end
+		end
 	end
 
-	if not link then
+	-- Spell link always works offline from step data — never leave the field empty.
+	if not link and step.spellID and step.name then
 		link = string.format("|cff71d5ff|Hspell:%d|h[%s]|h|r", step.spellID, step.name)
 	end
 
 	return {
 		name = step.name or "Loading...",
-		link = link,
+		link = link or step.name or "",
 		icon = icon or "Interface\\Icons\\INV_Misc_QuestionMark"
 	}
 end
