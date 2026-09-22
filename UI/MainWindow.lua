@@ -66,14 +66,22 @@ function RGXProf.MainWindow:Render(state)
         return
     end
 
-    local RGX = _G.RGXFramework; local afterFn = (RGX and RGX.After) or C_Timer.After; afterFn(0.1, function()
+    -- Schedule the show/position AFTER state has been rendered onto the frame.
+    -- Must bind self correctly: extracting RGX.After and calling it unbound
+    -- turns the duration into self and crashes CreateTimer before any SetText.
+    local function positionAndShow()
         local adapter = RGXProf.AdapterManager:GetCurrent()
         if adapter and adapter.position then
             adapter:position(self.UIElements.backFrame)
             frame:Show()
         end
-    end)
-
+    end
+    local RGX = _G.RGXFramework
+    if RGX and type(RGX.After) == "function" then
+        RGX:After(0.1, positionAndShow, "RGXProf_PositionWindow")
+    else
+        C_Timer.After(0.1, positionAndShow)
+    end
 
     ----------------------------------------------------------
     -- Render all the frames with their data
@@ -84,7 +92,7 @@ function RGXProf.MainWindow:Render(state)
     RGXProf.Recipes:Render(state)
     RGXProf.Reagents:Render(state.activeRecipe.reagents)
     RGXProf.Footer:Render(state.nextRecipe, state.profession)
-    
+
 end
 
 function RGXProf.MainWindow:SetPortrait(icon)

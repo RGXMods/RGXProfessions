@@ -46,7 +46,7 @@ function RGXProf.Utils:GetMatString(reagents)
 
 	for itemID, quantity in pairs(reagents) do
 		if tonumber(quantity) and quantity > 0 then
-			local itemName = select(2, RGXProf.WowAPI:GetItemInfo(itemID)) or ("ItemID:"..itemID)
+			local itemName = select(1, RGXProf.WowAPI:GetItemInfo(itemID)) or ("ItemID:"..itemID)
 			table.insert(parts, string.format("%dx %s", quantity, itemName))
 		end
 	end
