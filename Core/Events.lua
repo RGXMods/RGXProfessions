@@ -1,17 +1,37 @@
 --------------------------------------------------------------------
 
+-- Profession open/close can fire from secure execution (TOGGLEPROFESSIONBOOK
+-- macro). Frame creation/show/hide in that stack taints Blizzard UI and
+-- surfaces as <inaccessible error>. Always defer to the next frame.
+local function DeferOutOfSecure(self, fn, label)
+    local RGX = _G.RGXFramework
+    if RGX and type(RGX.After) == "function" then
+        RGX:After(0, fn, label)
+    else
+        fn()
+    end
+end
+
 RGXProf.Events = {
-    TRADE_SKILL_SHOW = function(self, ...)
-        self:TRADE_SHOW("TRADE_SKILL_SHOW")
+    TRADE_SKILL_SHOW = function(self, event)
+        DeferOutOfSecure(self, function()
+            self:TRADE_SHOW(event or "TRADE_SKILL_SHOW")
+        end, "RGXProf_TRADE_SKILL_SHOW")
     end,
-    CRAFT_SHOW = function(self, ...)
-        self:TRADE_SHOW("CRAFT_SHOW")
+    CRAFT_SHOW = function(self, event)
+        DeferOutOfSecure(self, function()
+            self:TRADE_SHOW(event or "CRAFT_SHOW")
+        end, "RGXProf_CRAFT_SHOW")
     end,
     TRADE_SKILL_CLOSE = function(self)
-        self:TRADE_CLOSE()
+        DeferOutOfSecure(self, function()
+            self:TRADE_CLOSE()
+        end, "RGXProf_TRADE_SKILL_CLOSE")
     end,
     CRAFT_CLOSE = function(self)
-        self:TRADE_CLOSE()
+        DeferOutOfSecure(self, function()
+            self:TRADE_CLOSE()
+        end, "RGXProf_CRAFT_CLOSE")
     end,
     TRADE_SKILL_UPDATE = function(self)
         RGXProf.StateManager:RequestRefresh()
