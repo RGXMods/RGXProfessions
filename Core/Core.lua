@@ -33,10 +33,10 @@ function RGXProf:CreateMinimapButton()
         angleKey = "minimapAngle",
         enabledKey = "minimapIconEnabled",
         tooltip = {
-            title = "|cff8B1538RGX|r Professions",
+            title = "|cff8B1538RGX|r Profession Leveling Guide",
             getLines = function()
                 return {
-                    { left = "|cffffffffThe profession leveling bible|r" },
+                    { left = "|cffffffffProfession leveling guide|r" },
                     { left = "|cff8B1538Left-Click|r", right = "|cffffffffOpen the book|r" },
                     { left = "|cff4ecdc4Left-Drag|r", right = "|cffffffffMove around minimap|r" },
                     { left = "|cffe74c3cCtrl+Right-Click|r", right = "|cffffffffHide minimap icon|r" },
