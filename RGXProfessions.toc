@@ -1,5 +1,5 @@
 ## Interface: 16001
-## Title: |cff8B1538RGX|r |cffffffffProfessions|r
+## Title: |cff8B1538RGX|r |cffffffffProfession Leveling Guide|r
 ## X-DisplayName: RGX Professions
 ## Notes: The profession leveling bible for WoW Forever. Browse every leveling path, recipe, and reagent like a book.|n|r  |cff8B1538/prof|r to open. |n|r Derived from PLG by LirameiRav (guides from wow-professions.com).
 ## Author: RealmGX, derived from PLG by LirameiRav and Keg
