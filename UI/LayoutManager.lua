@@ -63,7 +63,6 @@ function RGXProf.LayoutManager:CreateBackFrame(name, layout)
     if layout.positionFunc then
         layout.positionFunc(backFrame)
     end
-    backFrame:SetPropagateKeyboardInput(true)
 
     backFrame:Hide()
     return backFrame
