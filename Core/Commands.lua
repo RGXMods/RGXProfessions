@@ -35,7 +35,7 @@ local menuFrame
 local function ShowProfessionMenu()
     local professions = GetGuideProfessions()
     if #professions == 0 then
-        print("|cffff0000[RGXProf]|r No profession guides are loaded.")
+        print(RGXProf.L.CMD_NO_GUIDES)
         return
     end
 
@@ -63,7 +63,7 @@ local function ShowProfessionMenu()
     if menuFrame and EasyMenu then
         EasyMenu(menu, menuFrame, "cursor", 0, 0, "MENU")
     else
-        print("|cffffff00[RGXProf]|r Choose a profession: /RGXProf show <name>")
+        print(RGXProf.L.CMD_CHOOSE_PROF)
         for _, professionID in ipairs(professions) do
             print("  - " .. RGXProf.Constants.Professions[professionID].name)
         end
@@ -80,7 +80,7 @@ function RGXProf:HandleSlashCommand(msg)
         if RGXProf.BookWindow then
             RGXProf.BookWindow:Toggle()
         else
-            print("|cffff0000[RGXProf]|r The professions book is not loaded yet.")
+            print(RGXProf.L.CMD_BOOK_NOT_LOADED)
         end
     elseif command == "book" then
         if RGXProf.BookWindow then RGXProf.BookWindow:Show() end
@@ -89,13 +89,13 @@ function RGXProf:HandleSlashCommand(msg)
         if sub == "on" then
             RGXProf_Settings.minimapIconEnabled = true
             if RGXProf.minimapButton then RGXProf.minimapButton:SetVisible(true) end
-            print("[RGXProf] Minimap icon |cff00ff00shown|r")
+            print(RGXProf.L.CMD_ICON_SHOWN)
         elseif sub == "off" then
             RGXProf_Settings.minimapIconEnabled = false
             if RGXProf.minimapButton then RGXProf.minimapButton:SetVisible(false) end
-            print("[RGXProf] Minimap icon |cffff0000hidden|r. Use |cffffffff/prof icon on|r to show it again.")
+            print(RGXProf.L.CMD_ICON_HIDDEN)
         else
-            print("Usage: |cffffff00/prof icon on|r or |cffffff00/prof icon off|r")
+            print(RGXProf.L.CMD_ICON_USAGE)
         end
     elseif command == "show" then
         local adapter = RGXProf.AdapterManager:GetCurrent()
@@ -105,7 +105,7 @@ function RGXProf:HandleSlashCommand(msg)
             if name then
                 RGXProf.StateManager:ShowGuideForProfession(name)
             else
-                print("|cffff0000[RGXProf]|r Unknown profession: " .. args)
+                print(RGXProf.L.CMD_UNKNOWN_PROF .. args)
             end
         else
             RGXProf.BookWindow:Show()
@@ -113,7 +113,7 @@ function RGXProf:HandleSlashCommand(msg)
     elseif command == "preview" then
         if args == "" then
             if not RGXProf.CurrentState or not RGXProf.CurrentState.profession then
-                print("No active profession found. Open a profession window first.")
+                print(RGXProf.L.CMD_NO_ACTIVE_PROF)
                 return
             end
 
@@ -123,17 +123,17 @@ function RGXProf:HandleSlashCommand(msg)
         else
             local prof, skill = args:match("^(%S+)%s+(%d+)$")
             if not prof or not skill then
-                print("Usage: /RGXProf preview [profession] [skill]")
+                print(RGXProf.L.CMD_PREVIEW_USAGE)
                 return
             end
             RGXProf.MiniWindow:Show(prof, tonumber(skill))
         end
     else
-        print("|cffffff00[RGXProf]|r Commands:")
-        print("|cffffff00/prof|r - Open the professions book")
-        print("|cffffff00/prof show|r - Open the trade-window guide (or the menu)")
-        print("|cffffff00/prof show <profession>|r - Open the guide for a specific profession")
-        print("|cffffff00/prof preview <profession> <skill>|r - Show the Preview Steps window")
-        print("|cffffff00/prof icon on|r|cffffffff/|r|cffffff00off|r - Show or hide the minimap icon")
+        print(RGXProf.L.HELP_HEADER)
+        print(RGXProf.L.HELP_BOOK)
+        print(RGXProf.L.HELP_SHOW)
+        print(RGXProf.L.HELP_SHOW_PROF)
+        print(RGXProf.L.HELP_PREVIEW)
+        print(RGXProf.L.HELP_ICON)
     end
 end

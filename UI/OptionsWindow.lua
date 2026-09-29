@@ -4,15 +4,15 @@ RGXProf.OptionsWindow = RGXProf.OptionsWindow or {}
 function RGXProf.OptionsWindow:CreateOptionsPanel()
 
     local configPanel = CreateFrame("Frame", "RGXProfOptionsPanel", UIParent)
-    configPanel.name = "Profession Leveling Guide"
+    configPanel.name = RGXProf.L.ADDON_TITLE
 
     local title = configPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 16, -16)
-    title:SetText("Profession Leveling Guide")
+    title:SetText(RGXProf.L.ADDON_TITLE)
 
     local autoOpenCheckbox = CreateFrame("CheckButton", nil, configPanel, "InterfaceOptionsCheckButtonTemplate")
     autoOpenCheckbox:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
-    autoOpenCheckbox.Text:SetText("Auto-open RGXProf on profession window")
+    autoOpenCheckbox.Text:SetText(RGXProf.L.OPT_AUTO_OPEN)
     autoOpenCheckbox:SetChecked(RGXProf.Settings and RGXProf.Settings.autoOpen or false)
 
     autoOpenCheckbox:SetScript("OnClick", function(self)
@@ -25,7 +25,7 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
 
     local selectRecipeCheckbox = CreateFrame("CheckButton", nil, configPanel, "InterfaceOptionsCheckButtonTemplate")
     selectRecipeCheckbox:SetPoint("TOPLEFT", autoOpenCheckbox, "BOTTOMLEFT", 0, -12)
-    selectRecipeCheckbox.Text:SetText("Click RGXProf recipes to select them in the profession window")
+    selectRecipeCheckbox.Text:SetText(RGXProf.L.OPT_SELECT_RECIPES)
     selectRecipeCheckbox:SetChecked(RGXProf.Settings and RGXProf.Settings.selectRecipesInProfessionWindow ~= false)
 
     selectRecipeCheckbox:SetScript("OnClick", function(self)
@@ -38,7 +38,7 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
     selectRecipeDescription:SetPoint("TOPLEFT", selectRecipeCheckbox, "BOTTOMLEFT", 26, -2)
     selectRecipeDescription:SetWidth(520)
     selectRecipeDescription:SetJustifyH("LEFT")
-    selectRecipeDescription:SetText("When disabled, recipe clicks still switch RGXProf's Recipe/Alternate display but do not expand or change the profession list.")
+    selectRecipeDescription:SetText(RGXProf.L.OPT_SELECT_RECIPES_DESC)
 
     return configPanel
 end

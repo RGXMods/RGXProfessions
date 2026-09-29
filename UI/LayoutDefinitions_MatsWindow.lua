@@ -64,7 +64,7 @@ RGXProf.Layouts.MatsWindow.Header = {
         { kind = "FontString", name = "MatsV_Title",
           font = RGXProf.Layouts.Defaults.fonts.medium,
           color = RGXProf.Constants.Colors.RGB["BRN"],
-          text = "Remaining Materials",
+          text = RGXProf.L.MATS_TITLE,
           fillParentWidth = true,
           padding = 8,
           height = 20,

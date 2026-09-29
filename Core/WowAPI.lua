@@ -115,17 +115,17 @@ function RGXProf.WowAPI:GetMapName(id)
 	if type(id) ~= "number" then
 print(debugstack(2, 1, 0))
 
-		print("GetMapName called with non-numeric id:", id)
-		return "(Invalid ID)"
+		print(RGXProf.L.DIAG_MAPNAME_BAD_ID, id)
+		return RGXProf.L.INVALID_ID
 	end
 
 	local m = C_Map.GetMapInfo(id)
 	if not m then
-		print("No map info found for id:", id)
-		return "(Unknown Zone)"
+		print(RGXProf.L.DIAG_NO_MAP_INFO, id)
+		return RGXProf.L.UNKNOWN_ZONE
 	end
 
-	return m.name or "(Unnamed Map)"
+	return m.name or RGXProf.L.UNNAMED_MAP
 end
 
 function RGXProf.WowAPI:GetReagentInfoByItemID(itemID)
@@ -210,7 +210,7 @@ function RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
 	end
 
 	return {
-		name = step.name or "Loading...",
+		name = step.name or RGXProf.L.LOADING,
 		link = link or step.name or "",
 		icon = icon or "Interface\\Icons\\INV_Misc_QuestionMark"
 	}

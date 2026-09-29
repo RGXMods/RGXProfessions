@@ -28,16 +28,16 @@ function RGXProf.MainWindow:SetupUI()
         local btn = CreateFrame("Button", "RGXProfSimNextButton", RGXProf.MainWindow.UIElements.backFrame, "UIPanelButtonTemplate")
         btn:SetSize(60, 20)
         btn:SetPoint("TOPRIGHT", RGXProf.MainWindow.UIElements.backFrame, "TOPRIGHT", -10, -10)
-        btn:SetText("Next")
+        btn:SetText(RGXProf.L.SIM_NEXT)
         btn:SetScript("OnClick", function()
         local state = RGXProf.CurrentState
         if not state then
-            print("⚠️  No active simulation. Use /RGXProfsim first.")
+            print("⚠️  " .. RGXProf.L.SIM_NO_ACTIVE)
             return
         end
         local next = state.nextStep
         if not next then
-            print("✅  End of path reached!")
+            print("✅  " .. RGXProf.L.SIM_END_OF_PATH)
             return
         end
         RGXProf:SimulateStep(state.profession.id, next.minSkill, state.player.faction)
@@ -56,7 +56,7 @@ function RGXProf.MainWindow:Render(state)
     end
     -- Handle maxed out profession
     if state.profession.pointsEarned >= RGXProf.currentExpansion.maxSkill then
-        RGXProf.Utils:SendMsg("Your profession is maxed.")
+        RGXProf.Utils:SendMsg(RGXProf.L.PROF_MAXED)
         frame:Hide()
         return
     end
