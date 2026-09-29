@@ -143,7 +143,7 @@ function RGXProf.DataManager:GetStepPreviews(profession, steps, currentSkill)
 
 			local preview = {}
 
-			preview.text = string.format("• Create %dx %s (%d–%d)", estimatedCrafts, recipeDetails.link or recipeDetails.name or "?", step.minSkill, step.maxSkill)
+			preview.text = string.format(RGXProf.L.PREVIEW_STEP, estimatedCrafts, recipeDetails.link or recipeDetails.name or "?", step.minSkill, step.maxSkill)
 			preview.link = recipeDetails.link
 			preview.icon = recipeDetails.icon
 			table.insert(previews, preview)
@@ -465,7 +465,7 @@ function RGXProf.DataManager:GetVendors(step, playerFaction)
 					table.insert(result, vendor)
 				end
 			else
-				RGXProf.Utils:SendMsg("Please report missing vendor "..vendorID)
+				RGXProf.Utils:SendMsg(string.format(RGXProf.L.REPORT_MISSING_VENDOR, vendorID))
 			end
 		end
 	end
@@ -503,7 +503,7 @@ function RGXProf.DataManager:GetQuests(step, playerFaction)
 					quest.zoneID = npc.zoneID
 					table.insert(results, quest)
 				else
-					RGXProf.Utils:SendMsg("Please report missing quest NPC "..quest.npcID.." for quest "..questID)
+					RGXProf.Utils:SendMsg(string.format(RGXProf.L.REPORT_MISSING_QUEST_NPC, quest.npcID, questID))
 				end
 			end
 		end
@@ -612,11 +612,11 @@ function RGXProf.DataManager:GetRemainingMaterials(currentSkillLevel, profession
     for _, bucket in ipairs(bucketsWithMats) do
         local skillCap = bucket.skillCap
         local tierName = self:getTierLabel(skillCap)
-        table.insert(lines, { text = string.format("To reach %s (%d):", tierName, skillCap) })
+        table.insert(lines, { text = string.format(RGXProf.L.MATS_TO_REACH, tierName, skillCap) })
 
         local sorted = {}
         for itemID, count in pairs(bucket.mats or {}) do
-            local name = select(1, RGXProf.WowAPI:GetItemInfo(itemID)) or ("ItemID:" .. itemID)
+            local name = select(1, RGXProf.WowAPI:GetItemInfo(itemID)) or (RGXProf.L.ITEM_ID_FALLBACK .. itemID)
             table.insert(sorted, { name = name, count = count, itemID = itemID })
         end
         table.sort(sorted, function(a, b) return a.name < b.name end)
@@ -634,7 +634,7 @@ function RGXProf.DataManager:GetRemainingMaterials(currentSkillLevel, profession
 end
 
 function RGXProf.DataManager:getTierLabel(skillCap)
-	return RGXProf.Constants.TierLabels[skillCap] or ("Skill " .. skillCap)
+	return RGXProf.Constants.TierLabels[skillCap] or string.format(RGXProf.L.SKILL_TIER_FALLBACK, skillCap)
 end
 
 ---Calculate the estimated crafts needed to reach the next step

@@ -128,20 +128,20 @@ end
 function RGXProf.Expansions:IsSupported()
     local version = self:GetVersion()
     if not version then
-        print("|cffff0000[RGXProf]|r Unable to detect WoW client version.")
+        print(RGXProf.L.UNABLE_DETECT_VERSION)
         return false
     end
 
     if self.All[version] then return true end
 
-    print("|cffff0000[RGXProf]|r Unsupported WoW version.")
+    print(RGXProf.L.UNSUPPORTED_WOW_VERSION)
     return false
 end
 
 function RGXProf.Expansions:SetExpansionData(majorVersion)
     local expansionConstructor = self.All[majorVersion]
     if not expansionConstructor then
-        print("|cffff0000[RGXProf]|r Unknown expansion version:", majorVersion)
+        print(RGXProf.L.UNKNOWN_EXPANSION, majorVersion)
         return
     end
     

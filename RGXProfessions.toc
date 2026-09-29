@@ -14,6 +14,7 @@
 
 ## X-Category: Professions
 ## X-License: MIT
+## X-Localizations: enUS, deDE, esES, esMX, frFR, itIT, koKR, ptBR, ptPT, ruRU, zhCN, zhTW
 
 Core/Utils.lua
 
@@ -53,7 +54,7 @@ Core/Core.lua
 
 Constants/Colors.lua
 Constants/SkillUpColors.lua
-Constants/Strings.lua
+Constants/Localization.lua
 
 UI/LayoutDefinitions.lua
 UI\LayoutDefinitions_Training.lua
