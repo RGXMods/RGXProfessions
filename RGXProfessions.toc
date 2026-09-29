@@ -5,7 +5,7 @@
 ## Author: RealmGX, derived from PLG by LirameiRav and Keg
 ## Category: RGX
 ## Group: RGX
-## Version: v0.1.0
+## Version: v0.1.1
 ## RequiredDeps: RGX-Framework
 ## SavedVariables: RGXProf_Settings, RGXProf_SimResults
 ## IconTexture: Interface\AddOns\RGXProfessions\Media\PLGIcon.tga
