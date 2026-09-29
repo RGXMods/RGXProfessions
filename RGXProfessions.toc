@@ -5,7 +5,6 @@
 ## Author: RealmGX, derived from PLG by LirameiRav and Keg
 ## Category: RGX
 ## Group: RGX
-## Email: donniedice@protonmail.com
 ## Version: v0.1.0
 ## RequiredDeps: RGX-Framework
 ## SavedVariables: RGXProf_Settings, RGXProf_SimResults
