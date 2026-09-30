@@ -238,29 +238,64 @@ function RGXProf.BookWindow:EnsureFrame()
         f:SetPanelColor(nil, BRAND_BORDER)
     end
 
-    -- Single header block: icon + title + live skill + progress bar.
-    f.headerIcon = f:CreateTexture(nil, "ARTWORK")
+    -- Traditional RGXMods header: dark band, accent line, logo, title,
+    -- subtitle and brand - the same layout as the framework options panels.
+    local header = CreateFrame("Frame", nil, f, "BackdropTemplate")
+    header:SetHeight(HEADER_HEIGHT)
+    header:SetPoint("TOPLEFT", 4, -4)
+    header:SetPoint("TOPRIGHT", -4, -4)
+    header:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    local hs, hsg, hsb = 0.086, 0.086, 0.110
+    if Design then hs, hsg, hsb = Design:Unpack("surface") end
+    header:SetBackdropColor(hs, hsg, hsb, 0.95)
+    local hbr, hbg, hbb = 0.137, 0.137, 0.173
+    if Design then hbr, hbg, hbb = Design:Unpack("border") end
+    header:SetBackdropBorderColor(hbr, hbg, hbb, 1)
+
+    local accentLine = header:CreateTexture(nil, "ARTWORK")
+    accentLine:SetHeight(2)
+    accentLine:SetPoint("BOTTOMLEFT", header, "BOTTOMLEFT", 0, 0)
+    accentLine:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", 0, 0)
+    accentLine:SetColorTexture(unpack(BRAND_RGB))
+
+    f.headerIcon = header:CreateTexture(nil, "ARTWORK")
     f.headerIcon:SetSize(30, 30)
-    f.headerIcon:SetPoint("TOPLEFT", 14, -14)
+    f.headerIcon:SetPoint("LEFT", 12, -18)
     f.headerIcon:SetTexture("Interface\\AddOns\\RGXProfessions\\Media\\RGXIcon.tga")
 
-    f.headerTitle = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    f.headerTitle:SetPoint("LEFT", f.headerIcon, "RIGHT", 8, 0)
-    f.headerTitle:SetText("Profession Leveling Guide")
+    f.headerTitle = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    f.headerTitle:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, 10)
+    f.headerTitle:SetText("|cff8B1538RGX|r |cffffffffProfessions|r")
 
-    f.headerSkill = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    f.headerSkill:SetPoint("TOPRIGHT", -46, -20)
+    f.headerSub = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    f.headerSub:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, -8)
+    f.headerSub:SetText("The profession leveling bible for WoW Forever")
+    if Design then
+        local tr, tg, tb = Design:Unpack("subtext")
+        f.headerSub:SetTextColor(tr, tg, tb)
+    end
+
+    f.headerBrand = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    f.headerBrand:SetPoint("RIGHT", -40, -26)
+    f.headerBrand:SetText("|cff8B1538RGX|r |cffffd700Mods|r")
+
+    f.headerSkill = header:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    f.headerSkill:SetPoint("TOPRIGHT", -46, -8)
     f.headerSkill:SetJustifyH("RIGHT")
 
-    f.progress = CreateFrame("StatusBar", nil, f)
-    f.progress:SetPoint("TOPLEFT", 14, -50)
-    f.progress:SetPoint("RIGHT", -14, 0)
-    f.progress:SetHeight(8)
+    f.progress = CreateFrame("StatusBar", nil, header)
+    f.progress:SetPoint("BOTTOMLEFT", header, "BOTTOMLEFT", 14, 4)
+    f.progress:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", -14, 4)
+    f.progress:SetHeight(6)
     f.progress:SetStatusBarTexture("Interface\\Buttons\\WHITE8x8")
     f.progress:SetMinMaxValues(0, MaxSkill())
     f.progress:SetValue(0)
     do
-    local r, g, b = unpack(BRAND_RGB)
+        local r, g, b = unpack(BRAND_RGB)
         f.progress:SetStatusBarColor(r, g, b)
         local bg = f.progress:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
@@ -332,8 +367,8 @@ function RGXProf.BookWindow:EnsureFrame()
     -- Recipe card: icon, title, meta and difficulty together at the top,
     -- using the same RGXUI section skin as every other RGX options surface.
     detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
-    detail.recipeCard:SetPoint("TOPLEFT", canvas, "TOPLEFT", 0, 0)
-    detail.recipeCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", 0, 0)
+    detail.recipeCard:SetPoint("TOPLEFT", canvas, "TOPLEFT", 2, 0)
+    detail.recipeCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, 0)
     detail.recipeCard:SetHeight(128)
 
     detail.icon = detail.recipeCard.content:CreateTexture(nil, "ARTWORK")
@@ -364,7 +399,6 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.matsCard = UI:CreateSection(canvas, { title = "Materials" })
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -10)
     detail.matsCard:SetPoint("TOPRIGHT", detail.recipeCard, "BOTTOMRIGHT", 0, -10)
-
     detail.materials = detail.matsCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.materials:SetPoint("TOPLEFT", 2, -2)
     detail.materials:SetPoint("RIGHT", -2, 0)
@@ -405,21 +439,27 @@ function RGXProf.BookWindow:EnsureFrame()
     end)
     detail.locHover:SetScript("OnClick", function()
         local target = detail._pinTarget
+        -- 1. Real pin when the client exposes the waypoint API.
         if target and target.zoneID and target.x and target.y
             and UiMapPoint and UiMapPoint.CreateFromCoordinates
             and C_Map and C_Map.SetUserWaypoint then
             local okPoint, point = pcall(UiMapPoint.CreateFromCoordinates, target.zoneID, target.x, target.y)
             if okPoint and point then
-                pcall(C_Map.SetUserWaypoint, point)
-                if C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
+                local okSet = pcall(C_Map.SetUserWaypoint, point)
+                if okSet and C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
                     pcall(C_SuperTrack.SetSuperTrackedUserWaypoint, true)
                 end
             end
         end
+        -- 2. Always open the map, zoomed to the NPC's zone when possible -
+        --    this is the functional fallback when no waypoint API exists.
         if WorldMapFrame and WorldMapFrame:IsShown() then
             WorldMapFrame:Hide()
         elseif ToggleWorldMap then
             ToggleWorldMap()
+            if target and target.zoneID and WorldMapFrame and WorldMapFrame.SetMapID then
+                pcall(WorldMapFrame.SetMapID, WorldMapFrame, target.zoneID)
+            end
         end
     end)
 
