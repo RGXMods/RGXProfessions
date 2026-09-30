@@ -581,6 +581,9 @@ local function RenderDetail(self)
         crafts = RGXProf.DataManager:GetEstimatedCrafts(fromSkill, step) or 0
     end
     local metaText = Accent() .. string.format("Skill %d - %d", step.minSkill, step.maxSkill)
+    if step.learnAt then
+        metaText = metaText .. Dim() .. "  -  " .. Text() .. "Learn recipe at " .. step.learnAt
+    end
     if crafts > 0 then
         metaText = metaText .. Dim() .. "  Â·  " .. Text() .. string.format("Craft ~%d to reach %d", crafts, step.maxSkill)
     elseif skill then
