@@ -130,7 +130,8 @@ local function Forever()
             [185] = {107073, 15}, -- Cooking +15
         },
         paths = {
-            [197] = RGXProf.ForeverPaths.Tailoring
+            [197] = RGXProf.ForeverPaths.Tailoring,
+            [202] = RGXProf.ForeverPaths.Engineering
         },
         tiers = { 50, 75, 100, 150, 225, 300 },
     }

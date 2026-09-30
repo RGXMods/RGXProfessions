@@ -17,6 +17,7 @@
 Core/Utils.lua
 
 Data\Forever\ProfessionPaths\Tailoring.lua
+Data\Forever\ProfessionPaths\Engineering.lua
 
 Data\Classic\NPCs\Trainers.lua
 Data\Classic\NPCs\Vendors.lua
