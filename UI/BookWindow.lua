@@ -343,6 +343,29 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.locations:SetWordWrap(true)
     detail.locations:SetSpacing(3)
 
+    -- Location block interaction: click opens the world map so you can
+    -- travel to the trainer or vendor; hover highlights the block.
+    detail.locHover = CreateFrame("Button", nil, detail)
+    detail.locHover:SetAllPoints(detail.locations)
+    detail.locHover:EnableMouse(true)
+    detail.locHover:SetScript("OnEnter", function(s)
+        detail.locations:SetTextColor(1, 0.82, 0)
+        GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Open the world map")
+        GameTooltip:Show()
+    end)
+    detail.locHover:SetScript("OnLeave", function()
+        detail.locations:SetTextColor(1, 1, 1)
+        GameTooltip:Hide()
+    end)
+    detail.locHover:SetScript("OnClick", function()
+        if WorldMapFrame and WorldMapFrame:IsShown() then
+            WorldMapFrame:Hide()
+        elseif ToggleWorldMap then
+            ToggleWorldMap()
+        end
+    end)
+
     detail.notes = detail:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.notes:SetPoint("TOPLEFT", detail.locations, "BOTTOMLEFT", 0, -12)
     detail.notes:SetPoint("RIGHT", -4, 0)
@@ -608,12 +631,8 @@ local function RenderDetail(self)
     local trainers = RGXProf.DataManager:GetTrainers(faction, step.minSkill, professionID) or {}
     if #trainers > 0 then
         table.insert(locLines, Dim() .. "Trainers:")
-        local shown = math.min(4, #trainers)
-        for i = 1, shown do
-            table.insert(locLines, FormatNpcLine(trainers[i]))
-        end
-        if #trainers > shown then
-            table.insert(locLines, Dim() .. string.format("  …and %d more", #trainers - shown))
+        for _, trainer in ipairs(trainers) do
+            table.insert(locLines, FormatNpcLine(trainer))
         end
     end
 
