@@ -34,10 +34,10 @@ function RGXProf.TooltipManager:Usage(itemID)
             if entry.minSkill == entry.maxSkill then
                 rangeText = string.format(" (%d)", entry.minSkill)
             else
-                rangeText = string.format(" (%d–%d)", entry.minSkill, entry.maxSkill)
+                rangeText = string.format(" (%d-%d)", entry.minSkill, entry.maxSkill)
             end
 
-            table.insert(tooltips, "• " .. name .. rangeText)
+            table.insert(tooltips, "* " .. name .. rangeText)
         end
     end
     return tooltips
