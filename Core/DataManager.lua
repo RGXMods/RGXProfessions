@@ -646,9 +646,35 @@ function RGXProf.DataManager:GetEstimatedCrafts(pointsEarned, step, workingHighS
 
 	local currentSkill = pointsEarned
 	local skillGap = math.max(0, (workingHighSkill or step.maxSkill)- currentSkill)
-	local factor = self:GetRecipeCraftFactor(step.spellID, step.minSkill) or 1.0
+	local factor
+	if step.colors then
+		factor = self:GetStepColorsCraftFactor(step.colors, step.minSkill)
+	else
+		factor = self:GetRecipeCraftFactor(step.spellID, step.minSkill) or 1.0
+	end
 	return math.ceil(skillGap * factor)
-	
+
+end
+
+---Same threshold math as GetRecipeCraftFactor, but from inline per-step colors
+---(expansion beta data whose skill-up colours differ from the global table).
+---@param colors table {y=,g=,r=,up=}
+---@param skill integer
+---@return number craftFactor
+function RGXProf.DataManager:GetStepColorsCraftFactor(colors, skill)
+	local base
+	if skill < colors.y then
+		base = 1.0
+	elseif skill < colors.g then
+		base = 1.67
+	elseif skill < colors.r then
+		base = 5.0
+	else
+		base = math.huge
+	end
+
+	local skillUps = colors.up or 1
+	return base / skillUps
 end
 
 
