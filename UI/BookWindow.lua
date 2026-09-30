@@ -595,16 +595,42 @@ end
 -- Closest-NPC helpers: compare positions in world coordinates when the
 -- client can translate both points, else prefer NPCs on the player's map.
 -- Everything is pcall-guarded; missing APIs degrade to the first candidate.
+-- C_Map.GetWorldPosFromMapPos returns (continentID, worldX, worldY) on most
+-- clients, but the Forever beta hands the position back as a vector-like
+-- table. Normalize both shapes to continentID, x, y; nil when unusable.
+local function WorldPos(mapID, x, y)
+    if not (C_Map and C_Map.GetWorldPosFromMapPos and CreateVector2D and mapID) then return nil end
+    local ok, a, b, c = pcall(C_Map.GetWorldPosFromMapPos, mapID, CreateVector2D(x, y))
+    if not ok then return nil end
+    if type(b) == "table" then
+        if type(b.GetXY) == "function" then
+            local okXY, bx, by = pcall(b.GetXY, b)
+            if okXY and type(bx) == "number" and type(by) == "number" then
+                return a, bx, by
+            end
+        end
+        if type(b.x) == "number" and type(b.y) == "number" then
+            return a, b.x, b.y
+        end
+        return nil
+    end
+    if type(b) == "number" and type(c) == "number" then
+        return a, b, c
+    end
+    return nil
+end
+
 local function NpcDistance(npc, playerMapID, playerX, playerY)
     if npc.zoneID == playerMapID and npc.x and npc.y and playerX and playerY then
         local dx, dy = npc.x - playerX, npc.y - playerY
         return dx * dx + dy * dy
     end
-    if playerMapID and playerX and C_Map and C_Map.GetWorldPosFromMapPos
-        and CreateVector2D and npc.zoneID and npc.x and npc.y then
-        local okP, pCont, pwx, pwy = pcall(C_Map.GetWorldPosFromMapPos, playerMapID, CreateVector2D(playerX, playerY))
-        local okN, nCont, nwx, nwy = pcall(C_Map.GetWorldPosFromMapPos, npc.zoneID, CreateVector2D(npc.x, npc.y))
-        if okP and okN and pCont == nCont then
+    if playerMapID and playerX and playerY and npc.zoneID and npc.x and npc.y then
+        local pCont, pwx, pwy = WorldPos(playerMapID, playerX, playerY)
+        local nCont, nwx, nwy = WorldPos(npc.zoneID, npc.x, npc.y)
+        if pCont and nCont and pCont == nCont
+            and type(pwx) == "number" and type(pwy) == "number"
+            and type(nwx) == "number" and type(nwy) == "number" then
             local dx, dy = nwx - pwx, nwy - pwy
             return dx * dx + dy * dy
         end
