@@ -8,13 +8,15 @@
 ## Version: v0.1.1
 ## RequiredDeps: RGX-Framework
 ## SavedVariables: RGXProf_Settings, RGXProf_SimResults
-## IconTexture: Interface\AddOns\RGXProfessions\Media\PLGIcon.tga
+## IconTexture: Interface\AddOns\RGXProfessions\Media\RGXIcon.tga
 ## LoadOnDemand: 0
 
 ## X-Category: Professions
 ## X-License: MIT
 
 Core/Utils.lua
+
+Data\Forever\ProfessionPaths\Tailoring.lua
 
 Data\Classic\NPCs\Trainers.lua
 Data\Classic\NPCs\Vendors.lua

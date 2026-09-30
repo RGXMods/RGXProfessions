@@ -10,11 +10,14 @@ RGXProf.BookWindow = RGXProf.BookWindow or {}
 
 local Design = _G.RGXDesign
 
-local WINDOW_WIDTH = 680
+local WINDOW_WIDTH = 720
 local WINDOW_HEIGHT = 470
-local LIST_WIDTH = 226
+local LIST_WIDTH = 250
 local ROW_HEIGHT = 20
+local BANNER_HEIGHT = 22
 local HEADER_HEIGHT = 74
+
+local BRAND_BORDER = { 0.545, 0.082, 0.220 } -- RGX crimson #8B1538
 
 --------------------------------------------------------------------------------
 -- Colours / text helpers
@@ -38,6 +41,34 @@ local DIFF_WORDS = {
     easy    = { text = "Green - rarely a skill-up", key = "success" },
     trivial = { text = "Gray - no skill-ups", key = "label" },
 }
+
+-- Rank gates: crossing a skill cap like 75 requires training the next rank.
+-- Derived from Constants.TierLabels so every expansion tracks its own cadence.
+local function BuildRankGates()
+    local gates = {}
+    local labels = RGXProf.Constants and RGXProf.Constants.TierLabels
+    if not labels then return gates end
+
+    local sorted = {}
+    for cap in pairs(labels) do table.insert(sorted, cap) end
+    table.sort(sorted)
+
+    for i, cap in ipairs(sorted) do
+        local nextCap = sorted[i + 1]
+        if nextCap then
+            table.insert(gates, { cap = cap, rank = labels[nextCap], extendsTo = nextCap })
+        end
+    end
+    return gates
+end
+
+-- Next rank gate above the current skill (for the header "when to upgrade" text).
+local function NextGate(skill)
+    for _, gate in ipairs(BuildRankGates()) do
+        if not skill or skill < gate.cap then return gate end
+    end
+    return nil
+end
 
 --------------------------------------------------------------------------------
 -- Data helpers
@@ -146,11 +177,16 @@ function RGXProf.BookWindow:EnsureFrame()
     end)
     tinsert(UISpecialFrames, f:GetName() or "RGXProfBookWindow")
 
+    -- Brand border: RGX crimson frame ring
+    if f.SetPanelColor then
+        f:SetPanelColor(nil, BRAND_BORDER)
+    end
+
     -- Single header block: icon + title + live skill + progress bar.
     f.headerIcon = f:CreateTexture(nil, "ARTWORK")
     f.headerIcon:SetSize(30, 30)
     f.headerIcon:SetPoint("TOPLEFT", 14, -14)
-    f.headerIcon:SetTexture("Interface\\AddOns\\RGXProfessions\\Media\\PLGIcon.tga")
+    f.headerIcon:SetTexture("Interface\\AddOns\\RGXProfessions\\Media\\RGXIcon.tga")
 
     f.headerTitle = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     f.headerTitle:SetPoint("LEFT", f.headerIcon, "RIGHT", 8, 0)
@@ -257,6 +293,7 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.materials:SetPoint("TOPLEFT", detail.matsHeader, "BOTTOMLEFT", 0, -4)
     detail.materials:SetPoint("RIGHT", -4, 0)
     detail.materials:SetJustifyH("LEFT")
+    detail.materials:SetWordWrap(true)
     detail.materials:SetSpacing(3)
 
     detail.locHeader = detail:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -445,7 +482,7 @@ local function FormatNpcLine(npc)
     if npc.x and npc.y then
         coords = string.format(" (%.1f, %.1f)", npc.x, npc.y)
     end
-    return "  " .. Text() .. (npc.name or "Unknown") .. Dim() .. " — " .. zone .. coords
+    return "  " .. Text() .. (npc.name or "Unknown") .. Dim() .. " â€” " .. zone .. coords
 end
 
 local function RenderDetail(self)
@@ -476,12 +513,12 @@ local function RenderDetail(self)
     end
     local metaText = Accent() .. string.format("Skill %d - %d", step.minSkill, step.maxSkill)
     if crafts > 0 then
-        metaText = metaText .. Dim() .. "  ·  " .. Text() .. string.format("Craft ~%d to reach %d", crafts, step.maxSkill)
+        metaText = metaText .. Dim() .. "  Â·  " .. Text() .. string.format("Craft ~%d to reach %d", crafts, step.maxSkill)
     elseif skill then
-        metaText = metaText .. Dim() .. "  ·  " .. Dim() .. "Completed"
+        metaText = metaText .. Dim() .. "  Â·  " .. Dim() .. "Completed"
     end
     if step.alternate then
-        metaText = metaText .. Dim() .. "  ·  " .. Dim() .. "alternate route"
+        metaText = metaText .. Dim() .. "  Â·  " .. Dim() .. "alternate route"
     end
     detail.meta:SetText(metaText)
 
@@ -530,7 +567,7 @@ local function RenderDetail(self)
             table.insert(locLines, FormatNpcLine(trainers[i]))
         end
         if #trainers > shown then
-            table.insert(locLines, Dim() .. string.format("  …and %d more", #trainers - shown))
+            table.insert(locLines, Dim() .. string.format("  â€¦and %d more", #trainers - shown))
         end
     end
 
@@ -648,7 +685,9 @@ function RGXProf.BookWindow:Show()
 
         self.frame.headerIcon:SetTexture(prof.icon or 133741)
         self.frame.headerTitle:SetText(prof.name .. " - Leveling Guide")
-        self.frame.headerSkill:SetText(skill and (Dim() .. "Skill " .. Text() .. skill .. Dim() .. " / " .. maxSkill) or (Dim() .. "Not learned"))
+        local gate = skill and NextGate(tonumber(skill))
+    local gateText = gate and (Dim() .. "  -  Train " .. Text() .. gate.rank .. Dim() .. " at " .. gate.cap) or ""
+    self.frame.headerSkill:SetText(skill and (Dim() .. "Skill " .. Text() .. skill .. Dim() .. " / " .. maxSkill .. gateText) or (Dim() .. "Not learned"))
         self.frame.progress:SetMinMaxValues(0, maxSkill)
         self.frame.progress:SetValue(skill or 0)
 
@@ -661,7 +700,7 @@ function RGXProf.BookWindow:Show()
         RenderStepList(self)
         RenderDetail(self)
     else
-        self.frame.headerIcon:SetTexture("Interface\\AddOns\\RGXProfessions\\Media\\PLGIcon.tga")
+        self.frame.headerIcon:SetTexture("Interface\\AddOns\\RGXProfessions\\Media\\RGXIcon.tga")
         self.frame.headerTitle:SetText("Profession Leveling Guide")
         self.frame.headerSkill:SetText("")
         self.frame.progress:SetMinMaxValues(0, 1)

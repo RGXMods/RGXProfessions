@@ -112,15 +112,46 @@ local function Mists()
     }
 end
 
+-- WoW Forever: classic-era world with rebalanced beta skill-up data.
+-- Vendor, trainer and quest inventories are the Classic ones until the
+-- Forever beta confirms its own NPC tables. Paths are per-profession as
+-- the beta data lands; every shipped step carries inline skill-up colors.
+local function Forever()
+    return {
+        majorVersion = 16,
+        fullName = "WoW Forever",
+        tag = "Forever",
+        maxSkill = 300,
+        vendors = RGXProf.Classic.Vendors,
+        quests = RGXProf.Classic.Quests,
+        trainers = RGXProf.Classic.Trainers,
+        racialBonuses = {
+            [202] = {20593, 15}, -- Engineering +15 (Gnome)
+            [185] = {107073, 15}, -- Cooking +15
+        },
+        paths = {
+            [197] = RGXProf.ForeverPaths.Tailoring
+        },
+        tiers = { 50, 75, 100, 150, 225, 300 },
+    }
+end
+
 RGXProf.Expansions.All = {
     [1] = Classic,
     [4] = Cata,
-    [5] = Mists
+    [5] = Mists,
+    [16] = Forever
 }
 
 RGXProf.currentExpansion = RGXProf.currentExpansion or {}
 
 function RGXProf.Expansions:GetVersion()
+    -- WoW Forever reports an interface in the 16000s; its build version is
+    -- not stable in the beta, so the interface number is the reliable key.
+    local _, _, _, interface = GetBuildInfo()
+    if interface and interface >= 16000 and interface < 17000 then
+        return 16
+    end
     local buildVersion = RGXProf.WowAPI:GetBuildInfo()
     return tonumber(string.match(buildVersion, "^%d+"))
 end
