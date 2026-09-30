@@ -159,7 +159,7 @@ function RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
 	if step.itemID then
 		-- GetItemInfoInstant returns immediately (no cache wait).
 		-- Classic shape: itemID, itemType, itemSubType, equipLoc, icon, ...
-		-- Some builds also include itemLink — probe defensively.
+		-- Some builds also include itemLink - probe defensively.
 		if C_Item and C_Item.GetItemInfoInstant then
 			local ok, r1, r2, r3, r4, r5, r6, r7 = pcall(C_Item.GetItemInfoInstant, step.itemID)
 			if ok then
@@ -180,7 +180,7 @@ function RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
 			end
 		end
 
-		-- Full info (async). Multi-return only — never a table.
+		-- Full info (async). Multi-return only - never a table.
 		-- Slot 10 is icon/texture on both legacy and C_Item shapes.
 		local name, fullLink, _, _, _, _, _, _, _, fullIcon
 		if C_Item and C_Item.GetItemInfo then
@@ -207,7 +207,7 @@ function RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
 		end
 	end
 
-	-- Spell link always works offline from step data — never leave the field empty.
+	-- Spell link always works offline from step data - never leave the field empty.
 	if not link and step.spellID and step.name then
 		link = string.format("|cff71d5ff|Hspell:%d|h[%s]|h|r", step.spellID, step.name)
 	end
