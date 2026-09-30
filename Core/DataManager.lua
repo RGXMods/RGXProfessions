@@ -143,7 +143,7 @@ function RGXProf.DataManager:GetStepPreviews(profession, steps, currentSkill)
 
 			local preview = {}
 
-			preview.text = string.format("• Create %dx %s (%d–%d)", estimatedCrafts, recipeDetails.link or recipeDetails.name or "?", step.minSkill, step.maxSkill)
+			preview.text = string.format("* Create %dx %s (%d-%d)", estimatedCrafts, recipeDetails.link or recipeDetails.name or "?", step.minSkill, step.maxSkill)
 			preview.link = recipeDetails.link
 			preview.icon = recipeDetails.icon
 			table.insert(previews, preview)

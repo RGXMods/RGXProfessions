@@ -17,7 +17,7 @@ RGXProf.Layouts.Tooltips = {
         {
             kind = "children",
             children = {
-                {kind = "body", leftText = "", rightText = "", leftColor = "WHT", rightColor = "GRN", leftFormat = "• %s", rightFormat = "%d |cffaaaaaa(%d x %d)|r"}
+                {kind = "body", leftText = "", rightText = "", leftColor = "WHT", rightColor = "GRN", leftFormat = "* %s", rightFormat = "%d |cffaaaaaa(%d x %d)|r"}
             }
         },
         { kind = "blank" },

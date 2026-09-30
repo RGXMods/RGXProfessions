@@ -491,7 +491,7 @@ local function RenderStepList(self)
         else
             rangeHex = Label()
         end
-        row.range:SetText(string.format("%s%d – %d", rangeHex, step.minSkill, step.maxSkill))
+        row.range:SetText(string.format("%s%d - %d", rangeHex, step.minSkill, step.maxSkill))
 
         local nameHex = DiffColorHex(StepDifficulty(step, skill))
         local name = step.name or ("Recipe " .. (step.spellID or i))
@@ -555,7 +555,7 @@ local function FormatNpcLine(npc)
     if npc.x and npc.y then
         coords = string.format(" (%.1f, %.1f)", npc.x, npc.y)
     end
-    return "  " .. Text() .. (npc.name or "Unknown") .. Dim() .. " — " .. zone .. coords
+    return "  " .. Text() .. (npc.name or "Unknown") .. Dim() .. " - " .. zone .. coords
 end
 
 local function RenderDetail(self)
@@ -590,12 +590,12 @@ local function RenderDetail(self)
         metaText = metaText .. Dim() .. "  -  " .. Text() .. "Learn recipe at " .. step.learnAt
     end
     if crafts > 0 then
-        metaText = metaText .. Dim() .. "  Â·  " .. Text() .. string.format("Craft ~%d to reach %d", crafts, step.maxSkill)
+        metaText = metaText .. Dim() .. "  Â|  " .. Text() .. string.format("Craft ~%d to reach %d", crafts, step.maxSkill)
     elseif skill then
-        metaText = metaText .. Dim() .. "  Â·  " .. Dim() .. "Completed"
+        metaText = metaText .. Dim() .. "  Â|  " .. Dim() .. "Completed"
     end
     if step.alternate then
-        metaText = metaText .. Dim() .. "  Â·  " .. Dim() .. "alternate route"
+        metaText = metaText .. Dim() .. "  Â|  " .. Dim() .. "alternate route"
     end
     detail.meta:SetText(metaText)
 
@@ -652,7 +652,7 @@ local function RenderDetail(self)
     -- Notes
     local notes = {}
     if step.keep then table.insert(notes, C("accent") .. "Keep the crafted items for later steps.") end
-    if step.note then table.insert(notes, Accent() .. "• " .. Text() .. step.note) end
+    if step.note then table.insert(notes, Accent() .. "* " .. Text() .. step.note) end
     if step.quests then table.insert(notes, Dim() .. "Requires a quest (see trainer list).") end
     detail.notes:SetText(table.concat(notes, "\n"))
 
