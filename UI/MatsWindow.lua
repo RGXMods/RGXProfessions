@@ -60,5 +60,11 @@ end
 
 function RGXProf.MatsWindow:SetPortrait(icon)
     local portraitFrame = _G[self.UIElements.backFrame:GetName().."Portrait"]
-    SetPortraitToTexture(portraitFrame, icon)
+    -- SetPortraitToTexture is a classic-era global the Forever client no
+    -- longer exposes. Fall back to a plain texture set when it is absent.
+    if type(SetPortraitToTexture) == "function" and portraitFrame and portraitFrame.SetTexture then
+        pcall(SetPortraitToTexture, portraitFrame, icon)
+    elseif portraitFrame and portraitFrame.SetTexture then
+        portraitFrame:SetTexture(icon)
+    end
 end
