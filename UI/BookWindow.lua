@@ -18,6 +18,7 @@ local BANNER_HEIGHT = 22
 local HEADER_HEIGHT = 74
 
 local BRAND_BORDER = { 0.545, 0.082, 0.220 } -- RGX crimson #8B1538
+local BRAND_RGB = BRAND_BORDER -- accents share the brand crimson
 
 --------------------------------------------------------------------------------
 -- Colours / text helpers
@@ -234,8 +235,7 @@ function RGXProf.BookWindow:EnsureFrame()
     f.progress:SetMinMaxValues(0, MaxSkill())
     f.progress:SetValue(0)
     do
-        local r, g, b = 0.0, 0.9, 1.0
-        if Design then r, g, b = Design:Unpack("primary") end
+    local r, g, b = unpack(BRAND_RGB)
         f.progress:SetStatusBarColor(r, g, b)
         local bg = f.progress:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
@@ -447,8 +447,7 @@ local function RenderStepList(self)
     local selected = SelectedPage(professionID)
     local currentIdx = FindCurrentIndex(path, skill)
 
-    local ar, ag, ab = 0.0, 0.9, 1.0
-    if Design then ar, ag, ab = Design:Unpack("primary") end
+    local ar, ag, ab = unpack(BRAND_RGB)
 
     for i, step in ipairs(path) do
         local row = GetRow(self, i)
