@@ -150,6 +150,26 @@ local function DiffColorHex(diffKey)
     return Text()
 end
 
+-- Real in-game tooltip for a guide step: the crafted item when the step
+-- carries an itemID, otherwise the craft spell. SetHyperlink renders true
+-- client tooltips on every supported flavor.
+local function ShowStepTooltip(owner, step)
+    if not step then return end
+    GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+    local shown = false
+    if step.itemID then
+        shown = pcall(GameTooltip.SetHyperlink, GameTooltip, "item:" .. step.itemID)
+    end
+    if not shown and step.spellID then
+        shown = pcall(GameTooltip.SetHyperlink, GameTooltip, "spell:" .. step.spellID)
+    end
+    if shown then
+        GameTooltip:Show()
+    else
+        GameTooltip:Hide()
+    end
+end
+
 local function SelectedPage(professionID)
     local path = RGXProf.currentExpansion.paths[professionID]
     local page = RGXProf_Settings.bookPage
@@ -287,6 +307,13 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.title:SetPoint("RIGHT", detail, "RIGHT", -6, 0)
     detail.title:SetJustifyH("LEFT")
 
+    -- Hover frame over the title so the recipe shows its real in-game tooltip.
+    detail.titleHover = CreateFrame("Frame", nil, detail)
+    detail.titleHover:SetAllPoints(detail.title)
+    detail.titleHover:EnableMouse(true)
+    detail.titleHover:SetScript("OnEnter", function(s) ShowStepTooltip(s, detail._step) end)
+    detail.titleHover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
     detail.meta = detail:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     detail.meta:SetPoint("TOPLEFT", detail.icon, "BOTTOMLEFT", 0, -10)
     detail.meta:SetPoint("RIGHT", -2, 0)
@@ -404,8 +431,8 @@ local function GetRow(self, index)
     row.name:SetJustifyH("LEFT")
     row.name:SetWordWrap(false)
 
-    row:SetScript("OnEnter", function(s) s.bg:Show() end)
-    row:SetScript("OnLeave", function(s) if not s._selected then s.bg:Hide() end end)
+    row:SetScript("OnEnter", function(s) s.bg:Show() ShowStepTooltip(s, s._step) end)
+    row:SetScript("OnLeave", function(s) if not s._selected then s.bg:Hide() end GameTooltip:Hide() end)
 
     self.rows[index] = row
     return row
@@ -427,6 +454,7 @@ local function RenderStepList(self)
         local row = GetRow(self, i)
         row:SetPoint("TOPLEFT", 0, -((i - 1) * ROW_HEIGHT))
         row._selected = (i == selected)
+        row._step = step
 
         local rangeHex
         if skill and step.maxSkill <= skill then
@@ -519,6 +547,7 @@ local function RenderDetail(self)
     local faction = player and player.faction or "Alliance"
 
     -- Title + icon
+    detail._step = step
     local display = RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
     detail.icon:SetTexture(display.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
     detail.title:SetText(display.link or (Text() .. (step.name or "")))
