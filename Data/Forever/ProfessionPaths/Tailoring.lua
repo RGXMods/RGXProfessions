@@ -9,7 +9,7 @@ RGXProf.ForeverPaths = RGXProf.ForeverPaths or {}
 -- skill-up colors (yellow/green/grey) inline; the craft estimator reads
 -- step.colors before the global spell table.
 RGXProf.ForeverPaths.Tailoring = {
-  { keep = 1, minSkill = 1,   maxSkill = 30,  itemID = 2996,  spellID = 2963,    name = "Bolt of Linen Cloth",              colors = { y = 25,  g = 37,  r = 50 }, learnAt = 1 },
+  { keep = 1, minSkill = 1,   maxSkill = 30,  itemID = 2996,  spellID = 2963,    name = "Bolt of Linen Cloth",              colors = { y = 25,  g = 37,  r = 50 }, learnAt = 1, keepNote = "Used by Linen Belt (2 bolts each)." },
   { keep = 0, minSkill = 30,  maxSkill = 78,  itemID = 7026,  spellID = 8776,    name = "Linen Belt",                       colors = { y = 50,  g = 67,  r = 85 }, learnAt = 15 },
   { keep = 0, minSkill = 78,  maxSkill = 110, itemID = 2580,  spellID = 2402,    name = "Woolen Cape",                      colors = { y = 80,  g = 97,  r = 115 }, learnAt = 55 },
   { keep = 0, minSkill = 110, maxSkill = 130, itemID = 4314,  spellID = 3848,    name = "Double-stitched Woolen Shoulders", colors = { y = 110, g = 127, r = 145 }, learnAt = 110 },
