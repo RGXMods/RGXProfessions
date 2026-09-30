@@ -119,12 +119,22 @@ end
 -- known threshold table when available; otherwise infers from step range.
 local function StepDifficulty(step, skill)
     if not skill then return nil end
-    local thresholds = RGXProf.Data and RGXProf.Data.Skill and step.spellID and RGXProf.Data.Skill[step.spellID]
-    if thresholds and thresholds.y and thresholds.g and thresholds.r then
+    -- Prefer the step's own skill-up colors: Forever beta steps carry
+    -- thresholds that differ from the global (Classic) spell table.
+    local y, g, r
+    if step.colors then
+        y, g, r = step.colors.y, step.colors.g, step.colors.r
+    else
+        local thresholds = RGXProf.Data and RGXProf.Data.Skill and step.spellID and RGXProf.Data.Skill[step.spellID]
+        if thresholds then
+            y, g, r = thresholds.y, thresholds.g, thresholds.r
+        end
+    end
+    if y and g and r then
         local eff = math.max(step.minSkill, skill)
-        if eff < thresholds.y then return "optimal" end
-        if eff < thresholds.g then return "medium" end
-        if eff < thresholds.r then return "easy" end
+        if eff < y then return "optimal" end
+        if eff < g then return "medium" end
+        if eff < r then return "easy" end
         return "trivial"
     end
     if skill < step.minSkill then return "optimal" end
