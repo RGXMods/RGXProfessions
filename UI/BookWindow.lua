@@ -317,44 +317,53 @@ function RGXProf.BookWindow:EnsureFrame()
         f.stepScroll:SetVerticalScroll(off)
     end)
 
-    -- Detail pane (right half).
+    -- Detail pane (right half): a scrollable card column so the cards can
+    -- never overflow the window height; the canvas grows and the scroll
+    -- frame keeps every card reachable.
     local detail = CreateFrame("Frame", nil, f.guide)
     detail:SetPoint("TOPLEFT", LIST_WIDTH + 30, 0)
     detail:SetPoint("BOTTOMRIGHT", 0, 0)
     f.detail = detail
 
-    detail.icon = detail:CreateTexture(nil, "ARTWORK")
-    detail.icon:SetSize(36, 36)
-    detail.icon:SetPoint("TOPLEFT", 6, -6)
+    local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
+    local canvas = UI:CreateScrollPage(detail, 780)
+    detail.canvas = canvas
 
-    detail.title = detail:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    -- Recipe card: icon, title, meta and difficulty together at the top,
+    -- using the same RGXUI section skin as every other RGX options surface.
+    detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
+    detail.recipeCard:SetPoint("TOPLEFT", canvas, "TOPLEFT", 0, 0)
+    detail.recipeCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", 0, 0)
+    detail.recipeCard:SetHeight(128)
+
+    detail.icon = detail.recipeCard.content:CreateTexture(nil, "ARTWORK")
+    detail.icon:SetSize(36, 36)
+    detail.icon:SetPoint("TOPLEFT", 2, -4)
+
+    detail.title = detail.recipeCard.content:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     detail.title:SetPoint("LEFT", detail.icon, "RIGHT", 10, 0)
-    detail.title:SetPoint("RIGHT", detail, "RIGHT", -6, 0)
+    detail.title:SetPoint("RIGHT", -2, 0)
     detail.title:SetJustifyH("LEFT")
 
     -- Hover frame over the title so the recipe shows its real in-game tooltip.
-    detail.titleHover = CreateFrame("Frame", nil, detail)
+    detail.titleHover = CreateFrame("Frame", nil, detail.recipeCard.content)
     detail.titleHover:SetAllPoints(detail.title)
     detail.titleHover:EnableMouse(true)
     detail.titleHover:SetScript("OnEnter", function(s) ShowStepTooltip(s, detail._step) end)
     detail.titleHover:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
-    detail.meta = detail:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    detail.meta:SetPoint("TOPLEFT", detail.icon, "BOTTOMLEFT", 0, -10)
+    detail.meta = detail.recipeCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    detail.meta:SetPoint("TOPLEFT", detail.icon, "BOTTOMLEFT", 0, -8)
     detail.meta:SetPoint("RIGHT", -2, 0)
     detail.meta:SetJustifyH("LEFT")
 
-    detail.difficulty = detail:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    detail.difficulty = detail.recipeCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.difficulty:SetPoint("TOPLEFT", detail.meta, "BOTTOMLEFT", 0, -4)
+    detail.difficulty:SetPoint("RIGHT", -2, 0)
 
-    -- Framework cards: Materials / Where to get it / Notes, using the same
-    -- RGXUI section skin (branded header band, dark panel, FitContent) as
-    -- every other RGX options surface.
-    local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
-
-    detail.matsCard = UI:CreateSection(detail, { title = "Materials" })
-    detail.matsCard:SetPoint("TOPLEFT", detail.difficulty, "BOTTOMLEFT", -16, -12)
-    detail.matsCard:SetPoint("TOPRIGHT", detail, "TOPRIGHT", -6, -12)
+    detail.matsCard = UI:CreateSection(canvas, { title = "Materials" })
+    detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -10)
+    detail.matsCard:SetPoint("TOPRIGHT", detail.recipeCard, "BOTTOMRIGHT", 0, -10)
 
     detail.materials = detail.matsCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.materials:SetPoint("TOPLEFT", 2, -2)
@@ -363,9 +372,12 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.materials:SetWordWrap(true)
     detail.materials:SetSpacing(3)
 
-    detail.locCard = UI:CreateSection(detail, { title = "Where to get it" })
+    detail.locCard = UI:CreateSection(canvas, { title = "Where to get it" })
     detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "BOTTOMLEFT", 0, -10)
     detail.locCard:SetPoint("TOPRIGHT", detail.matsCard, "BOTTOMRIGHT", 0, -10)
+    -- Compact fixed height: header band plus one location line and its
+    -- click-to-pin hint. No FitContent - this card must never balloon.
+    detail.locCard:SetHeight(88)
 
     detail.locations = detail.locCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.locations:SetPoint("TOPLEFT", 2, -2)
@@ -411,7 +423,7 @@ function RGXProf.BookWindow:EnsureFrame()
         end
     end)
 
-    detail.notesCard = UI:CreateSection(detail, { title = "Notes" })
+    detail.notesCard = UI:CreateSection(canvas, { title = "Notes" })
     detail.notesCard:SetPoint("TOPLEFT", detail.locCard, "BOTTOMLEFT", 0, -10)
     detail.notesCard:SetPoint("TOPRIGHT", detail.locCard, "BOTTOMRIGHT", 0, -10)
 
@@ -706,12 +718,12 @@ local function RenderDetail(self)
         metaText = metaText .. Dim() .. "  -  " .. Text() .. "Learn recipe at " .. step.learnAt
     end
     if crafts > 0 then
-        metaText = metaText .. Dim() .. "  Â|  " .. Text() .. string.format("Craft ~%d to reach %d", crafts, step.maxSkill)
+        metaText = metaText .. Dim() .. "  |  " .. Text() .. string.format("Craft ~%d to reach %d", crafts, step.maxSkill)
     elseif skill then
-        metaText = metaText .. Dim() .. "  Â|  " .. Dim() .. "Completed"
+        metaText = metaText .. Dim() .. "  |  " .. Dim() .. "Completed"
     end
     if step.alternate then
-        metaText = metaText .. Dim() .. "  Â|  " .. Dim() .. "alternate route"
+        metaText = metaText .. Dim() .. "  |  " .. Dim() .. "alternate route"
     end
     detail.meta:SetText(metaText)
 
@@ -722,6 +734,9 @@ local function RenderDetail(self)
         detail.difficulty:SetText(C(d.key) .. d.text)
     else
         detail.difficulty:SetText("")
+    end
+    if detail.recipeCard and detail.recipeCard.FitContent then
+        detail.recipeCard:FitContent(6)
     end
 
     -- Materials
@@ -760,13 +775,15 @@ local function RenderDetail(self)
         table.insert(locLines, Dim() .. "Trainer-taught; ask any profession trainer.")
     end
     detail.locations:SetText(table.concat(locLines, "\n"))
-    if detail.locCard and detail.locCard.FitContent then
-        detail.locCard:FitContent(4)
-    end
 
     -- Notes
     local notes = {}
-    if step.keep then table.insert(notes, C("accent") .. "Keep the crafted items for later steps.") end
+    if step.keep then
+        table.insert(notes, C("accent") .. "Keep the crafted items for later steps.")
+        if step.keepNote then
+            table.insert(notes, Text() .. step.keepNote)
+        end
+    end
     if step.note then table.insert(notes, Accent() .. "* " .. Text() .. step.note) end
     if step.quests then table.insert(notes, Dim() .. "Requires a quest (see trainer list).") end
     detail.notes:SetText(table.concat(notes, "\n"))
