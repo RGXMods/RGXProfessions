@@ -347,38 +347,44 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.difficulty = detail:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.difficulty:SetPoint("TOPLEFT", detail.meta, "BOTTOMLEFT", 0, -4)
 
-    detail.matsHeader = detail:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    detail.matsHeader:SetPoint("TOPLEFT", detail.difficulty, "BOTTOMLEFT", 0, -14)
-    detail.matsHeader:SetText("Materials")
+    -- Framework cards: Materials / Where to get it / Notes, using the same
+    -- RGXUI section skin (branded header band, dark panel, FitContent) as
+    -- every other RGX options surface.
+    local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
 
-    detail.materials = detail:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    detail.materials:SetPoint("TOPLEFT", detail.matsHeader, "BOTTOMLEFT", 0, -4)
-    detail.materials:SetPoint("RIGHT", -4, 0)
+    detail.matsCard = UI:CreateSection(detail, { title = "Materials" })
+    detail.matsCard:SetPoint("TOPLEFT", detail.difficulty, "BOTTOMLEFT", -16, -12)
+    detail.matsCard:SetPoint("TOPRIGHT", detail, "TOPRIGHT", -6, -12)
+
+    detail.materials = detail.matsCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    detail.materials:SetPoint("TOPLEFT", 2, -2)
+    detail.materials:SetPoint("RIGHT", -2, 0)
     detail.materials:SetJustifyH("LEFT")
     detail.materials:SetWordWrap(true)
     detail.materials:SetSpacing(3)
 
-    detail.locHeader = detail:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    detail.locHeader:SetPoint("TOPLEFT", detail.materials, "BOTTOMLEFT", 0, -14)
+    detail.locCard = UI:CreateSection(detail, { title = "Where to get it" })
+    detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "BOTTOMLEFT", 0, -10)
+    detail.locCard:SetPoint("TOPRIGHT", detail.matsCard, "BOTTOMRIGHT", 0, -10)
 
-    detail.locations = detail:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    detail.locations:SetPoint("TOPLEFT", detail.locHeader, "BOTTOMLEFT", 0, -4)
-    detail.locations:SetPoint("RIGHT", -4, 0)
+    detail.locations = detail.locCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    detail.locations:SetPoint("TOPLEFT", 2, -2)
+    detail.locations:SetPoint("RIGHT", -2, 0)
     detail.locations:SetJustifyH("LEFT")
     detail.locations:SetWordWrap(true)
     detail.locations:SetSpacing(3)
 
-    -- Location block interaction: click drops a map pin on the closest NPC
+    -- Location card interaction: click drops a map pin on the shown NPC
     -- (waypoint API capability-gated; opens the map either way); hover
-    -- highlights the block.
-    detail.locHover = CreateFrame("Button", nil, detail)
-    detail.locHover:SetAllPoints(detail.locations)
+    -- highlights the card.
+    detail.locHover = CreateFrame("Button", nil, detail.locCard.content)
+    detail.locHover:SetAllPoints(detail.locCard.content)
     detail.locHover:EnableMouse(true)
     detail.locHover:SetScript("OnEnter", function(s)
         detail.locations:SetTextColor(1, 0.82, 0)
         GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
-        GameTooltip:SetText("Pin the nearest trainer or vendor")
-        GameTooltip:AddLine("Drops a map pin on the closest location to you.", 0.6, 0.6, 0.6)
+        GameTooltip:SetText("Pin on the map")
+        GameTooltip:AddLine("Drops a map pin on this location.", 0.6, 0.6, 0.6)
         GameTooltip:Show()
     end)
     detail.locHover:SetScript("OnLeave", function()
@@ -405,11 +411,16 @@ function RGXProf.BookWindow:EnsureFrame()
         end
     end)
 
-    detail.notes = detail:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    detail.notes:SetPoint("TOPLEFT", detail.locations, "BOTTOMLEFT", 0, -12)
-    detail.notes:SetPoint("RIGHT", -4, 0)
+    detail.notesCard = UI:CreateSection(detail, { title = "Notes" })
+    detail.notesCard:SetPoint("TOPLEFT", detail.locCard, "BOTTOMLEFT", 0, -10)
+    detail.notesCard:SetPoint("TOPRIGHT", detail.locCard, "BOTTOMRIGHT", 0, -10)
+
+    detail.notes = detail.notesCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    detail.notes:SetPoint("TOPLEFT", 2, -2)
+    detail.notes:SetPoint("RIGHT", -2, 0)
     detail.notes:SetJustifyH("LEFT")
     detail.notes:SetWordWrap(true)
+    detail.notes:SetSpacing(3)
 
     -- Footer buttons.
     f.backBtn = Design:CreateButton(f, "< Professions", 110, 24)
@@ -728,50 +739,30 @@ local function RenderDetail(self)
         table.insert(lines, Dim() .. "No reagent data for this step.")
     end
     detail.materials:SetText(table.concat(lines, "\n"))
+    if detail.matsCard and detail.matsCard.FitContent then
+        detail.matsCard:FitContent(4)
+    end
 
-    -- Locations: vendors + trainers
-    detail.locHeader:SetText("Where to get it")
-    local locLines = {}
-
+    -- Location card: show ONLY the NPC closest to the player when the
+    -- window is open, not the full vendor/trainer roster.
     local vendors = step.npcs and RGXProf.DataManager:GetVendors(step, faction) or {}
-    if #vendors > 0 then
-        table.insert(locLines, Dim() .. "Vendors:")
-        for _, vendor in ipairs(vendors) do
-            table.insert(locLines, FormatNpcLine(vendor))
-        end
-    end
-
     local trainers = RGXProf.DataManager:GetTrainers(faction, step.minSkill, professionID) or {}
-    if #trainers > 0 then
-        table.insert(locLines, Dim() .. "Trainers:")
-        for _, trainer in ipairs(trainers) do
-            table.insert(locLines, FormatNpcLine(trainer))
-        end
-    end
-
-    -- Closest NPC to the player: the target the location block pins.
     local allLocs = {}
     for _, v in ipairs(vendors) do table.insert(allLocs, v) end
     for _, t in ipairs(trainers) do table.insert(allLocs, t) end
     detail._pinTarget = NearestNpc(allLocs)
-    if detail._pinTarget then
-        local pinZone = ""
-        if detail._pinTarget.zoneID and RGXProf.WowAPI and RGXProf.WowAPI.GetMapName then
-            local ok, name = pcall(RGXProf.WowAPI.GetMapName, RGXProf.WowAPI, detail._pinTarget.zoneID)
-            if ok and name then pinZone = name end
-        end
-        local pinCoords = ""
-        if detail._pinTarget.x and detail._pinTarget.y then
-            pinCoords = string.format(" (%.1f, %.1f)", detail._pinTarget.x, detail._pinTarget.y)
-        end
-        table.insert(locLines, 1, Accent() .. "Nearest: " .. Text() .. (detail._pinTarget.name or "?")
-            .. Dim() .. " - " .. pinZone .. pinCoords .. "  (click to pin)")
-    end
 
-    if #locLines == 0 then
+    local locLines = {}
+    if detail._pinTarget then
+        table.insert(locLines, FormatNpcLine(detail._pinTarget))
+        table.insert(locLines, Dim() .. "Closest to you. Click to pin the map.")
+    else
         table.insert(locLines, Dim() .. "Trainer-taught; ask any profession trainer.")
     end
     detail.locations:SetText(table.concat(locLines, "\n"))
+    if detail.locCard and detail.locCard.FitContent then
+        detail.locCard:FitContent(4)
+    end
 
     -- Notes
     local notes = {}
@@ -779,6 +770,9 @@ local function RenderDetail(self)
     if step.note then table.insert(notes, Accent() .. "* " .. Text() .. step.note) end
     if step.quests then table.insert(notes, Dim() .. "Requires a quest (see trainer list).") end
     detail.notes:SetText(table.concat(notes, "\n"))
+    if detail.notesCard and detail.notesCard.FitContent then
+        detail.notesCard:FitContent(4)
+    end
 
     -- Footer buttons
     f.prevBtn:SetEnabled(page > 1)
