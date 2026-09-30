@@ -171,6 +171,26 @@ local function ShowStepTooltip(owner, step)
     end
 end
 
+-- Compact step tooltip for the list rows: the training-relevant facts.
+-- Menu rows do not pop the full item tooltip; they show the learn-at level
+-- and craft estimate instead.
+local function ShowStepSummary(owner, step)
+    if not step then return end
+    GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+    GameTooltip:SetText(step.name or "Recipe", 1, 1, 1)
+    GameTooltip:AddLine(string.format("Skill %d - %d", step.minSkill, step.maxSkill), 0.6, 0.6, 0.6)
+    if step.learnAt then
+        GameTooltip:AddLine(string.format("Learn recipe at %d", step.learnAt), 0.54, 0.08, 0.22)
+    end
+    if RGXProf.DataManager and RGXProf.DataManager.GetEstimatedCrafts then
+        local ok, crafts = pcall(RGXProf.DataManager.GetEstimatedCrafts, RGXProf.DataManager, step.minSkill, step)
+        if ok and crafts and crafts > 0 and crafts < math.huge then
+            GameTooltip:AddLine(string.format("Craft ~%d for this step", crafts), 0.6, 0.6, 0.6)
+        end
+    end
+    GameTooltip:Show()
+end
+
 local function SelectedPage(professionID)
     local path = RGXProf.currentExpansion.paths[professionID]
     local page = RGXProf_Settings.bookPage
@@ -348,15 +368,17 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.locations:SetWordWrap(true)
     detail.locations:SetSpacing(3)
 
-    -- Location block interaction: click opens the world map so you can
-    -- travel to the trainer or vendor; hover highlights the block.
+    -- Location block interaction: click drops a map pin on the closest NPC
+    -- (waypoint API capability-gated; opens the map either way); hover
+    -- highlights the block.
     detail.locHover = CreateFrame("Button", nil, detail)
     detail.locHover:SetAllPoints(detail.locations)
     detail.locHover:EnableMouse(true)
     detail.locHover:SetScript("OnEnter", function(s)
         detail.locations:SetTextColor(1, 0.82, 0)
         GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
-        GameTooltip:SetText("Open the world map")
+        GameTooltip:SetText("Pin the nearest trainer or vendor")
+        GameTooltip:AddLine("Drops a map pin on the closest location to you.", 0.6, 0.6, 0.6)
         GameTooltip:Show()
     end)
     detail.locHover:SetScript("OnLeave", function()
@@ -364,6 +386,18 @@ function RGXProf.BookWindow:EnsureFrame()
         GameTooltip:Hide()
     end)
     detail.locHover:SetScript("OnClick", function()
+        local target = detail._pinTarget
+        if target and target.zoneID and target.x and target.y
+            and UiMapPoint and UiMapPoint.CreateFromCoordinates
+            and C_Map and C_Map.SetUserWaypoint then
+            local okPoint, point = pcall(UiMapPoint.CreateFromCoordinates, target.zoneID, target.x, target.y)
+            if okPoint and point then
+                pcall(C_Map.SetUserWaypoint, point)
+                if C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
+                    pcall(C_SuperTrack.SetSuperTrackedUserWaypoint, true)
+                end
+            end
+        end
         if WorldMapFrame and WorldMapFrame:IsShown() then
             WorldMapFrame:Hide()
         elseif ToggleWorldMap then
@@ -459,7 +493,7 @@ local function GetRow(self, index)
     row.name:SetJustifyH("LEFT")
     row.name:SetWordWrap(false)
 
-    row:SetScript("OnEnter", function(s) s.bg:Show() ShowStepTooltip(s, s._step) end)
+    row:SetScript("OnEnter", function(s) s.bg:Show() ShowStepSummary(s, s._step) end)
     row:SetScript("OnLeave", function(s) if not s._selected then s.bg:Hide() end GameTooltip:Hide() end)
 
     self.rows[index] = row
@@ -558,6 +592,51 @@ local function FormatNpcLine(npc)
     return "  " .. Text() .. (npc.name or "Unknown") .. Dim() .. " - " .. zone .. coords
 end
 
+-- Closest-NPC helpers: compare positions in world coordinates when the
+-- client can translate both points, else prefer NPCs on the player's map.
+-- Everything is pcall-guarded; missing APIs degrade to the first candidate.
+local function NpcDistance(npc, playerMapID, playerX, playerY)
+    if npc.zoneID == playerMapID and npc.x and npc.y and playerX and playerY then
+        local dx, dy = npc.x - playerX, npc.y - playerY
+        return dx * dx + dy * dy
+    end
+    if playerMapID and playerX and C_Map and C_Map.GetWorldPosFromMapPos
+        and CreateVector2D and npc.zoneID and npc.x and npc.y then
+        local okP, pCont, pwx, pwy = pcall(C_Map.GetWorldPosFromMapPos, playerMapID, CreateVector2D(playerX, playerY))
+        local okN, nCont, nwx, nwy = pcall(C_Map.GetWorldPosFromMapPos, npc.zoneID, CreateVector2D(npc.x, npc.y))
+        if okP and okN and pCont == nCont then
+            local dx, dy = nwx - pwx, nwy - pwy
+            return dx * dx + dy * dy
+        end
+    end
+    return nil
+end
+
+local function NearestNpc(candidates)
+    if not candidates or #candidates == 0 then return nil end
+    local playerMapID
+    if C_Map and C_Map.GetBestMapForUnit then
+        local ok, mapID = pcall(C_Map.GetBestMapForUnit, "player")
+        if ok and mapID then playerMapID = mapID end
+    end
+    local px, py
+    if playerMapID and C_Map.GetPlayerMapPosition then
+        local ok, pos = pcall(C_Map.GetPlayerMapPosition, playerMapID, "player")
+        if ok and pos and pos.GetXY then
+            local okXY, x, y = pcall(pos.GetXY, pos)
+            if okXY then px, py = x, y end
+        end
+    end
+    local best, bestDist = candidates[1], nil
+    for _, npc in ipairs(candidates) do
+        local d = NpcDistance(npc, playerMapID, px, py)
+        if d and (not bestDist or d < bestDist) then
+            best, bestDist = npc, d
+        end
+    end
+    return best
+end
+
 local function RenderDetail(self)
     local f = self.frame
     local detail = f.detail
@@ -642,6 +721,25 @@ local function RenderDetail(self)
         for _, trainer in ipairs(trainers) do
             table.insert(locLines, FormatNpcLine(trainer))
         end
+    end
+
+    -- Closest NPC to the player: the target the location block pins.
+    local allLocs = {}
+    for _, v in ipairs(vendors) do table.insert(allLocs, v) end
+    for _, t in ipairs(trainers) do table.insert(allLocs, t) end
+    detail._pinTarget = NearestNpc(allLocs)
+    if detail._pinTarget then
+        local pinZone = ""
+        if detail._pinTarget.zoneID and RGXProf.WowAPI and RGXProf.WowAPI.GetMapName then
+            local ok, name = pcall(RGXProf.WowAPI.GetMapName, RGXProf.WowAPI, detail._pinTarget.zoneID)
+            if ok and name then pinZone = name end
+        end
+        local pinCoords = ""
+        if detail._pinTarget.x and detail._pinTarget.y then
+            pinCoords = string.format(" (%.1f, %.1f)", detail._pinTarget.x, detail._pinTarget.y)
+        end
+        table.insert(locLines, 1, Accent() .. "Nearest: " .. Text() .. (detail._pinTarget.name or "?")
+            .. Dim() .. " - " .. pinZone .. pinCoords .. "  (click to pin)")
     end
 
     if #locLines == 0 then
