@@ -187,7 +187,10 @@ function RGXProf.DataManager:GetRecipeDetails(step, pointsEarned)
 		local _, detectedHasSkill, detectedSkillColor = adapter:getRecipeLineInfo(step.spellID, step.name)
 		hasSkill, skillColor = detectedHasSkill, detectedSkillColor
 	elseif RGXProf.IsSimulation then
-		local thresholds = RGXProf.Data.Skill and RGXProf.Data.Skill[step.spellID]
+		-- Prefer the step's own skill-up colors: Forever beta steps carry
+		-- thresholds that differ from the global (Classic) spell table.
+		local thresholds = step.colors
+			or (RGXProf.Data.Skill and RGXProf.Data.Skill[step.spellID])
 		if thresholds and thresholds.y and thresholds.g and thresholds.r and pointsEarned then
 			local skillType
 			if pointsEarned < thresholds.y then
