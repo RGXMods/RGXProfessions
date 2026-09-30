@@ -56,7 +56,10 @@ function RGXProf.WowAPI:GetProfessionSkill(pName)
             for i = 1, 5 do
                 local index = GetProfessions(i)
                 if not index then break end
-                local name, _, _, skillLevel, skillMax = GetProfessionInfo(index)
+                -- name(1), icon(2), skillLevel(3), maxSkill(4) in both the
+                -- classic-era and modern return orders. Reading 4-5 surfaced
+                -- unrelated values on the Forever client.
+                local name, _, skillLevel, skillMax = GetProfessionInfo(index)
                 if name and name == pName then
                     return skillLevel, skillMax
                 end
