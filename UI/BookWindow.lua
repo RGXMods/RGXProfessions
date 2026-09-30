@@ -206,7 +206,12 @@ function RGXProf.BookWindow:EnsureFrame()
         local point, relFrame, relPoint, x, y = s:GetPoint()
         RGXProf_Settings.bookPosition = { point, relFrame, relPoint, x, y }
     end)
-    tinsert(UISpecialFrames, f:GetName() or "RGXProfBookWindow")
+    -- ESC closes the window. UISpecialFrames only works for named frames and
+    -- Design:CreateFrame builds unnamed ones, so handle the key directly.
+    f:EnableKeyboard(true)
+    f:SetScript("OnKeyDown", function(self, key)
+        if key == "ESCAPE" then self:Hide() end
+    end)
 
     -- Brand border: RGX crimson frame ring
     if f.SetPanelColor then
