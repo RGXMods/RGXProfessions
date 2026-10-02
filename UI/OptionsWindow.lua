@@ -4,11 +4,11 @@ RGXProf.OptionsWindow = RGXProf.OptionsWindow or {}
 function RGXProf.OptionsWindow:CreateOptionsPanel()
 
     local configPanel = CreateFrame("Frame", "RGXProfOptionsPanel", UIParent)
-    configPanel.name = "Profession Leveling Guide"
+    configPanel.name = "RGX Professions"
 
     local title = configPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 16, -16)
-    title:SetText("Profession Leveling Guide")
+    title:SetText("RGX Professions")
 
     local autoOpenCheckbox = CreateFrame("CheckButton", nil, configPanel, "InterfaceOptionsCheckButtonTemplate")
     autoOpenCheckbox:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
