@@ -15,7 +15,7 @@ local WINDOW_HEIGHT = 470
 local LIST_WIDTH = 250
 local ROW_HEIGHT = 20
 local BANNER_HEIGHT = 22
-local HEADER_HEIGHT = 74
+local HEADER_HEIGHT = 60
 
 local BRAND_BORDER = { 0.545, 0.082, 0.220 } -- RGX crimson #8B1538
 local BRAND_RGB = BRAND_BORDER -- accents share the brand crimson
@@ -31,16 +31,18 @@ local function C(key)
     end
     return "|cffffffff"
 end
-local function Accent() return C("primary") end
+-- Brand highlight: the same crimson as the RGX mark, the version text,
+-- and the window border - deliberately NOT the active theme's primary.
+local function Accent() return "|cff8B1538" end
 local function Text() return "|cffffffff" end
 local function Dim() return C("subtext") end
 local function Label() return C("label") end
 
 local DIFF_WORDS = {
-    optimal = { text = "Orange - always skill-ups", key = "warning" },
-    medium  = { text = "Yellow - usually a skill-up", key = "accent" },
-    easy    = { text = "Green - rarely a skill-up", key = "success" },
-    trivial = { text = "Gray - no skill-ups", key = "label" },
+    optimal = { text = "Orange · always skill-ups", key = "warning" },
+    medium  = { text = "Yellow · usually a skill-up", key = "accent" },
+    easy    = { text = "Green · rarely a skill-up", key = "success" },
+    trivial = { text = "Gray · no skill-ups", key = "label" },
 }
 
 -- Rank gates: crossing a skill cap like 75 requires training the next rank.
@@ -168,9 +170,16 @@ local HEADER_TITLE = StyledHeaderTitle("Profession Leveling Guide")
 local function ShowStepTooltip(owner, step)
     if not step then return end
     GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+    -- Prefer the crafted ITEM tooltip; fall back to the recipe spell
+    -- only when there is no item to show.
     local shown = false
     if step.itemID then
-        shown = pcall(GameTooltip.SetHyperlink, GameTooltip, "item:" .. step.itemID)
+        if GameTooltip.SetItemByID then
+            shown = pcall(GameTooltip.SetItemByID, GameTooltip, step.itemID)
+        end
+        if not shown then
+            shown = pcall(GameTooltip.SetHyperlink, GameTooltip, "item:" .. step.itemID)
+        end
     end
     if not shown and step.spellID then
         shown = pcall(GameTooltip.SetHyperlink, GameTooltip, "spell:" .. step.spellID)
@@ -187,7 +196,20 @@ end
 local function ShowStepMaterials(owner, step)
     if not step then return end
     GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
-    GameTooltip:SetText(step.name or "Recipe", 1, 1, 1)
+    -- Title carries the step's difficulty color, matching its list row.
+    local skill
+    if RGXProf.BookWindow and RGXProf.BookWindow.GetCurrentProfession then
+        local profID = RGXProf.BookWindow:GetCurrentProfession()
+        if profID then skill = LiveSkill(profID) end
+    end
+    local diff = StepDifficulty(step, skill)
+    local dc = diff and RGXProf.Constants and RGXProf.Constants.SkillUpColors
+        and RGXProf.Constants.SkillUpColors[diff]
+    if dc then
+        GameTooltip:SetText(step.name or "Recipe", dc.r, dc.g, dc.b)
+    else
+        GameTooltip:SetText(step.name or "Recipe", 1, 1, 1)
+    end
 
     local crafts
     if RGXProf.DataManager and RGXProf.DataManager.GetEstimatedCrafts then
@@ -251,12 +273,50 @@ function RGXProf.BookWindow:EnsureFrame()
         local point, relFrame, relPoint, x, y = s:GetPoint()
         RGXProf_Settings.bookPosition = { point, relFrame, relPoint, x, y }
     end)
-    -- ESC closes the window. UISpecialFrames only works for named frames and
-    -- Design:CreateFrame builds unnamed ones, so handle the key directly.
-    f:EnableKeyboard(true)
-    f:SetScript("OnKeyDown", function(self, key)
-        if key == "ESCAPE" then self:Hide() end
+
+    -- Resizable window: a bottom-right grip sizes the frame; every content
+    -- region below the header is anchor-driven so the layout reflows.
+    local savedSize = RGXProf_Settings and RGXProf_Settings.bookSize
+    if type(savedSize) == "table" and type(savedSize[1]) == "number" and type(savedSize[2]) == "number" then
+        f:SetSize(savedSize[1], savedSize[2])
+    end
+    f:SetResizable(true)
+    f:SetMinResize(640, 420)
+    f:SetMaxResize(1400, 1000)
+    f.sizer = CreateFrame("Button", nil, f)
+    f.sizer:SetSize(16, 16)
+    f.sizer:SetPoint("BOTTOMRIGHT", -2, 2)
+    f.sizer:RegisterForDrag("LeftButton")
+    f.sizer:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    f.sizer:SetScript("OnDragStart", function() f:StartSizing("BOTTOMRIGHT") end)
+    f.sizer:SetScript("OnDragStop", function()
+        f:StopMovingOrSizing()
+        RGXProf_Settings.bookSize = { f:GetWidth(), f:GetHeight() }
     end)
+    f.sizer:SetScript("OnEnter", function(s)
+        GameTooltip:SetOwner(s, "ANCHOR_LEFT")
+        GameTooltip:SetText("Resize")
+        GameTooltip:Show()
+    end)
+    f.sizer:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    -- ESC closes the window; every other key propagates so chat stays
+    -- usable while the book is open. UISpecialFrames only works for named
+    -- frames and Design:CreateFrame builds unnamed ones, so handle the key
+    -- directly. If the client lacks key propagation, keep chat working by
+    -- not enabling the keyboard hook at all (the close button remains).
+    f:SetScript("OnKeyDown", function(self, key)
+        if key == "ESCAPE" then
+            self:Hide()
+            if self.SetPropagateKeyboardInput then
+                self:SetPropagateKeyboardInput(false)
+            end
+        elseif self.SetPropagateKeyboardInput then
+            self:SetPropagateKeyboardInput(true)
+        end
+    end)
+    if f.SetPropagateKeyboardInput then
+        f:EnableKeyboard(true)
+    end
 
     -- Brand border: RGX crimson frame ring
     if f.SetPanelColor then
@@ -265,46 +325,41 @@ function RGXProf.BookWindow:EnsureFrame()
 
     -- Traditional RGXMods header: dark band, accent line, logo, title,
     -- subtitle and brand - the same layout as the framework options panels.
-    -- Rounded top corners: nine-slice the framework panel texture with the
-    -- top corners rounded and straight sides/bottom; the accent line below
-    -- covers the bottom edge. Ring in the brand highlight, fill in the
-    -- theme surface color.
+    -- Borderless band tucked inside the window's own panel ring: the
+    -- window border doubles as the header border, so the band reaches the
+    -- outer window border on every side. Only the fill is drawn (nine-
+    -- sliced from the framework panel texture, rounded top corners
+    -- matching the window's own radius, straight sides and bottom); the
+    -- progress strip below doubles as the band's bottom edge.
     local header = CreateFrame("Frame", nil, f)
     header:SetHeight(HEADER_HEIGHT)
-    header:SetPoint("TOPLEFT", 4, -4)
-    header:SetPoint("TOPRIGHT", -4, -4)
+    header:SetPoint("TOPLEFT", 1, -1)
+    header:SetPoint("TOPRIGHT", -1, -1)
     local R = 12
-    local function HeaderSlice(layer, inset, color, alpha)
+    local function HeaderFill(color, alpha)
         local function piece(u1, u2, v1, v2)
-            local tx = header:CreateTexture(nil, layer)
+            local tx = header:CreateTexture(nil, "BACKGROUND")
             tx:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\panel_rounded.tga")
             tx:SetTexCoord(u1, u2, v1, v2)
             tx:SetVertexColor(color[1], color[2], color[3], alpha or 1)
             return tx
         end
         local tl = piece(0, 0.25, 0, 0.25)
-        tl:SetSize(R, R); tl:SetPoint("TOPLEFT", inset, -inset)
+        tl:SetSize(R, R); tl:SetPoint("TOPLEFT", 0, 0)
         local tr = piece(0.75, 1, 0, 0.25)
-        tr:SetSize(R, R); tr:SetPoint("TOPRIGHT", -inset, -inset)
+        tr:SetSize(R, R); tr:SetPoint("TOPRIGHT", 0, 0)
         local tm = piece(0.25, 0.75, 0, 0.25)
         tm:SetPoint("TOPLEFT", tl, "TOPRIGHT"); tm:SetPoint("BOTTOMRIGHT", tr, "BOTTOMLEFT")
         local ml = piece(0, 0.25, 0.25, 0.75)
-        ml:SetPoint("TOPLEFT", tl, "BOTTOMLEFT"); ml:SetPoint("BOTTOMRIGHT", header, "BOTTOMLEFT", inset + R, 0)
+        ml:SetPoint("TOPLEFT", tl, "BOTTOMLEFT"); ml:SetPoint("BOTTOMRIGHT", header, "BOTTOMLEFT", R, 0)
         local mr = piece(0.75, 1, 0.25, 0.75)
-        mr:SetPoint("TOPRIGHT", tr, "BOTTOMRIGHT"); mr:SetPoint("BOTTOMLEFT", header, "BOTTOMRIGHT", -(inset + R), 0)
+        mr:SetPoint("TOPRIGHT", tr, "BOTTOMRIGHT"); mr:SetPoint("BOTTOMLEFT", header, "BOTTOMRIGHT", -R, 0)
         local c = piece(0.25, 0.75, 0.25, 0.75)
-        c:SetPoint("TOPLEFT", tl, "BOTTOMRIGHT"); c:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", -(inset + R), 0)
+        c:SetPoint("TOPLEFT", tl, "BOTTOMRIGHT"); c:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", -R, 0)
     end
     local hsr, hsg, hsb = 0.086, 0.086, 0.110
     if Design then hsr, hsg, hsb = Design:Unpack("surface") end
-    HeaderSlice("BACKGROUND", 0, BRAND_RGB, 1)
-    HeaderSlice("BORDER", 1, { hsr, hsg, hsb }, 0.95)
-
-    local accentLine = header:CreateTexture(nil, "ARTWORK")
-    accentLine:SetHeight(2)
-    accentLine:SetPoint("BOTTOMLEFT", header, "BOTTOMLEFT", 0, 0)
-    accentLine:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", 0, 0)
-    accentLine:SetColorTexture(unpack(BRAND_RGB))
+    HeaderFill({ hsr, hsg, hsb }, 0.95)
 
     f.headerIcon = header:CreateTexture(nil, "ARTWORK")
     f.headerIcon:SetSize(48, 48)
@@ -359,10 +414,12 @@ function RGXProf.BookWindow:EnsureFrame()
     local vr, vg, vb = unpack(BRAND_RGB)
     f.headerVer:SetTextColor(vr, vg, vb)
 
-    f.progress = CreateFrame("StatusBar", nil, header)
-    f.progress:SetPoint("BOTTOMLEFT", header, "BOTTOMLEFT", 14, 4)
-    f.progress:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", -14, 4)
-    f.progress:SetHeight(14)
+    -- Progress strip: a full-width bar directly below the header band,
+    -- edge to edge, doubling as the band's bottom edge.
+    f.progress = CreateFrame("StatusBar", nil, f)
+    f.progress:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -1)
+    f.progress:SetPoint("TOPRIGHT", header, "BOTTOMRIGHT", 0, -1)
+    f.progress:SetHeight(12)
     f.progressLabel = f.progress:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     f.progressLabel:SetAllPoints()
     f.progressLabel:SetJustifyH("CENTER")
@@ -384,16 +441,16 @@ function RGXProf.BookWindow:EnsureFrame()
 
     -- Landing page: profession grid with live skill under each.
     f.landing = CreateFrame("Frame", nil, f)
-    f.landing:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 8, -8)
-    f.landing:SetPoint("BOTTOMRIGHT", -12, 12)
+    f.landing:SetPoint("TOPLEFT", f.progress, "BOTTOMLEFT", 7, -8)
+    f.landing:SetPoint("BOTTOMRIGHT", -8, 12)
 
     f.landingHint = f.landing:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     f.landingHint:SetPoint("TOP", 0, -10)
 
     -- Guide view: left step list + right detail.
     f.guide = CreateFrame("Frame", nil, f)
-    f.guide:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 8, -8)
-    f.guide:SetPoint("BOTTOMRIGHT", -12, 44)
+    f.guide:SetPoint("TOPLEFT", f.progress, "BOTTOMLEFT", 7, -8)
+    f.guide:SetPoint("BOTTOMRIGHT", -8, 44)
     f.guide:Hide()
 
     -- Rounded panel behind the recipe list column: the same nine-slice
@@ -408,9 +465,9 @@ function RGXProf.BookWindow:EnsureFrame()
     end
 
     -- Step list (wheel-scrolled plain ScrollFrame; portable across flavors).
-    f.stepScroll = CreateFrame("ScrollFrame", nil, f.guide)
+    f.stepScroll = CreateFrame("ScrollFrame", nil, f.stepPanel)
     f.stepScroll:SetPoint("TOPLEFT", 0, 0)
-    f.stepScroll:SetSize(LIST_WIDTH, WINDOW_HEIGHT - HEADER_HEIGHT - 58)
+    f.stepScroll:SetPoint("BOTTOMRIGHT", 0, 6)
     f.stepScroll:EnableMouse(true)
     f.stepScroll:EnableMouseWheel(true)
 
@@ -430,7 +487,7 @@ function RGXProf.BookWindow:EnsureFrame()
 
     -- Rounded panel behind the detail pages column.
     f.detailPanel = Design:CreateFrame(f.guide)
-    f.detailPanel:SetPoint("TOPLEFT", LIST_WIDTH + 20, 0)
+    f.detailPanel:SetPoint("TOPLEFT", LIST_WIDTH + 14, 0)
     f.detailPanel:SetPoint("BOTTOMRIGHT", 0, 0)
     if f.detailPanel.SetPanelColor then
         f.detailPanel:SetPanelColor(nil, BRAND_BORDER)
@@ -442,7 +499,7 @@ function RGXProf.BookWindow:EnsureFrame()
     -- scroll inset cancels out and the first card sits tight under the
     -- panel top.
     local detail = CreateFrame("Frame", nil, f.guide)
-    detail:SetPoint("TOPLEFT", LIST_WIDTH + 30, 8)
+    detail:SetPoint("TOPLEFT", LIST_WIDTH + 24, 8)
     detail:SetPoint("BOTTOMRIGHT", 0, 0)
     f.detail = detail
 
@@ -477,7 +534,7 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.meta:SetPoint("TOPLEFT", detail.icon, "BOTTOMLEFT", 0, -8)
     detail.meta:SetPoint("RIGHT", -170, 0)
     detail.meta:SetJustifyH("LEFT")
-    detail.meta:SetWordWrap(true)
+    detail.meta:SetWordWrap(false)
 
     detail.difficulty = detail.recipeCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.difficulty:SetPoint("TOPLEFT", detail.meta, "TOPRIGHT", 12, 0)
@@ -488,12 +545,31 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -10)
     detail.matsCard:SetWidth(198)
     detail.matsCard:SetHeight(116)
-    detail.materials = detail.matsCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    detail.materials:SetPoint("TOPLEFT", 2, -2)
-    detail.materials:SetPoint("RIGHT", -2, 0)
-    detail.materials:SetJustifyH("LEFT")
-    detail.materials:SetWordWrap(true)
-    detail.materials:SetSpacing(3)
+    -- Material rows: icon left, name flexible, have/need right-aligned
+    -- and never wrapped. Row 8 doubles as the overflow note.
+    detail.materials = {}
+    for i = 1, 8 do
+        local row = CreateFrame("Frame", nil, detail.matsCard.content)
+        row:SetHeight(14)
+        if i == 1 then
+            row:SetPoint("TOPLEFT", 2, -2)
+        else
+            row:SetPoint("TOPLEFT", detail.materials[i - 1], "BOTTOMLEFT", 0, 0)
+        end
+        row:SetPoint("RIGHT", -2, 0)
+        row.icon = row:CreateTexture(nil, "ARTWORK")
+        row.icon:SetSize(14, 14)
+        row.icon:SetPoint("TOPLEFT", 0, 0)
+        row.name = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        row.name:SetPoint("LEFT", row.icon, "RIGHT", 4, 0)
+        row.name:SetPoint("RIGHT", row, "RIGHT", -44, 0)
+        row.name:SetJustifyH("LEFT")
+        row.name:SetWordWrap(false)
+        row.count = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        row.count:SetPoint("RIGHT", -2, 0)
+        row.count:SetJustifyH("RIGHT")
+        row:Hide()
+    end
 
     detail.locCard = UI:CreateSection(canvas, { title = "Where to get it" })
     detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "TOPRIGHT", 10, 0)
@@ -616,17 +692,68 @@ end
 -- Step list rows
 --------------------------------------------------------------------------------
 
+-- Row highlight helpers. The first row sits on the panel's rounded top
+-- corners, so its highlight is a rounded-corner slice set (clipped to the
+-- panel's curve); every other row uses a flat full-bleed rectangle.
+local function RowHighlightSetColor(row, r, g, b, a)
+    if row.bgIsSlice then
+        for _, tx in ipairs(row.bgPieces) do
+            tx:SetVertexColor(r, g, b)
+            tx:SetAlpha(a)
+        end
+    else
+        row.bg:SetColorTexture(r, g, b, a)
+    end
+end
+
+local function RowHighlightShow(row, show)
+    if row.bgIsSlice then
+        for _, tx in ipairs(row.bgPieces) do
+            if show then tx:Show() else tx:Hide() end
+        end
+    else
+        if show then row.bg:Show() else row.bg:Hide() end
+    end
+end
+
 local function GetRow(self, index)
     local row = self.rows[index]
     if row then return row end
 
     local content = self.frame.stepContent
     row = CreateFrame("Button", nil, content)
-    row:SetSize(LIST_WIDTH, ROW_HEIGHT)
+    row:SetHeight(ROW_HEIGHT)
+    row:SetPoint("RIGHT")
 
-    row.bg = row:CreateTexture(nil, "BACKGROUND")
-    row.bg:SetAllPoints()
-    row.bg:Hide()
+    -- Highlight layer. Row 1 sits on the panel's rounded top corners:
+    -- nine-slice the same rounded panel texture (rounded top corners,
+    -- solid body) so the fill terminates inside the curve instead of
+    -- poking past the rounded border. Other rows keep the flat fill.
+    row.bgIsSlice = (index == 1)
+    if row.bgIsSlice then
+        local R = 12
+        local function piece(u1, u2, v1, v2)
+            local tx = row:CreateTexture(nil, "BACKGROUND")
+            tx:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\panel_rounded.tga")
+            tx:SetTexCoord(u1, u2, v1, v2)
+            return tx
+        end
+        local tl = piece(0, 0.25, 0, 0.25)
+        tl:SetSize(R, R); tl:SetPoint("TOPLEFT", 0, 0)
+        local tr = piece(0.75, 1, 0, 0.25)
+        tr:SetSize(R, R); tr:SetPoint("TOPRIGHT", 0, 0)
+        local tm = piece(0.25, 0.75, 0, 0.25)
+        tm:SetPoint("TOPLEFT", tl, "TOPRIGHT"); tm:SetPoint("BOTTOMRIGHT", tr, "BOTTOMLEFT")
+        local body = piece(0.25, 0.75, 0.25, 0.75)
+        body:SetPoint("TOPLEFT", tl, "BOTTOMLEFT")
+        body:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
+        row.bgPieces = { tl, tr, tm, body }
+        for _, tx in ipairs(row.bgPieces) do tx:Hide() end
+    else
+        row.bg = row:CreateTexture(nil, "BACKGROUND")
+        row.bg:SetAllPoints()
+        row.bg:Hide()
+    end
 
     row.current = row:CreateTexture(nil, "ARTWORK")
     row.current:SetWidth(3)
@@ -645,8 +772,17 @@ local function GetRow(self, index)
     row.name:SetJustifyH("LEFT")
     row.name:SetWordWrap(false)
 
-    row:SetScript("OnEnter", function(s) s.bg:Show() ShowStepMaterials(s, s._step) end)
-    row:SetScript("OnLeave", function(s) if not s._selected then s.bg:Hide() end GameTooltip:Hide() end)
+    row:SetScript("OnEnter", function(s)
+        if not s._selected then
+            RowHighlightSetColor(s, unpack(BRAND_RGB), 0.10)
+        end
+        RowHighlightShow(s, true)
+        ShowStepMaterials(s, s._step)
+    end)
+    row:SetScript("OnLeave", function(s)
+        if not s._selected then RowHighlightShow(s, false) end
+        GameTooltip:Hide()
+    end)
 
     self.rows[index] = row
     return row
@@ -687,10 +823,10 @@ local function RenderStepList(self)
         row.name:SetText(nameHex .. name .. (step.alternate and (Dim() .. " (alt)") or ""))
 
         if row._selected then
-            row.bg:SetColorTexture(ar, ag, ab, 0.14)
-            row.bg:Show()
+            RowHighlightSetColor(row, ar, ag, ab, 0.14)
+            RowHighlightShow(row, true)
         else
-            row.bg:Hide()
+            RowHighlightShow(row, false)
         end
 
         if i == currentIdx then
@@ -730,19 +866,6 @@ end
 --------------------------------------------------------------------------------
 -- Detail pane
 --------------------------------------------------------------------------------
-
-local function FormatNpcLine(npc)
-    local zone = ""
-    if npc.zoneID and RGXProf.WowAPI and RGXProf.WowAPI.GetMapName then
-        local ok, name = pcall(RGXProf.WowAPI.GetMapName, RGXProf.WowAPI, npc.zoneID)
-        if ok and name then zone = name end
-    end
-    local coords = ""
-    if npc.x and npc.y then
-        coords = string.format(" (%.1f, %.1f)", npc.x, npc.y)
-    end
-    return "  " .. Text() .. (npc.name or "Unknown") .. Dim() .. " - " .. zone .. coords
-end
 
 -- Closest-NPC helpers: compare positions in world coordinates when the
 -- client can translate both points, else prefer NPCs on the player's map.
@@ -836,25 +959,28 @@ local function RenderDetail(self)
     detail.icon:SetTexture(display.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
     detail.title:SetText(display.link or (Text() .. (step.name or "")))
 
-    -- Meta line: range + craft estimate
+    -- Meta block: structured fields, no sentence-style wrapping.
+    -- Line 1: skill range + learn-at. Line 2: craft status.
     local fromSkill = math.max(step.minSkill, skill or step.minSkill)
     local crafts = 0
     if not skill or skill < step.maxSkill then
         crafts = RGXProf.DataManager:GetEstimatedCrafts(fromSkill, step) or 0
     end
-    local metaText = Accent() .. string.format("Skill %d - %d", step.minSkill, step.maxSkill)
+    local metaText = Accent() .. string.format("Skill %d-%d", step.minSkill, step.maxSkill)
     if step.learnAt then
-        metaText = metaText .. Dim() .. "  -  " .. Text() .. "Learn recipe at " .. step.learnAt
+        metaText = metaText .. Dim() .. " · " .. Text() .. string.format("Learn at %d", step.learnAt)
     end
+    local statusLine
     if crafts > 0 then
-        metaText = metaText .. Dim() .. "  |  " .. Text() .. string.format("Craft about %d to reach %d", crafts, step.maxSkill)
+        statusLine = Text() .. string.format("Craft about %d", crafts)
     elseif skill then
-        metaText = metaText .. Dim() .. "  |  " .. Dim() .. "Completed"
+        statusLine = Dim() .. "Completed"
     end
     if step.alternate then
-        metaText = metaText .. Dim() .. "  |  " .. Dim() .. "alternate route"
+        local alt = Dim() .. "Alternate"
+        statusLine = statusLine and (statusLine .. Dim() .. " · " .. alt) or alt
     end
-    detail.meta:SetText(metaText)
+    detail.meta:SetText(statusLine and (metaText .. "\n" .. statusLine) or metaText)
 
     -- Difficulty label
     local diff = StepDifficulty(step, skill)
@@ -868,21 +994,36 @@ local function RenderDetail(self)
         detail.recipeCard:FitContent(6)
     end
 
-    -- Materials
-    local lines = {}
+    -- Materials: structured rows - icon left, name flexible, count right.
     local displayCrafts = crafts > 0 and crafts or (RGXProf.DataManager:GetEstimatedCrafts(step.minSkill, step) or 1)
     local reagents = step.spellID and RGXProf.DataManager:GetReagentListWithDetails(step.spellID, displayCrafts) or {}
-    for _, reagent in ipairs(reagents or {}) do
-        local icon = reagent.icon and ("|T" .. reagent.icon .. ":14:14:0:0|t ") or ""
-        local have = tonumber(reagent.onHandCount) or 0
-        local need = tonumber(reagent.requiredCount) or 0
-        local haveHex = (have >= need) and C("success") or C("warning")
-        table.insert(lines, string.format("%s%s%d%sx %s %s(%d/%d)", icon, Text(), need, Dim(), reagent.name or tostring(reagent.itemID), haveHex, have, need))
+    reagents = reagents or {}
+    for i = 1, 8 do
+        local row = detail.materials[i]
+        if i == 8 and #reagents > 8 then
+            row.icon:Hide()
+            row.name:SetText(Dim() .. string.format("+ %d more", #reagents - 7))
+            row.count:SetText("")
+            row:Show()
+        elseif reagents[i] then
+            local reagent = reagents[i]
+            row.icon:SetTexture(reagent.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
+            row.icon:Show()
+            local have = tonumber(reagent.onHandCount) or 0
+            local need = tonumber(reagent.requiredCount) or 0
+            local haveHex = (have >= need) and C("success") or C("warning")
+            row.name:SetText(Text() .. need .. Dim() .. "x " .. Text() .. (reagent.name or tostring(reagent.itemID)))
+            row.count:SetText(haveHex .. string.format("%d/%d", have, need))
+            row:Show()
+        elseif i == 1 and #reagents == 0 then
+            row.icon:Hide()
+            row.name:SetText(Dim() .. "No reagent data for this step.")
+            row.count:SetText("")
+            row:Show()
+        else
+            row:Hide()
+        end
     end
-    if #lines == 0 then
-        table.insert(lines, Dim() .. "No reagent data for this step.")
-    end
-    detail.materials:SetText(table.concat(lines, "\n"))
 
     -- Location card: show ONLY the NPC closest to the player when the
     -- window is open, not the full vendor/trainer roster.
@@ -895,8 +1036,21 @@ local function RenderDetail(self)
 
     local locLines = {}
     if detail._pinTarget then
-        table.insert(locLines, FormatNpcLine(detail._pinTarget))
-        table.insert(locLines, Dim() .. "Closest to you. Click to pin the map.")
+        local target = detail._pinTarget
+        local nameLine = Text() .. (target.name or "Unknown")
+        local zone = ""
+        if target.zoneID and RGXProf.WowAPI and RGXProf.WowAPI.GetMapName then
+            local ok, zname = pcall(RGXProf.WowAPI.GetMapName, RGXProf.WowAPI, target.zoneID)
+            if ok and zname then zone = zname end
+        end
+        if zone ~= "" then
+            nameLine = nameLine .. Dim() .. " · " .. Text() .. zone
+        end
+        table.insert(locLines, nameLine)
+        if target.x and target.y then
+            table.insert(locLines, Dim() .. string.format("%.1f, %.1f", target.x, target.y))
+        end
+        table.insert(locLines, Dim() .. "Closest to you · Click to pin")
     else
         table.insert(locLines, Dim() .. "Trainer-taught; ask any profession trainer.")
     end
