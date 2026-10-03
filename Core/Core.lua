@@ -27,7 +27,7 @@ function RGXProf:CreateMinimapButton()
     local MM = RGX:GetMinimap()
     RGXProf.minimapButton = MM:Create({
         name = "RGXProfessions_MinimapButton",
-        icon = "Interface\\AddOns\\RGXProfessions\\Media\\RGXIcon.tga",
+        icon = "Interface\\AddOns\\RGX-Framework\\media\\round.tga",
         defaultAngle = 220,
         storage = RGXProf_Settings,
         angleKey = "minimapAngle",
