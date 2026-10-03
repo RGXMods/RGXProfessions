@@ -55,7 +55,7 @@ function RGXProf.AdapterManager:SetWaypoint(name, zoneID, x, y)
             return
         end
     end
-    RGXProf.Utils:SendMsg("No waypoint addon available")
+    RGXProf.Utils:SendMsg(RGXProf.L.NO_WAYPOINT_ADDON)
 end
 
 function RGXProf.AdapterManager:RegisterMissedAdapters()

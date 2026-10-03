@@ -65,7 +65,7 @@ function RGXProf.MiniWindow.MV_Header:Render(profession, parent)
     local h = ui.Header
     local titleFs = ui.MV_Title.fontString
 
-    local text = string.format("%s Preview", profession.name)
+    local text = string.format(RGXProf.L.PREVIEW_TITLE, profession.name)
     
     RGXProf.Utils:SetText(titleFs, text)
 
