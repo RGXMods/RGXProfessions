@@ -33,7 +33,7 @@ function RGXProf.Instructions:BuildTooltipContent(training)
     local content = {
         subtitle = npcList[1].questName,
         children = {},
-        footer = RGXProf.AdapterManager:HasNavigationAddon() and "|cff00ff00Click to set a waypoint.|r" or nil
+        footer = RGXProf.AdapterManager:HasNavigationAddon() and ("|cff00ff00" .. RGXProf.L.WAYPOINT .. "|r") or nil
     }
     for _, item in ipairs(npcList or {}) do
         table.insert(content.children, {
