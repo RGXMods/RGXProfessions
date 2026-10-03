@@ -1,11 +1,11 @@
 -------------------------------------------------------------------
--- Profession Leveling Guide: UI Layout
+-- RGX Professions: UI Layout
 -- Author: Liramei
 -------------------------------------------------------------------
 
 --[[
         +------------------------------------------------------------------+
-        | [Portrait]       Profession Leveling Guide                [X]    |
+        | [Portrait]       RGX Professions                          [X]    |
         +------------------------------------------------------------------+
         |                                                                  |
         |  INSTRUCTIONS      [Vendor]                     [Preview]        |

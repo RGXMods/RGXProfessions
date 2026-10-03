@@ -1,6 +1,6 @@
 --=====================================================================================
 -- RGXProfessions - UI/BookWindow.lua
--- The profession leveling guide: a two-pane browser with a difficulty-colored
+-- The profession book: a two-pane browser with a difficulty-colored
 -- step list, live skill tracking, and a detail pane with materials, vendors,
 -- and trainers for the selected step.
 --=====================================================================================
@@ -976,8 +976,7 @@ function RGXProf.BookWindow:Show()
     else
         self.frame.headerIcon:SetTexture("Interface\\AddOns\\RGXProfessions\\Media\\RGXIcon.tga")
         self.frame.headerTitle:SetText(RGXProf.L.ADDON_TITLE)
-        self.frame.progressLabel:SetText("")        self.frame.progress:SetMinMaxValues(0, 1)
-        self.frame.progress:SetValue(0)
+        self.frame.progressLabel:SetText("")        self.frame.progress:SetMinMaxValues(0, 1)        self.frame.progress:SetValue(0)
 
         self.frame.guide:Hide()
         self.frame.backBtn:Hide()

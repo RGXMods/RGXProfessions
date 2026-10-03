@@ -42,8 +42,7 @@ function RGXProf:CreateMinimapButton()
                 { left = "|cff4ecdc4" .. L.MINIMAP_LEFT_DRAG .. "|r", right = "|cffffffff" .. L.MINIMAP_MOVE .. "|r" },
                 { left = "|cffe74c3c" .. L.MINIMAP_CTRL_RIGHT_CLICK .. "|r", right = "|cffffffff" .. L.MINIMAP_HIDE .. "|r" },
             }
-        end,
-        },
+        end,        },
         onLeftClick = function()
             if RGXProf.BookWindow then
                 RGXProf.BookWindow:Toggle()
@@ -61,10 +60,6 @@ function RGXProf:CreateMinimapButton()
     RGX:RegisterSlashCommand("/prof", function(args)
         RGXProf:HandleSlashCommand(args)
     end, "RGXProfessions")
-
-    RGX:RegisterSlashCommand("/plg", function(args)
-        RGXProf:HandleSlashCommand(args)
-    end, "RGXProfessionsLegacy")
 end
 
 RGXProf:SafeInitialize()

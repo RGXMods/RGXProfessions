@@ -29,7 +29,6 @@ Derived from PLG (Profession Leveling Guide) by LirameiRav, updated from the ori
 | `/prof show <profession>` | Open the guide for a specific profession (partial names OK) |
 | `/prof preview <profession> <skill>` | Show the preview-steps window for a simulated skill |
 | `/prof icon on/off` | Show or hide the minimap button |
-| `/plg` | Legacy alias for the same commands |
 
 ## Language support
 
