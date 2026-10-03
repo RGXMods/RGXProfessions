@@ -3,6 +3,7 @@
 ## X-DisplayName: RGX Professions
 ## Notes: The profession leveling bible for WoW Forever. Browse every leveling path, recipe, and reagent like a book.|n|r  |cff8B1538/prof|r to open. |n|r Derived from PLG by LirameiRav (guides from wow-professions.com).
 ## Author: RealmGX, derived from PLG by LirameiRav and Keg
+## X-Discord: discord.gg/N7kdKAHVVF
 ## Category: RGX
 ## Group: RGX
 ## Version: v0.1.1
