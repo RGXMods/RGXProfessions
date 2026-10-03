@@ -151,6 +151,17 @@ local function DiffColorHex(diffKey)
     return Text()
 end
 
+-- Header-only addon title: the first letter of each word carries the
+-- brand highlight; the rest keeps the font's default color.
+local function StyledHeaderTitle(text)
+    local words = {}
+    for word in text:gmatch("%S+") do
+        words[#words + 1] = Accent() .. word:sub(1, 1) .. "|r" .. word:sub(2)
+    end
+    return table.concat(words, " ")
+end
+local HEADER_TITLE = StyledHeaderTitle("Profession Leveling Guide")
+
 -- Real in-game tooltip for a guide step: the crafted item when the step
 -- carries an itemID, otherwise the craft spell. SetHyperlink renders true
 -- client tooltips on every supported flavor.
@@ -254,20 +265,40 @@ function RGXProf.BookWindow:EnsureFrame()
 
     -- Traditional RGXMods header: dark band, accent line, logo, title,
     -- subtitle and brand - the same layout as the framework options panels.
-    local header = CreateFrame("Frame", nil, f, "BackdropTemplate")
+    -- Rounded top corners: nine-slice the framework panel texture with the
+    -- top corners rounded and straight sides/bottom; the accent line below
+    -- covers the bottom edge. Ring in the brand highlight, fill in the
+    -- theme surface color.
+    local header = CreateFrame("Frame", nil, f)
     header:SetHeight(HEADER_HEIGHT)
     header:SetPoint("TOPLEFT", 4, -4)
     header:SetPoint("TOPRIGHT", -4, -4)
-    header:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = 1,
-    })
-    local hs, hsg, hsb = 0.086, 0.086, 0.110
-    if Design then hs, hsg, hsb = Design:Unpack("surface") end
-    header:SetBackdropColor(hs, hsg, hsb, 0.95)
-    local hbr, hbg, hbb = unpack(BRAND_RGB)
-    header:SetBackdropBorderColor(hbr, hbg, hbb, 1)
+    local R = 12
+    local function HeaderSlice(layer, inset, color, alpha)
+        local function piece(u1, u2, v1, v2)
+            local tx = header:CreateTexture(nil, layer)
+            tx:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\panel_rounded.tga")
+            tx:SetTexCoord(u1, u2, v1, v2)
+            tx:SetVertexColor(color[1], color[2], color[3], alpha or 1)
+            return tx
+        end
+        local tl = piece(0, 0.25, 0, 0.25)
+        tl:SetSize(R, R); tl:SetPoint("TOPLEFT", inset, -inset)
+        local tr = piece(0.75, 1, 0, 0.25)
+        tr:SetSize(R, R); tr:SetPoint("TOPRIGHT", -inset, -inset)
+        local tm = piece(0.25, 0.75, 0, 0.25)
+        tm:SetPoint("TOPLEFT", tl, "TOPRIGHT"); tm:SetPoint("BOTTOMRIGHT", tr, "BOTTOMLEFT")
+        local ml = piece(0, 0.25, 0.25, 0.75)
+        ml:SetPoint("TOPLEFT", tl, "BOTTOMLEFT"); ml:SetPoint("BOTTOMRIGHT", header, "BOTTOMLEFT", inset + R, 0)
+        local mr = piece(0.75, 1, 0.25, 0.75)
+        mr:SetPoint("TOPRIGHT", tr, "BOTTOMRIGHT"); mr:SetPoint("BOTTOMLEFT", header, "BOTTOMRIGHT", -(inset + R), 0)
+        local c = piece(0.25, 0.75, 0.25, 0.75)
+        c:SetPoint("TOPLEFT", tl, "BOTTOMRIGHT"); c:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", -(inset + R), 0)
+    end
+    local hsr, hsg, hsb = 0.086, 0.086, 0.110
+    if Design then hsr, hsg, hsb = Design:Unpack("surface") end
+    HeaderSlice("BACKGROUND", 0, BRAND_RGB, 1)
+    HeaderSlice("BORDER", 1, { hsr, hsg, hsb }, 0.95)
 
     local accentLine = header:CreateTexture(nil, "ARTWORK")
     accentLine:SetHeight(2)
@@ -282,8 +313,7 @@ function RGXProf.BookWindow:EnsureFrame()
 
     f.headerTitle = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     f.headerTitle:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, 10)
-    f.headerTitle:SetText(RGXProf.L.ADDON_TITLE)
-    f.headerTitle:SetTextColor(unpack(BRAND_RGB))
+    f.headerTitle:SetText(HEADER_TITLE)
 
     f.headerSub = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.headerSub:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, -8)
@@ -354,7 +384,7 @@ function RGXProf.BookWindow:EnsureFrame()
 
     -- Landing page: profession grid with live skill under each.
     f.landing = CreateFrame("Frame", nil, f)
-    f.landing:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 8, 0)
+    f.landing:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 8, -8)
     f.landing:SetPoint("BOTTOMRIGHT", -12, 12)
 
     f.landingHint = f.landing:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -362,7 +392,7 @@ function RGXProf.BookWindow:EnsureFrame()
 
     -- Guide view: left step list + right detail.
     f.guide = CreateFrame("Frame", nil, f)
-    f.guide:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 8, 0)
+    f.guide:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 8, -8)
     f.guide:SetPoint("BOTTOMRIGHT", -12, 44)
     f.guide:Hide()
 
@@ -408,9 +438,11 @@ function RGXProf.BookWindow:EnsureFrame()
 
     -- Detail pane (right half): a scrollable card column so the cards can
     -- never overflow the window height; the canvas grows and the scroll
-    -- frame keeps every card reachable.
+    -- frame keeps every card reachable. Lifted 8px so the framework's
+    -- scroll inset cancels out and the first card sits tight under the
+    -- panel top.
     local detail = CreateFrame("Frame", nil, f.guide)
-    detail:SetPoint("TOPLEFT", LIST_WIDTH + 30, 0)
+    detail:SetPoint("TOPLEFT", LIST_WIDTH + 30, 8)
     detail:SetPoint("BOTTOMRIGHT", 0, 0)
     f.detail = detail
 
@@ -1003,7 +1035,7 @@ function RGXProf.BookWindow:Show()
         RenderDetail(self)
     else
         self.frame.headerIcon:SetTexture("Interface\\AddOns\\RGXProfessions\\Media\\RGXIcon.tga")
-        self.frame.headerTitle:SetText(RGXProf.L.ADDON_TITLE)
+        self.frame.headerTitle:SetText(HEADER_TITLE)
         self.frame.progressLabel:SetText("")
         self.frame.progress:SetMinMaxValues(0, 1)
         self.frame.progress:SetValue(0)
