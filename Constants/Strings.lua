@@ -7,7 +7,7 @@ RGXProf.L = {
     LEARN_MAX_VENDOR = "You have reached the max skill for this level. See the vendors listed below.",
     LEARN_MAX_QUEST = "You have reached the max skill for this level. Complete the quest chain listed below.",
 
-    CREATE = "Craft ~%s of the following recipe until skill level %s.",
+    CREATE = "Craft about %s of the following recipe until skill level %s.",
     SELECT = "(Click to select)",
     KEEP = "You will need to keep these for future recipes.",
     WAITING = "Waiting for server...",
