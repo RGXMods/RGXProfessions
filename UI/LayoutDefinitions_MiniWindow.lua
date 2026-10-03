@@ -54,7 +54,7 @@ RGXProf.Layouts.MiniWindow.Header = {
         { kind = "FontString", name = "MV_Title",
           font = RGXProf.Layouts.Defaults.fonts.medium,
           color = RGXProf.Constants.Colors.RGB["BRN"],
-          text = "%s Preview - Starting from skill %d",
+          text = RGXProf.L.PREVIEW_TITLE_SKILL,
           fillParentWidth = true,
           padding = 8,
           height = 20,
