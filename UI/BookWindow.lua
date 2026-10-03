@@ -280,17 +280,49 @@ function RGXProf.BookWindow:EnsureFrame()
     end
 
     f.headerBrand = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    f.headerBrand:SetPoint("RIGHT", -40, -26)
+    f.headerBrand:SetPoint("RIGHT", -46, -54)
+    f.headerBrand:SetJustifyH("RIGHT")
     f.headerBrand:SetText("|cff8B1538RGX|r |cffffd700Mods|r")
 
-    f.headerSkill = header:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    f.headerSkill:SetPoint("TOPRIGHT", -46, -8)
-    f.headerSkill:SetJustifyH("RIGHT")
+    local function HeaderMeta(key)
+        if C_AddOns and C_AddOns.GetAddOnMetadata then
+            local ok, v = pcall(C_AddOns.GetAddOnMetadata, "RGXProfessions", key)
+            if ok and v and v ~= "" then return v end
+        elseif GetAddOnMetadata then
+            local ok, v = pcall(GetAddOnMetadata, "RGXProfessions", key)
+            if ok and v and v ~= "" then return v end
+        end
+    end
+
+    f.headerVer = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    f.headerVer:SetPoint("TOPRIGHT", -46, -8)
+    f.headerVer:SetJustifyH("RIGHT")
+    f.headerVer:SetText("v" .. tostring(HeaderMeta("Version") or "?"))
+
+    f.headerAuthor = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    f.headerAuthor:SetPoint("TOPRIGHT", -46, -24)
+    f.headerAuthor:SetJustifyH("RIGHT")
+    f.headerAuthor:SetText("by donniedice")
+
+    f.headerDiscord = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    f.headerDiscord:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, -18)
+    f.headerDiscord:SetText("|cff7289daDiscord:|r |cffffd700" .. tostring(HeaderMeta("X-Discord") or "") .. "|r")
+
+    local sr, sg, sb = 0.545, 0.545, 0.596
+    if Design then sr, sg, sb = Design:Unpack("subtext") end
+    f.headerAuthor:SetTextColor(sr, sg, sb)
+    f.headerDiscord:SetTextColor(0.85, 0.85, 0.85)
+    local vr, vg, vb = 0.545, 0.082, 0.220
+    if Design then vr, vg, vb = Design:Unpack("primary") end
+    f.headerVer:SetTextColor(vr, vg, vb)
 
     f.progress = CreateFrame("StatusBar", nil, header)
     f.progress:SetPoint("BOTTOMLEFT", header, "BOTTOMLEFT", 14, 4)
     f.progress:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", -14, 4)
-    f.progress:SetHeight(6)
+    f.progress:SetHeight(14)
+    f.progressLabel = f.progress:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    f.progressLabel:SetAllPoints()
+    f.progressLabel:SetJustifyH("CENTER")
     f.progress:SetStatusBarTexture("Interface\\Buttons\\WHITE8x8")
     f.progress:SetMinMaxValues(0, MaxSkill())
     f.progress:SetValue(0)
@@ -935,7 +967,7 @@ function RGXProf.BookWindow:Show()
         self.frame.headerTitle:SetText(prof.name .. " - Leveling Guide")
         local gate = skill and NextGate(tonumber(skill))
     local gateText = gate and (Dim() .. "  -  Train " .. Text() .. gate.rank .. Dim() .. " at " .. gate.cap) or ""
-    self.frame.headerSkill:SetText(skill and (Dim() .. "Skill " .. Text() .. skill .. Dim() .. " / " .. maxSkill .. gateText) or (Dim() .. "Not learned"))
+    self.frame.progressLabel:SetText(skill and (Dim() .. "Skill " .. Text() .. skill .. Dim() .. " / " .. maxSkill .. gateText) or (Dim() .. "Not learned"))
         self.frame.progress:SetMinMaxValues(0, maxSkill)
         self.frame.progress:SetValue(skill or 0)
 
@@ -950,7 +982,7 @@ function RGXProf.BookWindow:Show()
     else
         self.frame.headerIcon:SetTexture("Interface\\AddOns\\RGXProfessions\\Media\\RGXIcon.tga")
         self.frame.headerTitle:SetText("Profession Leveling Guide")
-        self.frame.headerSkill:SetText("")
+        self.frame.progressLabel:SetText("")
         self.frame.progress:SetMinMaxValues(0, 1)
         self.frame.progress:SetValue(0)
 
