@@ -37,10 +37,10 @@ local function Dim() return C("subtext") end
 local function Label() return C("label") end
 
 local DIFF_WORDS = {
-    optimal = { text = "Orange - always skill-ups", key = "warning" },
-    medium  = { text = "Yellow - usually a skill-up", key = "accent" },
-    easy    = { text = "Green - rarely a skill-up", key = "success" },
-    trivial = { text = "Gray - no skill-ups", key = "label" },
+    optimal = { text = RGXProf.L.DIFF_DEFAULT_OPTIMAL, key = "warning" },
+    medium  = { text = RGXProf.L.DIFF_DEFAULT_MEDIUM, key = "accent" },
+    easy    = { text = RGXProf.L.DIFF_DEFAULT_EASY, key = "success" },
+    trivial = { text = RGXProf.L.DIFF_DEFAULT_TRIVIAL, key = "label" },
 }
 
 -- Rank gates: crossing a skill cap like 75 requires training the next rank.
@@ -270,7 +270,6 @@ function RGXProf.BookWindow:EnsureFrame()
     f.headerTitle = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     f.headerTitle:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, 10)
     f.headerTitle:SetText("|cff8B1538RGX|r |cffffffffProfessions|r")
-
     f.headerSub = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.headerSub:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, -8)
     f.headerSub:SetText("The profession leveling bible for WoW Forever")
@@ -428,13 +427,12 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.difficulty:SetPoint("TOPLEFT", detail.meta, "BOTTOMLEFT", 0, -4)
     detail.difficulty:SetPoint("RIGHT", -2, 0)
 
-    detail.matsCard = UI:CreateSection(canvas, { title = "Materials" })
+    detail.matsCard = UI:CreateSection(canvas, { title = RGXProf.L.MATERIALS })
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -10)
     detail.matsCard:SetPoint("TOPRIGHT", detail.recipeCard, "BOTTOMRIGHT", 0, -10)
     detail.materials = detail.matsCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.materials:SetPoint("TOPLEFT", 2, -2)
-    detail.materials:SetPoint("RIGHT", -2, 0)
-    detail.materials:SetJustifyH("LEFT")
+    detail.materials:SetPoint("RIGHT", -2, 0)    detail.materials:SetJustifyH("LEFT")
     detail.materials:SetWordWrap(true)
     detail.materials:SetSpacing(3)
 
@@ -507,17 +505,17 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.notes:SetSpacing(3)
 
     -- Footer buttons.
-    f.backBtn = Design:CreateButton(f, "< Professions", 110, 24)
+    f.backBtn = Design:CreateButton(f, RGXProf.L.BTN_BACK_PROFESSIONS, 110, 24)
     f.backBtn:SetPoint("BOTTOMLEFT", 14, 12)
-    f.backBtn:SetTooltip("Back", "Return to the profession list.")
+    f.backBtn:SetTooltip("Back", RGXProf.L.TIP_BACK)
     f.backBtn:SetScript("OnClick", function()
         RGXProf_Settings.bookProfessionID = nil
         RGXProf.BookWindow:Show()
     end)
 
-    f.matsBtn = Design:CreateButton(f, "Materials to Max", 130, 24)
+    f.matsBtn = Design:CreateButton(f, RGXProf.L.BTN_MATS_TO_MAX, 130, 24)
     f.matsBtn:SetPoint("BOTTOMLEFT", 134, 12)
-    f.matsBtn:SetTooltip("Materials to Max", "Show everything you still need to reach the skill cap.")
+    f.matsBtn:SetTooltip(RGXProf.L.BTN_MATS_TO_MAX, RGXProf.L.TIP_MATS_TO_MAX)
     f.matsBtn:SetScript("OnClick", function()
         local professionID = RGXProf.BookWindow:GetCurrentProfession()
         if not professionID then return end
@@ -530,7 +528,7 @@ function RGXProf.BookWindow:EnsureFrame()
         })
     end)
 
-    f.prevBtn = Design:CreateButton(f, "< Prev", 90, 24)
+    f.prevBtn = Design:CreateButton(f, RGXProf.L.BTN_PREV, 90, 24)
     f.prevBtn:SetPoint("BOTTOMRIGHT", -150, 12)
     f.prevBtn:SetScript("OnClick", function()
         local professionID = RGXProf.BookWindow:GetCurrentProfession()
@@ -540,7 +538,7 @@ function RGXProf.BookWindow:EnsureFrame()
         RGXProf.BookWindow:Show()
     end)
 
-    f.nextBtn = Design:CreateButton(f, "Next >", 90, 24)
+    f.nextBtn = Design:CreateButton(f, RGXProf.L.BTN_NEXT, 90, 24)
     f.nextBtn:SetPoint("BOTTOMRIGHT", -14, 12)
     f.nextBtn:SetScript("OnClick", function()
         local professionID = RGXProf.BookWindow:GetCurrentProfession()
@@ -623,11 +621,11 @@ local function RenderStepList(self)
         row.range:SetText(string.format("%s%d - %d", rangeHex, step.minSkill, step.maxSkill))
 
         local nameHex = DiffColorHex(StepDifficulty(step, skill))
-        local name = step.name or ("Recipe " .. (step.spellID or i))
+        local name = step.name or (RGXProf.L.RECIPE_PREFIX .. (step.spellID or i))
         if skill and step.maxSkill <= skill then
             nameHex = Dim()
         end
-        row.name:SetText(nameHex .. name .. (step.alternate and (Dim() .. " (alt)") or ""))
+        row.name:SetText(nameHex .. name .. (step.alternate and (Dim() .. RGXProf.L.ALT_SUFFIX) or ""))
 
         if row._selected then
             row.bg:SetColorTexture(ar, ag, ab, 0.14)
@@ -785,18 +783,17 @@ local function RenderDetail(self)
     if not skill or skill < step.maxSkill then
         crafts = RGXProf.DataManager:GetEstimatedCrafts(fromSkill, step) or 0
     end
-    local metaText = Accent() .. string.format("Skill %d - %d", step.minSkill, step.maxSkill)
+    local metaText = Accent() .. string.format(RGXProf.L.SKILL_RANGE, step.minSkill, step.maxSkill)
     if step.learnAt then
         metaText = metaText .. Dim() .. "  -  " .. Text() .. "Learn recipe at " .. step.learnAt
     end
     if crafts > 0 then
-        metaText = metaText .. Dim() .. "  |  " .. Text() .. string.format("Craft ~%d to reach %d", crafts, step.maxSkill)
+        metaText = metaText .. Dim() .. "  |  " .. Text() .. string.format(RGXProf.L.CRAFT_TO_REACH, crafts, step.maxSkill)
     elseif skill then
-        metaText = metaText .. Dim() .. "  |  " .. Dim() .. "Completed"
+        metaText = metaText .. Dim() .. "  |  " .. Dim() .. RGXProf.L.COMPLETED
     end
     if step.alternate then
-        metaText = metaText .. Dim() .. "  |  " .. Dim() .. "alternate route"
-    end
+        metaText = metaText .. Dim() .. "  |  " .. Dim() .. RGXProf.L.ALTERNATE_ROUTE    end
     detail.meta:SetText(metaText)
 
     -- Difficulty label
@@ -823,7 +820,7 @@ local function RenderDetail(self)
         table.insert(lines, string.format("%s%s%d%sx %s %s(%d/%d)", icon, Text(), need, Dim(), reagent.name or tostring(reagent.itemID), haveHex, have, need))
     end
     if #lines == 0 then
-        table.insert(lines, Dim() .. "No reagent data for this step.")
+        table.insert(lines, Dim() .. RGXProf.L.NO_REAGENT_DATA)
     end
     detail.materials:SetText(table.concat(lines, "\n"))
     if detail.matsCard and detail.matsCard.FitContent then
@@ -844,21 +841,19 @@ local function RenderDetail(self)
         table.insert(locLines, FormatNpcLine(detail._pinTarget))
         table.insert(locLines, Dim() .. "Closest to you. Click to pin the map.")
     else
-        table.insert(locLines, Dim() .. "Trainer-taught; ask any profession trainer.")
-    end
+        table.insert(locLines, Dim() .. "Trainer-taught; ask any profession trainer.")    end
     detail.locations:SetText(table.concat(locLines, "\n"))
 
     -- Notes
     local notes = {}
     if step.keep then
-        table.insert(notes, C("accent") .. "Keep the crafted items for later steps.")
+        table.insert(notes, C("accent") .. RGXProf.L.KEEP_FOR_LATER)
         if step.keepNote then
             table.insert(notes, Text() .. step.keepNote)
         end
     end
     if step.note then table.insert(notes, Accent() .. "* " .. Text() .. step.note) end
-    if step.quests then table.insert(notes, Dim() .. "Requires a quest (see trainer list).") end
-    detail.notes:SetText(table.concat(notes, "\n"))
+    if step.quests then table.insert(notes, Dim() .. RGXProf.L.REQUIRES_QUEST) end    detail.notes:SetText(table.concat(notes, "\n"))
     if detail.notesCard and detail.notesCard.FitContent then
         detail.notesCard:FitContent(4)
     end
@@ -881,7 +876,7 @@ local function BuildLanding(self)
     end
 
     local professions = GetGuideProfessions()
-    self.frame.landingHint:SetText(Dim() .. "Choose a profession to open its leveling guide.")
+    self.frame.landingHint:SetText(Dim() .. RGXProf.L.CHOOSE_PROFESSION)
 
     local columns = 4
     local rowsNeeded = math.ceil(#professions / columns)
@@ -914,7 +909,7 @@ local function BuildLanding(self)
         btn.icon:SetTexture(prof.icon or 133741)
         btn.name:SetText(Text() .. prof.name)
         local skill, total = LiveSkill(professionID)
-        btn.skill:SetText(skill and (Dim() .. string.format("Skill %d/%d", skill, total or MaxSkill())) or (Label() .. "Not learned"))
+        btn.skill:SetText(skill and (Dim() .. string.format(RGXProf.L.SKILL_FRACTION, skill, total or MaxSkill())) or (Label() .. RGXProf.L.NOT_LEARNED))
 
         btn:SetScript("OnClick", function()
             RGXProf.BookWindow:OpenProfession(professionID)
@@ -964,11 +959,10 @@ function RGXProf.BookWindow:Show()
         local maxSkill = total or MaxSkill()
 
         self.frame.headerIcon:SetTexture(prof.icon or 133741)
-        self.frame.headerTitle:SetText(prof.name .. " - Leveling Guide")
+        self.frame.headerTitle:SetText(prof.name .. RGXProf.L.LEVELING_GUIDE_SUFFIX)
         local gate = skill and NextGate(tonumber(skill))
-    local gateText = gate and (Dim() .. "  -  Train " .. Text() .. gate.rank .. Dim() .. " at " .. gate.cap) or ""
-    self.frame.progressLabel:SetText(skill and (Dim() .. "Skill " .. Text() .. skill .. Dim() .. " / " .. maxSkill .. gateText) or (Dim() .. "Not learned"))
-        self.frame.progress:SetMinMaxValues(0, maxSkill)
+    local gateText = gate and (Dim() .. "  -  " .. Text() .. gate.rank .. Dim() .. " at " .. gate.cap) or ""
+    self.frame.progressLabel:SetText(skill and (Dim() .. Text() .. string.format(RGXProf.L.SKILL_PROGRESS, skill, maxSkill) .. gateText) or (Dim() .. RGXProf.L.NOT_LEARNED))        self.frame.progress:SetMinMaxValues(0, maxSkill)
         self.frame.progress:SetValue(skill or 0)
 
         self.frame.landing:Hide()
@@ -981,9 +975,8 @@ function RGXProf.BookWindow:Show()
         RenderDetail(self)
     else
         self.frame.headerIcon:SetTexture("Interface\\AddOns\\RGXProfessions\\Media\\RGXIcon.tga")
-        self.frame.headerTitle:SetText("Profession Leveling Guide")
-        self.frame.progressLabel:SetText("")
-        self.frame.progress:SetMinMaxValues(0, 1)
+        self.frame.headerTitle:SetText(RGXProf.L.ADDON_TITLE)
+        self.frame.progressLabel:SetText("")        self.frame.progress:SetMinMaxValues(0, 1)
         self.frame.progress:SetValue(0)
 
         self.frame.guide:Hide()
