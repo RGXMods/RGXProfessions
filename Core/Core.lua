@@ -48,6 +48,16 @@ function RGXProf:CreateMinimapButton()
                 RGXProf.BookWindow:Toggle()
             end
         end,
+        onRightClick = function()
+            -- Open addon options panel
+            if Settings and Settings.OpenToCategory then
+                Settings.OpenToCategory("RGX Professions")
+            elseif InterfaceOptionsFrame_OpenToCategory then
+                InterfaceOptionsFrame_OpenToCategory("RGX Professions")
+                -- WoW quirk: first call sometimes doesn't work
+                InterfaceOptionsFrame_OpenToCategory("RGX Professions")
+            end
+        end,
         onCtrlRight = function(btn)
             btn:SetVisible(false)
             RGXProf_Settings.minimapIconEnabled = false
