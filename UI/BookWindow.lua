@@ -881,7 +881,7 @@ local function BuildLanding(self)
     end
 
     local professions = GetGuideProfessions()
-    self.frame.landingHint:SetText(Dim() .. "Choose a profession to open its leveling guide.")
+    self.frame.landingHint:SetText(Dim() .. "Choose a profession to open its leveling path.")
 
     local columns = 4
     local rowsNeeded = math.ceil(#professions / columns)
