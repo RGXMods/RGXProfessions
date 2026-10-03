@@ -15,7 +15,7 @@ local WINDOW_HEIGHT = 470
 local LIST_WIDTH = 250
 local ROW_HEIGHT = 20
 local BANNER_HEIGHT = 22
-local HEADER_HEIGHT = 82
+local HEADER_HEIGHT = 74
 
 local BRAND_BORDER = { 0.545, 0.082, 0.220 } -- RGX crimson #8B1538
 local BRAND_RGB = BRAND_BORDER -- accents share the brand crimson
@@ -171,6 +171,40 @@ local function ShowStepTooltip(owner, step)
     end
 end
 
+-- Recipe-list hover: required materials with inline icons, rendered in the
+-- same format as the page's Materials card (live have/need bag counts).
+local function ShowStepMaterials(owner, step)
+    if not step then return end
+    GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+    GameTooltip:SetText(step.name or "Recipe", 1, 1, 1)
+
+    local crafts
+    if RGXProf.DataManager and RGXProf.DataManager.GetEstimatedCrafts then
+        local ok, result = pcall(RGXProf.DataManager.GetEstimatedCrafts, RGXProf.DataManager, step.minSkill, step)
+        if ok and result and result > 0 and result < math.huge then crafts = result end
+    end
+    if crafts then
+        GameTooltip:AddLine(string.format("Craft about %d", crafts), 0.6, 0.6, 0.6)
+    end
+
+    local reagents = {}
+    if step.spellID and RGXProf.DataManager and RGXProf.DataManager.GetReagentListWithDetails then
+        local okR, list = pcall(RGXProf.DataManager.GetReagentListWithDetails, RGXProf.DataManager, step.spellID, crafts or 1)
+        if okR and type(list) == "table" then reagents = list end
+    end
+    for _, reagent in ipairs(reagents) do
+        local icon = reagent.icon and ("|T" .. reagent.icon .. ":14:14:0:0|t ") or ""
+        local have = tonumber(reagent.onHandCount) or 0
+        local need = tonumber(reagent.requiredCount) or 0
+        local haveHex = (have >= need) and C("success") or C("warning")
+        GameTooltip:AddLine(string.format("%s%s%d%sx %s %s(%d/%d)", icon, Text(), need, Dim(), reagent.name or tostring(reagent.itemID), haveHex, have, need), 1, 1, 1)
+    end
+    if #reagents == 0 then
+        GameTooltip:AddLine(Dim() .. "No reagent data for this step.", 0.6, 0.6, 0.6)
+    end
+    GameTooltip:Show()
+end
+
 local function SelectedPage(professionID)
     local path = RGXProf.currentExpansion.paths[professionID]
     local page = RGXProf_Settings.bookPage
@@ -232,8 +266,7 @@ function RGXProf.BookWindow:EnsureFrame()
     local hs, hsg, hsb = 0.086, 0.086, 0.110
     if Design then hs, hsg, hsb = Design:Unpack("surface") end
     header:SetBackdropColor(hs, hsg, hsb, 0.95)
-    local hbr, hbg, hbb = 0.137, 0.137, 0.173
-    if Design then hbr, hbg, hbb = Design:Unpack("border") end
+    local hbr, hbg, hbb = unpack(BRAND_RGB)
     header:SetBackdropBorderColor(hbr, hbg, hbb, 1)
 
     local accentLine = header:CreateTexture(nil, "ARTWORK")
@@ -244,12 +277,13 @@ function RGXProf.BookWindow:EnsureFrame()
 
     f.headerIcon = header:CreateTexture(nil, "ARTWORK")
     f.headerIcon:SetSize(48, 48)
-    f.headerIcon:SetPoint("TOPLEFT", 12, -6)
+    f.headerIcon:SetPoint("TOPLEFT", 12, -4)
     f.headerIcon:SetTexture("Interface\\AddOns\\RGXProfessions\\Media\\RGXIconSquare.tga")
 
     f.headerTitle = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     f.headerTitle:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, 10)
     f.headerTitle:SetText(RGXProf.L.ADDON_TITLE)
+    f.headerTitle:SetTextColor(unpack(BRAND_RGB))
 
     f.headerSub = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.headerSub:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, -8)
@@ -292,8 +326,7 @@ function RGXProf.BookWindow:EnsureFrame()
     if Design then sr, sg, sb = Design:Unpack("subtext") end
     f.headerAuthor:SetTextColor(sr, sg, sb)
     f.headerDiscord:SetTextColor(0.85, 0.85, 0.85)
-    local vr, vg, vb = 0.545, 0.082, 0.220
-    if Design then vr, vg, vb = Design:Unpack("primary") end
+    local vr, vg, vb = unpack(BRAND_RGB)
     f.headerVer:SetTextColor(vr, vg, vb)
 
     f.progress = CreateFrame("StatusBar", nil, header)
@@ -333,14 +366,15 @@ function RGXProf.BookWindow:EnsureFrame()
     f.guide:SetPoint("BOTTOMRIGHT", -12, 44)
     f.guide:Hide()
 
-    f.guide.divider = f.guide:CreateTexture(nil, "ARTWORK")
-    f.guide.divider:SetWidth(1)
-    f.guide.divider:SetPoint("TOPLEFT", LIST_WIDTH + 16, 0)
-    f.guide.divider:SetPoint("BOTTOMLEFT", LIST_WIDTH + 16, 0)
-    do
-        local br, bgc, bb = 0.137, 0.137, 0.173
-        if Design then br, bgc, bb = Design:Unpack("border") end
-        f.guide.divider:SetColorTexture(br, bgc, bb, 1)
+    -- Rounded panel behind the recipe list column: the same nine-slice
+    -- panel skin as the other RGX surfaces; the step rows render on top.
+    -- The old 1px divider is retired - the two panel borders now provide
+    -- the column separation.
+    f.stepPanel = Design:CreateFrame(f.guide, { width = LIST_WIDTH })
+    f.stepPanel:SetPoint("TOPLEFT", 0, 0)
+    f.stepPanel:SetPoint("BOTTOMLEFT", 0, 0)
+    if f.stepPanel.SetPanelColor then
+        f.stepPanel:SetPanelColor(nil, BRAND_BORDER)
     end
 
     -- Step list (wheel-scrolled plain ScrollFrame; portable across flavors).
@@ -363,6 +397,14 @@ function RGXProf.BookWindow:EnsureFrame()
         if off < 0 then off = 0 elseif off > maxOff then off = maxOff end
         f.stepScroll:SetVerticalScroll(off)
     end)
+
+    -- Rounded panel behind the detail pages column.
+    f.detailPanel = Design:CreateFrame(f.guide)
+    f.detailPanel:SetPoint("TOPLEFT", LIST_WIDTH + 20, 0)
+    f.detailPanel:SetPoint("BOTTOMRIGHT", 0, 0)
+    if f.detailPanel.SetPanelColor then
+        f.detailPanel:SetPanelColor(nil, BRAND_BORDER)
+    end
 
     -- Detail pane (right half): a scrollable card column so the cards can
     -- never overflow the window height; the canvas grows and the scroll
@@ -412,7 +454,8 @@ function RGXProf.BookWindow:EnsureFrame()
 
     detail.matsCard = UI:CreateSection(canvas, { title = "Materials" })
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -10)
-    detail.matsCard:SetPoint("TOPRIGHT", detail.recipeCard, "BOTTOMRIGHT", 0, -10)
+    detail.matsCard:SetWidth(198)
+    detail.matsCard:SetHeight(116)
     detail.materials = detail.matsCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.materials:SetPoint("TOPLEFT", 2, -2)
     detail.materials:SetPoint("RIGHT", -2, 0)
@@ -421,11 +464,11 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.materials:SetSpacing(3)
 
     detail.locCard = UI:CreateSection(canvas, { title = "Where to get it" })
-    detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "BOTTOMLEFT", 0, -10)
-    detail.locCard:SetPoint("TOPRIGHT", detail.matsCard, "BOTTOMRIGHT", 0, -10)
-    -- Compact fixed height: header band plus one location line and its
-    -- click-to-pin hint. No FitContent - this card must never balloon.
-    detail.locCard:SetHeight(88)
+    detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "TOPRIGHT", 10, 0)
+    detail.locCard:SetPoint("TOPRIGHT", detail.recipeCard, "BOTTOMRIGHT", 0, -10)
+    -- Fixed height matching the materials column so the notes card can
+    -- anchor below both. No FitContent - this card must never balloon.
+    detail.locCard:SetHeight(116)
 
     detail.locations = detail.locCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.locations:SetPoint("TOPLEFT", 2, -2)
@@ -478,7 +521,7 @@ function RGXProf.BookWindow:EnsureFrame()
     end)
 
     detail.notesCard = UI:CreateSection(canvas, { title = "Notes" })
-    detail.notesCard:SetPoint("TOPLEFT", detail.locCard, "BOTTOMLEFT", 0, -10)
+    detail.notesCard:SetPoint("TOPLEFT", detail.matsCard, "BOTTOMLEFT", 0, -10)
     detail.notesCard:SetPoint("TOPRIGHT", detail.locCard, "BOTTOMRIGHT", 0, -10)
 
     detail.notes = detail.notesCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -570,7 +613,7 @@ local function GetRow(self, index)
     row.name:SetJustifyH("LEFT")
     row.name:SetWordWrap(false)
 
-    row:SetScript("OnEnter", function(s) s.bg:Show() ShowStepTooltip(s, s._step) end)
+    row:SetScript("OnEnter", function(s) s.bg:Show() ShowStepMaterials(s, s._step) end)
     row:SetScript("OnLeave", function(s) if not s._selected then s.bg:Hide() end GameTooltip:Hide() end)
 
     self.rows[index] = row
@@ -808,9 +851,6 @@ local function RenderDetail(self)
         table.insert(lines, Dim() .. "No reagent data for this step.")
     end
     detail.materials:SetText(table.concat(lines, "\n"))
-    if detail.matsCard and detail.matsCard.FitContent then
-        detail.matsCard:FitContent(4)
-    end
 
     -- Location card: show ONLY the NPC closest to the player when the
     -- window is open, not the full vendor/trainer roster.
