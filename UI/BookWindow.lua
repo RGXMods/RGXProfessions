@@ -274,23 +274,38 @@ function RGXProf.BookWindow:EnsureFrame()
         RGXProf_Settings.bookPosition = { point, relFrame, relPoint, x, y }
     end)
 
-    -- Resizable window: a bottom-right grip sizes the frame; every content
-    -- region below the header is anchor-driven so the layout reflows.
+    -- Resizable window: a bottom-right grip sizes the frame with a manual
+    -- drag (SetSize + TOPLEFT pinning each update) because the beta client
+    -- does not expose the native frame resize family (SetMinResize is nil
+    -- there); clamped 640x420..1400x1000 and persisted to
+    -- RGXProf_Settings.bookSize. Every content region below the header is
+    -- anchor-driven so the layout reflows.
     local savedSize = RGXProf_Settings and RGXProf_Settings.bookSize
     if type(savedSize) == "table" and type(savedSize[1]) == "number" and type(savedSize[2]) == "number" then
         f:SetSize(savedSize[1], savedSize[2])
     end
-    f:SetResizable(true)
-    f:SetMinResize(640, 420)
-    f:SetMaxResize(1400, 1000)
     f.sizer = CreateFrame("Button", nil, f)
     f.sizer:SetSize(16, 16)
     f.sizer:SetPoint("BOTTOMRIGHT", -2, 2)
     f.sizer:RegisterForDrag("LeftButton")
     f.sizer:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
-    f.sizer:SetScript("OnDragStart", function() f:StartSizing("BOTTOMRIGHT") end)
-    f.sizer:SetScript("OnDragStop", function()
-        f:StopMovingOrSizing()
+    f.sizer:SetScript("OnDragStart", function(s)
+        s._scale = f:GetEffectiveScale()
+        s._left = f:GetLeft()
+        s._top = f:GetTop()
+        s:SetScript("OnUpdate", function(self)
+            local mx, my = GetCursorPosition()
+            local w = mx / self._scale - self._left
+            local h = self._top - my / self._scale
+            if w < 640 then w = 640 elseif w > 1400 then w = 1400 end
+            if h < 420 then h = 420 elseif h > 1000 then h = 1000 end
+            f:ClearAllPoints()
+            f:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", self._left, self._top)
+            f:SetSize(w, h)
+        end)
+    end)
+    f.sizer:SetScript("OnDragStop", function(s)
+        s:SetScript("OnUpdate", nil)
         RGXProf_Settings.bookSize = { f:GetWidth(), f:GetHeight() }
     end)
     f.sizer:SetScript("OnEnter", function(s)
