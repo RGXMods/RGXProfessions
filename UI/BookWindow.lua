@@ -718,7 +718,11 @@ local function RowHighlightSetColor(row, r, g, b, a)
             tx:SetAlpha(a)
         end
     else
-        row.bg:SetColorTexture(r, g, b, a)
+        -- SetVertexColor + alpha is the classic-stable form; some Forever
+        -- clients ship a Color-object SetColorTexture signature that rejects
+        -- the (r,g,b,a) call form. row.bg is a plain white texture anyway.
+        row.bg:SetVertexColor(r, g, b)
+        row.bg:SetAlpha(a)
     end
 end
 
