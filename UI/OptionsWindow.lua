@@ -50,7 +50,6 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
     else
         accent:SetColorTexture(0.545, 0.082, 0.220)
     end
-
     local autoOpenCheckbox = CreateFrame("CheckButton", nil, configPanel, "InterfaceOptionsCheckButtonTemplate")
     autoOpenCheckbox:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -26)
     autoOpenCheckbox.Text:SetText("Auto-open the guide when a profession window opens")
