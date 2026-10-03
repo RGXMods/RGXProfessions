@@ -264,7 +264,7 @@ function RGXProf.BookWindow:EnsureFrame()
 
     f.headerIcon = header:CreateTexture(nil, "ARTWORK")
     f.headerIcon:SetSize(30, 30)
-    f.headerIcon:SetPoint("LEFT", 12, -18)
+    f.headerIcon:SetPoint("TOPLEFT", 12, -18)
     f.headerIcon:SetTexture("Interface\\AddOns\\RGXProfessions\\Media\\RGXIcon.tga")
 
     f.headerTitle = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -280,7 +280,7 @@ function RGXProf.BookWindow:EnsureFrame()
     end
 
     f.headerBrand = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    f.headerBrand:SetPoint("RIGHT", -46, -54)
+    f.headerBrand:SetPoint("TOPRIGHT", -46, -40)
     f.headerBrand:SetJustifyH("RIGHT")
     f.headerBrand:SetText("|cff8B1538RGX|r |cffffd700Mods|r")
 
@@ -305,7 +305,7 @@ function RGXProf.BookWindow:EnsureFrame()
     f.headerAuthor:SetText("by donniedice")
 
     f.headerDiscord = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    f.headerDiscord:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, -18)
+    f.headerDiscord:SetPoint("LEFT", f.headerSub, "RIGHT", 24, 0)
     f.headerDiscord:SetText("|cff7289daDiscord:|r |cffffd700" .. tostring(HeaderMeta("X-Discord") or "") .. "|r")
 
     local sr, sg, sb = 0.545, 0.545, 0.596
