@@ -263,16 +263,16 @@ function RGXProf.BookWindow:EnsureFrame()
     accentLine:SetColorTexture(unpack(BRAND_RGB))
 
     f.headerIcon = header:CreateTexture(nil, "ARTWORK")
-    f.headerIcon:SetSize(30, 30)
-    f.headerIcon:SetPoint("LEFT", 12, -18)
+    f.headerIcon:SetSize(42, 42)
+    f.headerIcon:SetPoint("LEFT", 12, 0)
     f.headerIcon:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\square.tga")
 
     f.headerTitle = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    f.headerTitle:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, 10)
+    f.headerTitle:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, 14)
     f.headerTitle:SetText("|cff8B1538RGX|r |cffffffffProfessions|r")
 
     f.headerSub = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    f.headerSub:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, -8)
+    f.headerSub:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, -6)
     f.headerSub:SetText("The profession leveling bible for WoW Forever")
     if Design then
         local tr, tg, tb = Design:Unpack("subtext")
