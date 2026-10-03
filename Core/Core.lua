@@ -49,10 +49,8 @@ function RGXProf:CreateMinimapButton()
             end
         end,
         onRightClick = function()
-            -- Open addon options panel
-            if Settings and Settings.OpenToCategory then
-                Settings.OpenToCategory("RGX Professions")
-            elseif InterfaceOptionsFrame_OpenToCategory then
+            -- Open addon options panel using legacy API (panel is created with CreateFrame)
+            if InterfaceOptionsFrame_OpenToCategory then
                 InterfaceOptionsFrame_OpenToCategory("RGX Professions")
                 -- WoW quirk: first call sometimes doesn't work
                 InterfaceOptionsFrame_OpenToCategory("RGX Professions")
