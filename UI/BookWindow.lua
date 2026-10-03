@@ -15,7 +15,7 @@ local WINDOW_HEIGHT = 470
 local LIST_WIDTH = 250
 local ROW_HEIGHT = 20
 local BANNER_HEIGHT = 22
-local HEADER_HEIGHT = 74
+local HEADER_HEIGHT = 82
 
 local BRAND_BORDER = { 0.545, 0.082, 0.220 } -- RGX crimson #8B1538
 local BRAND_RGB = BRAND_BORDER -- accents share the brand crimson
@@ -171,26 +171,6 @@ local function ShowStepTooltip(owner, step)
     end
 end
 
--- Compact step tooltip for the list rows: the training-relevant facts.
--- Menu rows do not pop the full item tooltip; they show the learn-at level
--- and craft estimate instead.
-local function ShowStepSummary(owner, step)
-    if not step then return end
-    GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
-    GameTooltip:SetText(step.name or "Recipe", 1, 1, 1)
-    GameTooltip:AddLine(string.format("Skill %d - %d", step.minSkill, step.maxSkill), 0.6, 0.6, 0.6)
-    if step.learnAt then
-        GameTooltip:AddLine(string.format("Learn recipe at %d", step.learnAt), 0.54, 0.08, 0.22)
-    end
-    if RGXProf.DataManager and RGXProf.DataManager.GetEstimatedCrafts then
-        local ok, crafts = pcall(RGXProf.DataManager.GetEstimatedCrafts, RGXProf.DataManager, step.minSkill, step)
-        if ok and crafts and crafts > 0 and crafts < math.huge then
-            GameTooltip:AddLine(string.format("Craft ~%d for this step", crafts), 0.6, 0.6, 0.6)
-        end
-    end
-    GameTooltip:Show()
-end
-
 local function SelectedPage(professionID)
     local path = RGXProf.currentExpansion.paths[professionID]
     local page = RGXProf_Settings.bookPage
@@ -305,7 +285,7 @@ function RGXProf.BookWindow:EnsureFrame()
     f.headerAuthor:SetText("by donniedice")
 
     f.headerDiscord = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    f.headerDiscord:SetPoint("LEFT", f.headerSub, "RIGHT", 24, 0)
+    f.headerDiscord:SetPoint("TOPLEFT", f.headerSub, "BOTTOMLEFT", 0, -2)
     f.headerDiscord:SetText("|cff7289daDiscord:|r |cffffd700" .. tostring(HeaderMeta("X-Discord") or "") .. "|r")
 
     local sr, sg, sb = 0.545, 0.545, 0.596
@@ -401,7 +381,7 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
     detail.recipeCard:SetPoint("TOPLEFT", canvas, "TOPLEFT", 2, 0)
     detail.recipeCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, 0)
-    detail.recipeCard:SetHeight(128)
+    detail.recipeCard:SetHeight(100)
 
     detail.icon = detail.recipeCard.content:CreateTexture(nil, "ARTWORK")
     detail.icon:SetSize(36, 36)
@@ -421,12 +401,14 @@ function RGXProf.BookWindow:EnsureFrame()
 
     detail.meta = detail.recipeCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     detail.meta:SetPoint("TOPLEFT", detail.icon, "BOTTOMLEFT", 0, -8)
-    detail.meta:SetPoint("RIGHT", -2, 0)
+    detail.meta:SetPoint("RIGHT", -170, 0)
     detail.meta:SetJustifyH("LEFT")
+    detail.meta:SetWordWrap(true)
 
     detail.difficulty = detail.recipeCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    detail.difficulty:SetPoint("TOPLEFT", detail.meta, "BOTTOMLEFT", 0, -4)
+    detail.difficulty:SetPoint("TOPLEFT", detail.meta, "TOPRIGHT", 12, 0)
     detail.difficulty:SetPoint("RIGHT", -2, 0)
+    detail.difficulty:SetJustifyH("RIGHT")
 
     detail.matsCard = UI:CreateSection(canvas, { title = "Materials" })
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -10)
@@ -588,7 +570,7 @@ local function GetRow(self, index)
     row.name:SetJustifyH("LEFT")
     row.name:SetWordWrap(false)
 
-    row:SetScript("OnEnter", function(s) s.bg:Show() ShowStepSummary(s, s._step) end)
+    row:SetScript("OnEnter", function(s) s.bg:Show() ShowStepTooltip(s, s._step) end)
     row:SetScript("OnLeave", function(s) if not s._selected then s.bg:Hide() end GameTooltip:Hide() end)
 
     self.rows[index] = row
@@ -790,7 +772,7 @@ local function RenderDetail(self)
         metaText = metaText .. Dim() .. "  -  " .. Text() .. "Learn recipe at " .. step.learnAt
     end
     if crafts > 0 then
-        metaText = metaText .. Dim() .. "  |  " .. Text() .. string.format("Craft ~%d to reach %d", crafts, step.maxSkill)
+        metaText = metaText .. Dim() .. "  |  " .. Text() .. string.format("Craft about %d to reach %d", crafts, step.maxSkill)
     elseif skill then
         metaText = metaText .. Dim() .. "  |  " .. Dim() .. "Completed"
     end
