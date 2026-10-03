@@ -263,9 +263,9 @@ function RGXProf.BookWindow:EnsureFrame()
     accentLine:SetColorTexture(unpack(BRAND_RGB))
 
     f.headerIcon = header:CreateTexture(nil, "ARTWORK")
-    f.headerIcon:SetSize(30, 30)
-    f.headerIcon:SetPoint("TOPLEFT", 12, -18)
-    f.headerIcon:SetTexture("Interface\\AddOns\\RGXProfessions\\Media\\RGXIcon.tga")
+    f.headerIcon:SetSize(48, 48)
+    f.headerIcon:SetPoint("TOPLEFT", 12, -6)
+    f.headerIcon:SetTexture("Interface\\AddOns\\RGXProfessions\\Media\\RGXIconSquare.tga")
 
     f.headerTitle = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     f.headerTitle:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, 10)
@@ -341,7 +341,7 @@ function RGXProf.BookWindow:EnsureFrame()
 
     -- Landing page: profession grid with live skill under each.
     f.landing = CreateFrame("Frame", nil, f)
-    f.landing:SetPoint("TOPLEFT", 12, -HEADER_HEIGHT)
+    f.landing:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 8, 0)
     f.landing:SetPoint("BOTTOMRIGHT", -12, 12)
 
     f.landingHint = f.landing:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -349,7 +349,7 @@ function RGXProf.BookWindow:EnsureFrame()
 
     -- Guide view: left step list + right detail.
     f.guide = CreateFrame("Frame", nil, f)
-    f.guide:SetPoint("TOPLEFT", 12, -HEADER_HEIGHT)
+    f.guide:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 8, 0)
     f.guide:SetPoint("BOTTOMRIGHT", -12, 44)
     f.guide:Hide()
 
