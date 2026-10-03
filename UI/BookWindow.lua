@@ -302,17 +302,16 @@ function RGXProf.BookWindow:EnsureFrame()
     f.headerAuthor = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.headerAuthor:SetPoint("TOPRIGHT", -46, -24)
     f.headerAuthor:SetJustifyH("RIGHT")
-    f.headerAuthor:SetText("by RealmGX")
+    f.headerAuthor:SetText("by donniedice")
 
     f.headerDiscord = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    f.headerDiscord:SetPoint("TOPRIGHT", -46, -38)
-    f.headerDiscord:SetJustifyH("RIGHT")
-    f.headerDiscord:SetText(tostring(HeaderMeta("X-Discord") or ""))
+    f.headerDiscord:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, -18)
+    f.headerDiscord:SetText("|cff7289daDiscord:|r |cffffd700" .. tostring(HeaderMeta("X-Discord") or "") .. "|r")
 
     local sr, sg, sb = 0.545, 0.545, 0.596
     if Design then sr, sg, sb = Design:Unpack("subtext") end
     f.headerAuthor:SetTextColor(sr, sg, sb)
-    f.headerDiscord:SetTextColor(sr, sg, sb)
+    f.headerDiscord:SetTextColor(0.85, 0.85, 0.85)
     local vr, vg, vb = 0.545, 0.082, 0.220
     if Design then vr, vg, vb = Design:Unpack("primary") end
     f.headerVer:SetTextColor(vr, vg, vb)
