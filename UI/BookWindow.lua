@@ -269,7 +269,7 @@ function RGXProf.BookWindow:EnsureFrame()
 
     f.headerTitle = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     f.headerTitle:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, 10)
-    f.headerTitle:SetText("|cff8B1538RGX|r |cffffffffProfessions|r")
+    f.headerTitle:SetText(RGXProf.L.ADDON_TITLE)
 
     f.headerSub = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.headerSub:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, -8)
@@ -964,7 +964,7 @@ function RGXProf.BookWindow:Show()
         local maxSkill = total or MaxSkill()
 
         self.frame.headerIcon:SetTexture(prof.icon or 133741)
-        self.frame.headerTitle:SetText(prof.name .. " - Leveling Guide")
+        self.frame.headerTitle:SetText(prof.name .. " - Leveling Path")
         local gate = skill and NextGate(tonumber(skill))
     local gateText = gate and (Dim() .. "  -  Train " .. Text() .. gate.rank .. Dim() .. " at " .. gate.cap) or ""
     self.frame.progressLabel:SetText(skill and (Dim() .. "Skill " .. Text() .. skill .. Dim() .. " / " .. maxSkill .. gateText) or (Dim() .. "Not learned"))
