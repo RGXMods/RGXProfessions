@@ -584,6 +584,7 @@ function RGXProf.BookWindow:EnsureFrame()
         row.count:SetPoint("RIGHT", -2, 0)
         row.count:SetJustifyH("RIGHT")
         row:Hide()
+        detail.materials[i] = row
     end
 
     detail.locCard = UI:CreateSection(canvas, { title = "Where to get it" })
