@@ -605,9 +605,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
     detail.meta:SetWordWrap(true)
     detail.meta:SetTextColor(0.9, 0.9, 0.9)
 
-    detail.recipeCard:FitContent(6)
-
-    detail.recipeCard:FitContent(6)
+detail.recipeCard:FitContent(6)
 
     -- Middle row: two-column proportional layout
     -- Materials card (~46%) | Where to Get It card (~54%)
