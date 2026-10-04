@@ -21,19 +21,43 @@ local BRAND_BORDER = { 0.545, 0.082, 0.220 } -- RGX crimson #8B1538
 local BRAND_RGB = BRAND_BORDER -- accents share the brand crimson
 
 --------------------------------------------------------------------------------
--- Textures: some Forever beta clients only accept a Color object for
--- SetColorTexture / SetVertexColor (rejecting the legacy r,g,b[,a] form).
--- Build one via CreateColor when available and pass it through; fall back
--- to the positional form otherwise. Defined early so EnsureFrame - which
--- runs at first Show, before later helpers in this file have executed -
--- can call it.
-local function ApplyColor(tex, r, g, b, a)
-    local colorObj = CreateColor and CreateColor(r, g, b, a or 1)
-    if colorObj then
-        if tex.SetColorTexture then tex:SetColorTexture(colorObj) end
-    else
-        tex:SetColorTexture(r, g, b, a or 1)
+-- Textures: this Forever beta client is inconsistent across builds - some
+-- accept positional SetColorTexture(r,g,b[,a]) / SetVertexColor(r,g,b[,a]),
+-- others only accept a single Color object, and CreateColor may be present
+-- or absent. SetTextureColor probes each strategy once (cached per
+-- texture) via pcall and uses the first that succeeds, so EnsureFrame -
+-- which runs at first Show - never aborts on a color call. A plain white
+-- texture colored via SetVertexColor is equivalent to a solid fill.
+local function SetTextureColor(tex, r, g, b, a)
+    if not tex or (not tex.SetColorTexture and not tex.SetVertexColor) then return end
+    a = a or 1
+    local key = rawget(tex, "__rgxColorMethod") or 0
+    if key == 0 then
+        local c = CreateColor and CreateColor(r, g, b, a)
+        local opts = {
+            function() tex:SetColorTexture(r, g, b, a) end,
+            function() tex:SetColorTexture(r, g, b) end,
+            function() tex:SetVertexColor(r, g, b, a) end,
+            function() tex:SetVertexColor(r, g, b) tex:SetAlpha(a) end,
+        }
+        if c then
+            table.insert(opts, function() tex:SetColorTexture(c) end)
+            table.insert(opts, function() tex:SetVertexColor(c) end)
+        end
+        for i, fn in ipairs(opts) do
+            if pcall(fn) then rawset(tex, "__rgxColorMethod", i) key = i break end
+        end
+        if key == 0 then rawset(tex, "__rgxColorMethod", -1) end
     end
+
+    local c = CreateColor and CreateColor(r, g, b, a)
+    if key == 1 then pcall(tex.SetColorTexture, tex, r, g, b, a)
+    elseif key == 2 then pcall(tex.SetColorTexture, tex, r, g, b)
+    elseif key == 3 then pcall(tex.SetVertexColor, tex, r, g, b, a)
+    elseif key == 4 then pcall(tex.SetVertexColor, tex, r, g, b) pcall(tex.SetAlpha, tex, a)
+    elseif key == 5 and c then pcall(tex.SetColorTexture, tex, c)
+    elseif key == 6 and c then pcall(tex.SetVertexColor, tex, c)
+    else pcall(tex.SetColorTexture, tex, r, g, b, a) end
 end
 
 --------------------------------------------------------------------------------
@@ -464,7 +488,7 @@ function RGXProf.BookWindow:EnsureFrame()
         bg:SetAllPoints()
         local br, bgc, bb = 0.137, 0.137, 0.173
         if Design then br, bgc, bb = Design:Unpack("border") end
-        ApplyColor(bg, br, bgc, bb, 0.8)
+        SetTextureColor(bg, br, bgc, bb, 0.8)
     end
 
     f.close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
@@ -729,17 +753,11 @@ end
 -- panel's curve); every other row uses a flat full-bleed rectangle.
 local function RowHighlightSetColor(row, r, g, b, a)
     if row.bgIsSlice then
-        local colorObj = CreateColor and CreateColor(r, g, b, a or 1)
         for _, tx in ipairs(row.bgPieces) do
-            if colorObj then
-                tx:SetVertexColor(colorObj)
-            else
-                tx:SetVertexColor(r, g, b)
-                tx:SetAlpha(a or 1)
-            end
+            SetTextureColor(tx, r, g, b, a)
         end
     else
-        ApplyColor(row.bg, r, g, b, a)
+        SetTextureColor(row.bg, r, g, b, a)
     end
 end
 
