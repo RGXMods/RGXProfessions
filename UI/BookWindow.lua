@@ -568,16 +568,14 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.recipeCard:SetPoint("TOPLEFT", canvas, "TOPLEFT", 2, -6)
     detail.recipeCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, -6)
     detail.recipeCard:SetHeight(100)
-    -- Flush the recipe card to the window surface tone so it reads as the
-    -- prominent recipe well rather than a contrasting panel. SetTextureColor
-    -- probes the client's texture-color API (this build rejects positional
-    -- SetColorTexture/SetVertexColor) and caches the winner per texture.
-    if detail.recipeCard._panelFill then
-        local sr, sg, sb = 0.086, 0.086, 0.110
-        if Design then sr, sg, sb = Design:Unpack("surface") end
-        for _, tx in ipairs(detail.recipeCard._panelFill) do
-            SetTextureColor(tx, sr, sg, sb, 1)
-        end
+    -- Give the recipe card a distinct background so it reads as a well,
+    -- not flush with the window surface. Use the framework's SetPanelColor
+    -- (positional SetVertexColor on the nine-slice fill - the form Blizzard
+    -- FrameXML uses on this client) with a dark surface tone.
+    if detail.recipeCard.SetPanelColor then
+        local dr, dg, db = 0.055, 0.055, 0.080
+        detail.recipeCard:SetPanelColor({ dr, dg, db }, nil, 1)
+    end
     end
 
     detail.icon = detail.recipeCard.content:CreateTexture(nil, "ARTWORK")
@@ -762,13 +760,18 @@ end
 -- Row highlight helpers. The first row sits on the panel's rounded top
 -- corners, so its highlight is a rounded-corner slice set (clipped to the
 -- panel's curve); every other row uses a flat full-bleed rectangle.
+-- Color via positional SetColorTexture/SetVertexColor + SetAlpha, the same
+-- form Blizzard's FrameXML uses on this client (verified against the
+-- forever UI dump); wrap in pcall so a per-texture quirk can never abort
+-- the hover handler.
 local function RowHighlightSetColor(row, r, g, b, a)
     if row.bgIsSlice then
         for _, tx in ipairs(row.bgPieces) do
-            SetTextureColor(tx, r, g, b, a)
+            pcall(tx.SetVertexColor, tx, r, g, b)
+            pcall(tx.SetAlpha, tx, a)
         end
     else
-        SetTextureColor(row.bg, r, g, b, a)
+        pcall(row.bg.SetColorTexture, row.bg, r, g, b, a)
     end
 end
 
