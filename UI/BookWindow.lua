@@ -609,18 +609,21 @@ detail.recipeCard:FitContent(6)
 
     -- Middle row: two-column proportional layout
     -- Materials card (~46%) | Where to Get It card (~54%)
+    -- NO bottom anchors here: a ScrollChild canvas never auto-grows from
+    -- children, so anchoring cards to the canvas bottom collapses them.
+    -- Cards flow top-down with intrinsic heights; RenderDetail positions
+    -- the notes card below the deeper of the two via the midRow spacer.
     local MIDDLE_GAP = 6
 
     detail.matsCard = UI:CreateSection(canvas, { title = "Materials" })
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -6)
     detail.matsCard:SetPoint("TOPRIGHT", canvas, "TOP", -MIDDLE_GAP / 2, -6)
-    detail.matsCard:SetPoint("BOTTOM", canvas, "BOTTOM", 0, 6)
 
-    -- Material rows: each row self-sizes to its wrapped content
+    -- Material rows: each row self-sizes to its wrapped content; heights
+    -- are measured and applied in RenderDetail.
     detail.materials = {}
     for i = 1, 8 do
         local row = CreateFrame("Frame", nil, detail.matsCard.content)
-        -- No fixed height - row will size to content via FontString anchors
         if i == 1 then
             row:SetPoint("TOPLEFT", 2, -2)
             row:SetPoint("TOPRIGHT", -2, -2)
@@ -633,13 +636,12 @@ detail.recipeCard:FitContent(6)
         row.icon:SetPoint("TOPLEFT", 0, 0)
         row.name = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 4, 0)
-        row.name:SetPoint("RIGHT", row, "RIGHT", -54, 0)
+        row.name:SetPoint("RIGHT", row, "RIGHT", -36, 0)
         row.name:SetJustifyH("LEFT")
         row.name:SetWordWrap(true)
         row.name:SetNonSpaceWrap(true)
         row.count = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         row.count:SetPoint("TOPRIGHT", -2, 0)
-        row.count:SetPoint("BOTTOMRIGHT", -2, 0)
         row.count:SetJustifyH("RIGHT")
         row.count:SetTextColor(0.9, 0.9, 0.9)
         row:Hide()
@@ -648,8 +650,7 @@ detail.recipeCard:FitContent(6)
 
     detail.locCard = UI:CreateSection(canvas, { title = "Where to get it" })
     detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "TOPRIGHT", MIDDLE_GAP, 0)
-    detail.locCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -2, -6)
-    detail.locCard:SetPoint("BOTTOM", canvas, "BOTTOM", 0, 6)
+    detail.locCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, -6)
 
     -- Location content: structured FontStrings for proper flow
     detail.locHeader = detail.locCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -679,16 +680,23 @@ detail.recipeCard:FitContent(6)
     detail.locAction:SetSpacing(2)
     detail.locAction:SetTextColor(0.6, 0.8, 1)
 
-    -- Notes card: full width below middle row, fills remaining space
+    -- Invisible spacer marking the horizontal bottom of the middle row.
+    -- RenderDetail repositions it below the deeper of the two cards so
+    -- the notes card gets a level top edge even when heights differ.
+    detail.midRow = CreateFrame("Frame", nil, canvas)
+    detail.midRow:SetHeight(1)
+    detail.midRow:SetPoint("TOPLEFT", canvas, "TOPLEFT", 0, 0)
+    detail.midRow:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", 0, 0)
+
+    -- Notes card: full width below the middle row. No canvas-bottom anchor:
+    -- FitContent must be free to shrink the card to its text.
     detail.notesCard = UI:CreateSection(canvas, { title = "Notes" })
-    detail.notesCard:SetPoint("TOPLEFT", detail.matsCard, "BOTTOMLEFT", 0, -6)
-    detail.notesCard:SetPoint("TOPRIGHT", detail.locCard, "BOTTOMRIGHT", 0, -6)
-    detail.notesCard:SetPoint("BOTTOM", canvas, "BOTTOM", 0, 0)
+    detail.notesCard:SetPoint("TOPLEFT", detail.midRow, "BOTTOMLEFT", 0, -6)
+    detail.notesCard:SetPoint("TOPRIGHT", detail.midRow, "BOTTOMRIGHT", 0, -6)
 
     detail.notes = detail.notesCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.notes:SetPoint("TOPLEFT", 2, -2)
     detail.notes:SetPoint("RIGHT", -2, 0)
-    detail.notes:SetPoint("BOTTOM", -2, 2)
     detail.notes:SetJustifyH("LEFT")
     detail.notes:SetWordWrap(true)
     detail.notes:SetNonSpaceWrap(true)
@@ -984,6 +992,7 @@ end
 local function RenderDetail(self)
     local f = self.frame
     local detail = f.detail
+    local canvas = detail.canvas
     local professionID = self:GetCurrentProfession()
     if not professionID then return end
 
@@ -1066,13 +1075,12 @@ local function RenderDetail(self)
         else
             row:Hide()
         end
-        -- Force row to wrap and size to content
+        -- Size each shown row to its wrapped text: the FontString width is
+        -- already constrained by anchors, so GetStringHeight reflects the
+        -- wrapped height immediately after SetText. The icon is 14px tall.
         if row:IsShown() then
-            row.name:SetWidth(row.name:GetWidth())
             local nameH = row.name:GetStringHeight()
-            local iconH = row.icon:GetHeight()
-            local rowH = math.max(nameH, iconH)
-            row:SetHeight(rowH)
+            row:SetHeight(math.max(nameH, 14))
         end
     end
 
@@ -1113,7 +1121,9 @@ local function RenderDetail(self)
     end
     detail.locCard:FitContent(6)
 
-    -- Notes
+    -- Notes: hide the card entirely when there is nothing to say, so the
+    -- layout never carries an empty card. No bottom anchor on the text:
+    -- FitContent must be free to shrink the card to its real height.
     local notes = {}
     if step.keep then
         table.insert(notes, C("accent") .. "Keep the crafted items for later steps.")
@@ -1123,9 +1133,38 @@ local function RenderDetail(self)
     end
     if step.note then table.insert(notes, Accent() .. "* " .. Text() .. step.note) end
     if step.quests then table.insert(notes, Dim() .. "Requires a quest (see trainer list).") end
-    detail.notes:SetText(table.concat(notes, "\n"))
-    detail.notesCard:FitContent(4)
-    detail.recipeCard:FitContent(6)
+
+    -- Position the spacer below the deeper of the two middle cards so the
+    -- notes top edge stays level when the columns have different heights.
+    local canvasTop = canvas:GetTop() or 0
+    local matsBottom = detail.matsCard:GetBottom() or canvasTop
+    local locBottom = detail.locCard:GetBottom() or canvasTop
+    local deepest = math.min(matsBottom, locBottom)
+    local dy = math.max(0, canvasTop - deepest)
+    detail.midRow:ClearAllPoints()
+    detail.midRow:SetPoint("TOPLEFT", canvas, "TOPLEFT", 0, -dy)
+    detail.midRow:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", 0, -dy)
+
+    if #notes > 0 then
+        detail.notesCard:Show()
+        detail.notes:SetText(table.concat(notes, "\n"))
+        detail.notesCard:FitContent(4)
+    else
+        detail.notesCard:Hide()
+    end
+
+    -- Canvas height: ScrollChild canvases never auto-grow from children,
+    -- so compute the content bottom explicitly and size the canvas to it,
+    -- floored at the viewport height so short content never scrolls.
+    local contentBottom
+    if #notes > 0 then
+        contentBottom = detail.notesCard:GetBottom() or deepest
+    else
+        contentBottom = deepest
+    end
+    local contentH = (canvasTop - contentBottom) + 10
+    local viewportH = detail:GetHeight() or 0
+    canvas:SetHeight(math.max(contentH, viewportH))
 end
 
 --------------------------------------------------------------------------------
