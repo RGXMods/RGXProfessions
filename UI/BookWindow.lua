@@ -18,7 +18,23 @@ local BANNER_HEIGHT = 22
 local HEADER_HEIGHT = 60
 
 local BRAND_BORDER = { 0.545, 0.082, 0.220 } -- RGX crimson #8B1538
-local BRAND_RGB = BRAND_BORDER -- accents share the brand crimson
+local BRAND_RGB = BRAND_RGB -- accents share the brand crimson
+
+--------------------------------------------------------------------------------
+-- Textures: some Forever beta clients only accept a Color object for
+-- SetColorTexture / SetVertexColor (rejecting the legacy r,g,b[,a] form).
+-- Build one via CreateColor when available and pass it through; fall back
+-- to the positional form otherwise. Defined early so EnsureFrame - which
+-- runs at first Show, before later helpers in this file have executed -
+-- can call it.
+local function ApplyColor(tex, r, g, b, a)
+    local colorObj = CreateColor and CreateColor(r, g, b, a or 1)
+    if colorObj then
+        if tex.SetColorTexture then tex:SetColorTexture(colorObj) end
+    else
+        tex:SetColorTexture(r, g, b, a or 1)
+    end
+end
 
 --------------------------------------------------------------------------------
 -- Colours / text helpers
@@ -711,19 +727,6 @@ end
 -- Row highlight helpers. The first row sits on the panel's rounded top
 -- corners, so its highlight is a rounded-corner slice set (clipped to the
 -- panel's curve); every other row uses a flat full-bleed rectangle.
--- Some Forever beta textures (notably the step-list row backgrounds) reject
--- the legacy (r,g,b[,a]) argument form for SetColorTexture/SetVertexColor
--- and only accept a single Color object. Build one via CreateColor when it
--- exists and pass it through; fall back to the positional form otherwise.
-local function ApplyColor(tex, r, g, b, a)
-    local colorObj = CreateColor and CreateColor(r, g, b, a or 1)
-    if colorObj then
-        if tex.SetColorTexture then tex:SetColorTexture(colorObj) end
-    else
-        tex:SetColorTexture(r, g, b, a or 1)
-    end
-end
-
 local function RowHighlightSetColor(row, r, g, b, a)
     if row.bgIsSlice then
         local colorObj = CreateColor and CreateColor(r, g, b, a or 1)
