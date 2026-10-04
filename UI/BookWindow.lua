@@ -607,8 +607,7 @@ detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
 
     detail.matsCard = UI:CreateSection(canvas, { title = "Materials" })
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -6)
-    detail.matsCard:SetPoint("BOTTOMRIGHT", detail.recipeCard, "BOTTOMRIGHT", -4, -116)
-    detail.matsCard:SetPoint("RIGHT", detail.locCard, "LEFT", -6, 0)
+    detail.matsCard:SetPoint("BOTTOMRIGHT", detail.recipeCard, "BOTTOM", -3, -116)
 
     -- Material rows: icon left, name flexible, have/need right-aligned
     -- and never wrapped. Row 8 doubles as the overflow note.
@@ -639,7 +638,7 @@ detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
     end
 
     detail.locCard = UI:CreateSection(canvas, { title = "Where to get it" })
-    detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "TOPRIGHT", 6, 0)
+    detail.locCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOM", 3, -6)
     detail.locCard:SetPoint("BOTTOMRIGHT", detail.recipeCard, "BOTTOMRIGHT", 0, -6)
     -- Fixed height matching the materials column so the notes card can
     -- anchor below both. No FitContent - this card must never balloon.
