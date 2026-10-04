@@ -419,7 +419,7 @@ function RGXProf.BookWindow:EnsureFrame()
     f.headerIcon = header:CreateTexture(nil, "ARTWORK")
     f.headerIcon:SetSize(48, 48)
     f.headerIcon:SetPoint("TOPLEFT", 12, -4)
-    f.headerIcon:SetTexture("Interface\\AddOns\\RGXProfessions\\Media\\RGXIconSquare.tga")
+    f.headerIcon:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\square.png")
 
     f.headerTitle = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     f.headerTitle:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, 10)
@@ -613,8 +613,7 @@ detail.recipeCard:FitContent(6)
 
     detail.matsCard = UI:CreateSection(canvas, { title = "Materials" })
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -6)
-    detail.matsCard:SetPoint("BOTTOMLEFT", canvas, "BOTTOM", -MIDDLE_GAP / 2, 0)
-    detail.matsCard:SetPoint("RIGHT", canvas, "BOTTOM", -MIDDLE_GAP / 2, 0)
+    detail.matsCard:SetPoint("TOPRIGHT", canvas, "TOP", -MIDDLE_GAP / 2, -6)
 
     -- Material rows: icon left, name flexible, have/need right-aligned
     detail.materials = {}
@@ -647,7 +646,7 @@ detail.recipeCard:FitContent(6)
 
     detail.locCard = UI:CreateSection(canvas, { title = "Where to get it" })
     detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "TOPRIGHT", MIDDLE_GAP, 0)
-    detail.locCard:SetPoint("BOTTOMRIGHT", canvas, "BOTTOM", MIDDLE_GAP / 2, 0)
+    detail.locCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -2, -6)
 
     -- Location content: structured FontStrings for proper flow
     detail.locHeader = detail.locCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -1250,7 +1249,7 @@ function RGXProf.BookWindow:Show()
         local skill, total = LiveSkill(professionID)
         local maxSkill = total or MaxSkill()
 
-        self.frame.headerIcon:SetTexture(prof.icon or 133741)
+        self.frame.headerIcon:SetTexture(prof.icon or "Interface\\AddOns\\RGX-Framework\\media\\square.png")
         self.frame.headerTitle:SetText(prof.name .. " - Leveling Path")
         local gate = skill and NextGate(tonumber(skill))
     local gateText = gate and (Dim() .. "  -  Train " .. Text() .. gate.rank .. Dim() .. " at " .. gate.cap) or ""
@@ -1265,7 +1264,7 @@ function RGXProf.BookWindow:Show()
         RenderStepList(self)
         RenderDetail(self)
     else
-        self.frame.headerIcon:SetTexture("Interface\\AddOns\\RGXProfessions\\Media\\RGXIcon.tga")
+        self.frame.headerIcon:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\square.png")
         self.frame.headerTitle:SetText(HEADER_TITLE)
         self.frame.progressLabel:SetText("")
         self.frame.progress:SetMinMaxValues(0, 1)
