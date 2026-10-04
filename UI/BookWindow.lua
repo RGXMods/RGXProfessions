@@ -568,6 +568,17 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.recipeCard:SetPoint("TOPLEFT", canvas, "TOPLEFT", 2, -6)
     detail.recipeCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, -6)
     detail.recipeCard:SetHeight(100)
+    -- Flush the recipe card to the window surface tone so it reads as the
+    -- prominent recipe well rather than a contrasting panel. SetTextureColor
+    -- probes the client's texture-color API (this build rejects positional
+    -- SetColorTexture/SetVertexColor) and caches the winner per texture.
+    if detail.recipeCard._panelFill then
+        local sr, sg, sb = 0.086, 0.086, 0.110
+        if Design then sr, sg, sb = Design:Unpack("surface") end
+        for _, tx in ipairs(detail.recipeCard._panelFill) do
+            SetTextureColor(tx, sr, sg, sb, 1)
+        end
+    end
 
     detail.icon = detail.recipeCard.content:CreateTexture(nil, "ARTWORK")
     detail.icon:SetSize(36, 36)
