@@ -18,7 +18,7 @@ local BANNER_HEIGHT = 22
 local HEADER_HEIGHT = 60
 
 local BRAND_BORDER = { 0.545, 0.082, 0.220 } -- RGX crimson #8B1538
-local BRAND_RGB = BRAND_RGB -- accents share the brand crimson
+local BRAND_RGB = BRAND_BORDER -- accents share the brand crimson
 
 --------------------------------------------------------------------------------
 -- Textures: some Forever beta clients only accept a Color object for
