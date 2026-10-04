@@ -558,16 +558,16 @@ function RGXProf.BookWindow:EnsureFrame()
     detail:SetPoint("BOTTOMRIGHT", 0, 0)
     f.detail = detail
 
-    local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
-    local canvas = UI:CreateScrollPage(detail, 780)
+local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
+    local canvas = UI:CreateScrollPage(detail, 0)
     detail.canvas = canvas
+    canvas:SetHeight(1)
 
-    -- Recipe card: icon, title, meta and difficulty together at the top,
-    -- using the same RGXUI section skin as every other RGX options surface.
-detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
-    detail.recipeCard:SetPoint("TOPLEFT", canvas, "TOPLEFT", 2, -6)
-    detail.recipeCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, -6)
-    detail.recipeCard:SetHeight(100)
+    -- Recipe card: full width, intrinsic height via FitContent
+    detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
+    detail.recipeCard:SetPoint("TOPLEFT", canvas, "TOPLEFT", 2, 0)
+    detail.recipeCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, 0)
+
     -- Recipe card background: tint the nine-slice fill directly with
     -- pcall-guarded positional SetVertexColor (the form Blizzard FrameXML
     -- uses on this client). A dark distinct tone so it reads as a well.
@@ -586,8 +586,8 @@ detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
     detail.title:SetPoint("LEFT", detail.icon, "RIGHT", 10, 0)
     detail.title:SetPoint("RIGHT", -2, 0)
     detail.title:SetJustifyH("LEFT")
+    detail.title:SetWordWrap(true)
 
-    -- Hover frame over the title so the recipe shows its real in-game tooltip.
     detail.titleHover = CreateFrame("Frame", nil, detail.recipeCard.content)
     detail.titleHover:SetAllPoints(detail.title)
     detail.titleHover:EnableMouse(true)
@@ -602,15 +602,23 @@ detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
     detail.meta:SetPoint("TOPLEFT", detail.icon, "BOTTOMLEFT", 0, -8)
     detail.meta:SetPoint("RIGHT", detail.difficulty, "LEFT", -8, 0)
     detail.meta:SetJustifyH("LEFT")
-    detail.meta:SetWordWrap(false)
+    detail.meta:SetWordWrap(true)
     detail.meta:SetTextColor(0.9, 0.9, 0.9)
+
+    detail.recipeCard:FitContent(6)
+
+    detail.recipeCard:FitContent(6)
+
+    -- Middle row: two-column proportional layout
+    -- Materials card (~46%) | Where to Get It card (~54%)
+    local MIDDLE_GAP = 6
 
     detail.matsCard = UI:CreateSection(canvas, { title = "Materials" })
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -6)
-    detail.matsCard:SetPoint("BOTTOMRIGHT", detail.recipeCard, "BOTTOM", -3, -116)
+    detail.matsCard:SetPoint("BOTTOMLEFT", canvas, "BOTTOM", -MIDDLE_GAP / 2, 0)
+    detail.matsCard:SetPoint("RIGHT", canvas, "BOTTOM", -MIDDLE_GAP / 2, 0)
 
     -- Material rows: icon left, name flexible, have/need right-aligned
-    -- and never wrapped. Row 8 doubles as the overflow note.
     detail.materials = {}
     for i = 1, 8 do
         local row = CreateFrame("Frame", nil, detail.matsCard.content)
@@ -628,7 +636,7 @@ detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
         row.name:SetPoint("LEFT", row.icon, "RIGHT", 4, 0)
         row.name:SetPoint("RIGHT", row, "RIGHT", -54, 0)
         row.name:SetJustifyH("LEFT")
-        row.name:SetWordWrap(false)
+        row.name:SetWordWrap(true)
         row.count = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         row.count:SetPoint("RIGHT", -2, 0)
         row.count:SetJustifyH("RIGHT")
@@ -637,41 +645,60 @@ detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
         detail.materials[i] = row
     end
 
+    detail.matsCard:FitContent(6)
+
     detail.locCard = UI:CreateSection(canvas, { title = "Where to get it" })
-    detail.locCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOM", 3, -6)
-    detail.locCard:SetPoint("BOTTOMRIGHT", detail.recipeCard, "BOTTOMRIGHT", 0, -6)
-    -- Fixed height matching the materials column so the notes card can
-    -- anchor below both. No FitContent - this card must never balloon.
-    detail.locCard:SetHeight(116)
+    detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "TOPRIGHT", MIDDLE_GAP, 0)
+    detail.locCard:SetPoint("BOTTOMRIGHT", canvas, "BOTTOM", MIDDLE_GAP / 2, 0)
 
-    detail.locations = detail.locCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    detail.locations:SetPoint("TOPLEFT", 2, -2)
-    detail.locations:SetPoint("RIGHT", -2, 0)
-    detail.locations:SetJustifyH("LEFT")
-    detail.locations:SetWordWrap(true)
-    detail.locations:SetSpacing(2)
-    detail.locations:SetTextColor(0.95, 0.95, 0.95)
+    -- Location content: structured FontStrings for proper flow
+    detail.locHeader = detail.locCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    detail.locHeader:SetPoint("TOPLEFT", 2, -2)
+    detail.locHeader:SetPoint("RIGHT", -2, 0)
+    detail.locHeader:SetJustifyH("LEFT")
+    detail.locHeader:SetWordWrap(true)
+    detail.locHeader:SetSpacing(2)
+    detail.locHeader:SetTextColor(0.95, 0.95, 0.95)
 
-    -- Location card interaction: click drops a map pin on the shown NPC
-    -- (waypoint API capability-gated; opens the map either way); hover
-    -- highlights the card.
+    detail.locCoords = detail.locCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    detail.locCoords:SetPoint("TOPLEFT", detail.locHeader, "BOTTOMLEFT", 0, -2)
+    detail.locCoords:SetPoint("RIGHT", -2, 0)
+    detail.locCoords:SetJustifyH("LEFT")
+    detail.locCoords:SetWordWrap(true)
+    detail.locCoords:SetSpacing(2)
+    detail.locCoords:SetTextColor(0.7, 0.7, 0.7)
+
+    detail.locAction = detail.locCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    detail.locAction:SetPoint("TOPLEFT", detail.locCoords, "BOTTOMLEFT", 0, -2)
+    detail.locAction:SetPoint("RIGHT", -2, 0)
+    detail.locAction:SetJustifyH("LEFT")
+    detail.locAction:SetWordWrap(true)
+    detail.locAction:SetSpacing(2)
+    detail.locAction:SetTextColor(0.6, 0.8, 1)
+
+    detail.locCard:FitContent(6)
+
+    -- Location card interaction
     detail.locHover = CreateFrame("Button", nil, detail.locCard.content)
     detail.locHover:SetAllPoints(detail.locCard.content)
     detail.locHover:EnableMouse(true)
     detail.locHover:SetScript("OnEnter", function(s)
-        detail.locations:SetTextColor(1, 0.82, 0)
+        detail.locHeader:SetTextColor(1, 0.82, 0)
+        detail.locCoords:SetTextColor(1, 0.82, 0)
+        detail.locAction:SetTextColor(1, 0.82, 0)
         GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
         GameTooltip:SetText("Pin on the map")
         GameTooltip:AddLine("Drops a map pin on this location.", 0.6, 0.6, 0.6)
         GameTooltip:Show()
     end)
     detail.locHover:SetScript("OnLeave", function()
-        detail.locations:SetTextColor(1, 1, 1)
+        detail.locHeader:SetTextColor(0.95, 0.95, 0.95)
+        detail.locCoords:SetTextColor(0.7, 0.7, 0.7)
+        detail.locAction:SetTextColor(0.6, 0.8, 1)
         GameTooltip:Hide()
     end)
     detail.locHover:SetScript("OnClick", function()
         local target = detail._pinTarget
-        -- 1. Real pin when the client exposes the waypoint API.
         if target and target.zoneID and target.x and target.y
             and UiMapPoint and UiMapPoint.CreateFromCoordinates
             and C_Map and C_Map.SetUserWaypoint then
@@ -683,8 +710,6 @@ detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
                 end
             end
         end
-        -- 2. Always open the map, zoomed to the NPC's zone when possible -
-        --    this is the functional fallback when no waypoint API exists.
         if WorldMapFrame and WorldMapFrame:IsShown() then
             WorldMapFrame:Hide()
         elseif ToggleWorldMap then
@@ -695,6 +720,7 @@ detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
         end
     end)
 
+    -- Notes card: full width below middle row, intrinsic height
     detail.notesCard = UI:CreateSection(canvas, { title = "Notes" })
     detail.notesCard:SetPoint("TOPLEFT", detail.matsCard, "BOTTOMLEFT", 0, -6)
     detail.notesCard:SetPoint("TOPRIGHT", detail.locCard, "BOTTOMRIGHT", 0, -6)
@@ -706,6 +732,8 @@ detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
     detail.notes:SetWordWrap(true)
     detail.notes:SetSpacing(3)
     detail.notes:SetTextColor(0.9, 0.9, 0.9)
+
+    detail.notesCard:FitContent(6)
 
     -- Footer buttons.
     f.backBtn = Design:CreateButton(f, "< Professions", 110, 24)
@@ -1089,7 +1117,6 @@ local function RenderDetail(self)
     for _, t in ipairs(trainers) do table.insert(allLocs, t) end
     detail._pinTarget = NearestNpc(allLocs)
 
-    local locLines = {}
     if detail._pinTarget then
         local target = detail._pinTarget
         local nameLine = Text() .. (target.name or "Unknown")
@@ -1101,15 +1128,18 @@ local function RenderDetail(self)
         if zone ~= "" then
             nameLine = nameLine .. Dim() .. " · " .. Text() .. zone
         end
-        table.insert(locLines, nameLine)
+        detail.locHeader:SetText(nameLine)
         if target.x and target.y then
-            table.insert(locLines, Dim() .. string.format("%.1f, %.1f", target.x, target.y))
+            detail.locCoords:SetText(Dim() .. string.format("%.1f, %.1f", target.x, target.y))
+        else
+            detail.locCoords:SetText("")
         end
-        table.insert(locLines, Dim() .. "Closest to you · Click to pin")
+        detail.locAction:SetText(Dim() .. "Closest to you · Click to pin")
     else
-        table.insert(locLines, Dim() .. "Trainer-taught; ask any profession trainer.")
+        detail.locHeader:SetText(Dim() .. "Trainer-taught; ask any profession trainer.")
+        detail.locCoords:SetText("")
+        detail.locAction:SetText("")
     end
-    detail.locations:SetText(table.concat(locLines, "\n"))
 
     -- Notes
     local notes = {}
