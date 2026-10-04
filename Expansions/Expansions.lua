@@ -130,8 +130,18 @@ local function Forever()
             [185] = {107073, 15}, -- Cooking +15
         },
         paths = {
-            [197] = RGXProf.ForeverPaths.Tailoring,
-            [202] = RGXProf.ForeverPaths.Engineering
+            [164] = RGXProf.ForeverPaths.Blacksmithing,
+            [165] = RGXProf.ForeverPaths.Leatherworking,
+            [171] = RGXProf.ForeverPaths.Alchemy,
+            [185] = RGXProf.ForeverPaths.Cooking,
+            [333] = RGXProf.ForeverPaths.Enchanting,
+            [202] = RGXProf.ForeverPaths.Engineering,
+            [129] = RGXProf.ForeverPaths.FirstAid,
+            [356] = RGXProf.ForeverPaths.Fishing,
+            [182] = RGXProf.ForeverPaths.Herbalism,
+            [186] = RGXProf.ForeverPaths.Mining,
+            [393] = RGXProf.ForeverPaths.Skinning,
+            [197] = RGXProf.ForeverPaths.Tailoring
         },
         tiers = { 50, 75, 100, 150, 225, 300 },
     }
