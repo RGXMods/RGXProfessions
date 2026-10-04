@@ -594,16 +594,16 @@ detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
     detail.titleHover:SetScript("OnEnter", function(s) ShowStepTooltip(s, detail._step) end)
     detail.titleHover:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
+    detail.difficulty = detail.recipeCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    detail.difficulty:SetPoint("TOPRIGHT", -2, 0)
+    detail.difficulty:SetJustifyH("RIGHT")
+
     detail.meta = detail.recipeCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     detail.meta:SetPoint("TOPLEFT", detail.icon, "BOTTOMLEFT", 0, -8)
     detail.meta:SetPoint("RIGHT", detail.difficulty, "LEFT", -8, 0)
     detail.meta:SetJustifyH("LEFT")
     detail.meta:SetWordWrap(false)
     detail.meta:SetTextColor(0.9, 0.9, 0.9)
-
-    detail.difficulty = detail.recipeCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    detail.difficulty:SetPoint("TOPRIGHT", -2, 0)
-    detail.difficulty:SetJustifyH("RIGHT")
 
     detail.matsCard = UI:CreateSection(canvas, { title = "Materials" })
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -6)
