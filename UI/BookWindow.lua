@@ -1122,10 +1122,6 @@ local function RenderDetail(self)
     if detail.notesCard and detail.notesCard.FitContent then
         detail.notesCard:FitContent(4)
     end
-
-    -- Footer buttons
-    f.prevBtn:SetEnabled(page > 1)
-    f.nextBtn:SetEnabled(page < #path)
 end
 
 --------------------------------------------------------------------------------
@@ -1235,8 +1231,6 @@ function RGXProf.BookWindow:Show()
         self.frame.guide:Show()
         self.frame.backBtn:Show()
         self.frame.matsBtn:Show()
-        self.frame.prevBtn:Show()
-        self.frame.nextBtn:Show()
         RenderStepList(self)
         RenderDetail(self)
     else
@@ -1249,8 +1243,6 @@ function RGXProf.BookWindow:Show()
         self.frame.guide:Hide()
         self.frame.backBtn:Hide()
         self.frame.matsBtn:Hide()
-        self.frame.prevBtn:Hide()
-        self.frame.nextBtn:Hide()
         self.frame.landing:Show()
         BuildLanding(self)
     end
