@@ -1226,6 +1226,18 @@ end
 -- Public API
 --------------------------------------------------------------------------------
 
+-- Shared live progress header: skill value, rank-gate hint, bar fill.
+-- Used by both Show and Refresh so a skill-up re-renders identically.
+local function UpdateProgressFrame(f, professionID)
+    local skill, total = LiveSkill(professionID)
+    local maxSkill = total or MaxSkill()
+    local gate = skill and NextGate(tonumber(skill))
+    local gateText = gate and (Dim() .. "  -  Train " .. Text() .. gate.rank .. Dim() .. " at " .. gate.cap) or ""
+    f.progressLabel:SetText(skill and (Dim() .. "Skill " .. Text() .. skill .. Dim() .. " / " .. maxSkill .. gateText) or (Dim() .. "Not learned"))
+    f.progress:SetMinMaxValues(0, maxSkill)
+    f.progress:SetValue(skill or 0)
+end
+
 function RGXProf.BookWindow:GetCurrentProfession()
     local saved = RGXProf_Settings.bookProfessionID
     if saved and RGXProf.currentExpansion.paths[saved] then
@@ -1259,16 +1271,9 @@ function RGXProf.BookWindow:Show()
     local professionID = self:GetCurrentProfession()
     if professionID then
         local prof = RGXProf.Constants.Professions[professionID]
-        local skill, total = LiveSkill(professionID)
-        local maxSkill = total or MaxSkill()
-
         self.frame.headerIcon:SetTexture(prof.icon or "Interface\\AddOns\\RGX-Framework\\media\\square.png")
         self.frame.headerTitle:SetText(prof.name .. " - Leveling Path")
-        local gate = skill and NextGate(tonumber(skill))
-    local gateText = gate and (Dim() .. "  -  Train " .. Text() .. gate.rank .. Dim() .. " at " .. gate.cap) or ""
-    self.frame.progressLabel:SetText(skill and (Dim() .. "Skill " .. Text() .. skill .. Dim() .. " / " .. maxSkill .. gateText) or (Dim() .. "Not learned"))
-        self.frame.progress:SetMinMaxValues(0, maxSkill)
-        self.frame.progress:SetValue(skill or 0)
+        UpdateProgressFrame(self.frame, professionID)
 
         self.frame.landing:Hide()
         self.frame.guide:Show()
@@ -1290,6 +1295,35 @@ function RGXProf.BookWindow:Show()
         BuildLanding(self)
     end
     self.frame:Show()
+end
+
+-- Live refresh: the debounced profession refresh calls this on every
+-- skill-up, craft, or bag change while the book is open. Re-renders the
+-- step list (difficulty colors, current marker), the detail page, and the
+-- progress header, and auto-advances the page once the shown step is fully
+-- passed so the book tracks the player's live step. An incomplete page the
+-- user is browsing is never yanked away.
+function RGXProf.BookWindow:Refresh()
+    local f = self.frame
+    if not f or not f:IsShown() then return end
+    local professionID = self:GetCurrentProfession()
+    if not professionID then
+        if f.landing:IsShown() then BuildLanding(self) end
+        return
+    end
+    UpdateProgressFrame(f, professionID)
+    local path = RGXProf.currentExpansion.paths[professionID]
+    local skill = LiveSkill(professionID)
+    local page = SelectedPage(professionID)
+    local step = path and path[page]
+    if skill and step and not step.alternate and skill >= step.maxSkill then
+        local current = FindCurrentIndex(path, skill)
+        if current and current ~= page then
+            RGXProf_Settings.bookPage = current
+        end
+    end
+    RenderStepList(self)
+    RenderDetail(self)
 end
 
 function RGXProf.BookWindow:Hide()
