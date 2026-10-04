@@ -596,19 +596,20 @@ detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
 
     detail.meta = detail.recipeCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     detail.meta:SetPoint("TOPLEFT", detail.icon, "BOTTOMLEFT", 0, -8)
-    detail.meta:SetPoint("RIGHT", -170, 0)
+    detail.meta:SetPoint("RIGHT", detail.difficulty, "LEFT", -8, 0)
     detail.meta:SetJustifyH("LEFT")
     detail.meta:SetWordWrap(false)
+    detail.meta:SetTextColor(0.9, 0.9, 0.9)
 
     detail.difficulty = detail.recipeCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    detail.difficulty:SetPoint("TOPLEFT", detail.meta, "TOPRIGHT", 12, 0)
-    detail.difficulty:SetPoint("RIGHT", -2, 0)
+    detail.difficulty:SetPoint("TOPRIGHT", -2, 0)
     detail.difficulty:SetJustifyH("RIGHT")
 
     detail.matsCard = UI:CreateSection(canvas, { title = "Materials" })
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -6)
-    detail.matsCard:SetWidth(198)
-    detail.matsCard:SetHeight(116)
+    detail.matsCard:SetPoint("BOTTOMRIGHT", detail.recipeCard, "BOTTOMRIGHT", -4, -116)
+    detail.matsCard:SetPoint("RIGHT", detail.locCard, "LEFT", -6, 0)
+
     -- Material rows: icon left, name flexible, have/need right-aligned
     -- and never wrapped. Row 8 doubles as the overflow note.
     detail.materials = {}
@@ -626,19 +627,20 @@ detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
         row.icon:SetPoint("TOPLEFT", 0, 0)
         row.name = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         row.name:SetPoint("LEFT", row.icon, "RIGHT", 4, 0)
-        row.name:SetPoint("RIGHT", row, "RIGHT", -44, 0)
+        row.name:SetPoint("RIGHT", row, "RIGHT", -54, 0)
         row.name:SetJustifyH("LEFT")
         row.name:SetWordWrap(false)
         row.count = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         row.count:SetPoint("RIGHT", -2, 0)
         row.count:SetJustifyH("RIGHT")
+        row.count:SetTextColor(0.9, 0.9, 0.9)
         row:Hide()
         detail.materials[i] = row
     end
 
     detail.locCard = UI:CreateSection(canvas, { title = "Where to get it" })
-    detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "TOPRIGHT", 10, 0)
-    detail.locCard:SetPoint("TOPRIGHT", detail.recipeCard, "BOTTOMRIGHT", 0, -6)
+    detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "TOPRIGHT", 6, 0)
+    detail.locCard:SetPoint("BOTTOMRIGHT", detail.recipeCard, "BOTTOMRIGHT", 0, -6)
     -- Fixed height matching the materials column so the notes card can
     -- anchor below both. No FitContent - this card must never balloon.
     detail.locCard:SetHeight(116)
@@ -648,7 +650,8 @@ detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
     detail.locations:SetPoint("RIGHT", -2, 0)
     detail.locations:SetJustifyH("LEFT")
     detail.locations:SetWordWrap(true)
-    detail.locations:SetSpacing(3)
+    detail.locations:SetSpacing(2)
+    detail.locations:SetTextColor(0.95, 0.95, 0.95)
 
     -- Location card interaction: click drops a map pin on the shown NPC
     -- (waypoint API capability-gated; opens the map either way); hover
@@ -703,6 +706,7 @@ detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
     detail.notes:SetJustifyH("LEFT")
     detail.notes:SetWordWrap(true)
     detail.notes:SetSpacing(3)
+    detail.notes:SetTextColor(0.9, 0.9, 0.9)
 
     -- Footer buttons.
     f.backBtn = Design:CreateButton(f, "< Professions", 110, 24)
