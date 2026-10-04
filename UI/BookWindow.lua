@@ -614,39 +614,42 @@ detail.recipeCard:FitContent(6)
     detail.matsCard = UI:CreateSection(canvas, { title = "Materials" })
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -6)
     detail.matsCard:SetPoint("TOPRIGHT", canvas, "TOP", -MIDDLE_GAP / 2, -6)
+    detail.matsCard:SetPoint("BOTTOM", detail.notesCard, "TOP", 0, -6)
 
-    -- Material rows: icon left, name flexible, have/need right-aligned
+    -- Material rows: each row self-sizes to its wrapped content
     detail.materials = {}
     for i = 1, 8 do
         local row = CreateFrame("Frame", nil, detail.matsCard.content)
-        row:SetHeight(14)
+        -- No fixed height - row will size to content via FontString anchors
         if i == 1 then
             row:SetPoint("TOPLEFT", 2, -2)
+            row:SetPoint("TOPRIGHT", -2, -2)
         else
-            row:SetPoint("TOPLEFT", detail.materials[i - 1], "BOTTOMLEFT", 0, 0)
+            row:SetPoint("TOPLEFT", detail.materials[i - 1], "BOTTOMLEFT", 0, -2)
+            row:SetPoint("TOPRIGHT", detail.materials[i - 1], "BOTTOMRIGHT", 0, -2)
         end
-        row:SetPoint("RIGHT", -2, 0)
         row.icon = row:CreateTexture(nil, "ARTWORK")
         row.icon:SetSize(14, 14)
         row.icon:SetPoint("TOPLEFT", 0, 0)
         row.name = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        row.name:SetPoint("LEFT", row.icon, "RIGHT", 4, 0)
+        row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 4, 0)
         row.name:SetPoint("RIGHT", row, "RIGHT", -54, 0)
         row.name:SetJustifyH("LEFT")
         row.name:SetWordWrap(true)
+        row.name:SetNonSpaceWrap(true)
         row.count = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        row.count:SetPoint("RIGHT", -2, 0)
+        row.count:SetPoint("TOPRIGHT", -2, 0)
+        row.count:SetPoint("BOTTOMRIGHT", -2, 0)
         row.count:SetJustifyH("RIGHT")
         row.count:SetTextColor(0.9, 0.9, 0.9)
         row:Hide()
         detail.materials[i] = row
     end
 
-    detail.matsCard:FitContent(6)
-
     detail.locCard = UI:CreateSection(canvas, { title = "Where to get it" })
     detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "TOPRIGHT", MIDDLE_GAP, 0)
     detail.locCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -2, -6)
+    detail.locCard:SetPoint("BOTTOM", detail.notesCard, "TOP", 0, -6)
 
     -- Location content: structured FontStrings for proper flow
     detail.locHeader = detail.locCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -654,6 +657,7 @@ detail.recipeCard:FitContent(6)
     detail.locHeader:SetPoint("RIGHT", -2, 0)
     detail.locHeader:SetJustifyH("LEFT")
     detail.locHeader:SetWordWrap(true)
+    detail.locHeader:SetNonSpaceWrap(true)
     detail.locHeader:SetSpacing(2)
     detail.locHeader:SetTextColor(0.95, 0.95, 0.95)
 
@@ -662,6 +666,7 @@ detail.recipeCard:FitContent(6)
     detail.locCoords:SetPoint("RIGHT", -2, 0)
     detail.locCoords:SetJustifyH("LEFT")
     detail.locCoords:SetWordWrap(true)
+    detail.locCoords:SetNonSpaceWrap(true)
     detail.locCoords:SetSpacing(2)
     detail.locCoords:SetTextColor(0.7, 0.7, 0.7)
 
@@ -670,67 +675,25 @@ detail.recipeCard:FitContent(6)
     detail.locAction:SetPoint("RIGHT", -2, 0)
     detail.locAction:SetJustifyH("LEFT")
     detail.locAction:SetWordWrap(true)
+    detail.locAction:SetNonSpaceWrap(true)
     detail.locAction:SetSpacing(2)
     detail.locAction:SetTextColor(0.6, 0.8, 1)
 
-    detail.locCard:FitContent(6)
-
-    -- Location card interaction
-    detail.locHover = CreateFrame("Button", nil, detail.locCard.content)
-    detail.locHover:SetAllPoints(detail.locCard.content)
-    detail.locHover:EnableMouse(true)
-    detail.locHover:SetScript("OnEnter", function(s)
-        detail.locHeader:SetTextColor(1, 0.82, 0)
-        detail.locCoords:SetTextColor(1, 0.82, 0)
-        detail.locAction:SetTextColor(1, 0.82, 0)
-        GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
-        GameTooltip:SetText("Pin on the map")
-        GameTooltip:AddLine("Drops a map pin on this location.", 0.6, 0.6, 0.6)
-        GameTooltip:Show()
-    end)
-    detail.locHover:SetScript("OnLeave", function()
-        detail.locHeader:SetTextColor(0.95, 0.95, 0.95)
-        detail.locCoords:SetTextColor(0.7, 0.7, 0.7)
-        detail.locAction:SetTextColor(0.6, 0.8, 1)
-        GameTooltip:Hide()
-    end)
-    detail.locHover:SetScript("OnClick", function()
-        local target = detail._pinTarget
-        if target and target.zoneID and target.x and target.y
-            and UiMapPoint and UiMapPoint.CreateFromCoordinates
-            and C_Map and C_Map.SetUserWaypoint then
-            local okPoint, point = pcall(UiMapPoint.CreateFromCoordinates, target.zoneID, target.x, target.y)
-            if okPoint and point then
-                local okSet = pcall(C_Map.SetUserWaypoint, point)
-                if okSet and C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
-                    pcall(C_SuperTrack.SetSuperTrackedUserWaypoint, true)
-                end
-            end
-        end
-        if WorldMapFrame and WorldMapFrame:IsShown() then
-            WorldMapFrame:Hide()
-        elseif ToggleWorldMap then
-            ToggleWorldMap()
-            if target and target.zoneID and WorldMapFrame and WorldMapFrame.SetMapID then
-                pcall(WorldMapFrame.SetMapID, WorldMapFrame, target.zoneID)
-            end
-        end
-    end)
-
-    -- Notes card: full width below middle row, intrinsic height
+    -- Notes card: full width below middle row, fills remaining space
     detail.notesCard = UI:CreateSection(canvas, { title = "Notes" })
     detail.notesCard:SetPoint("TOPLEFT", detail.matsCard, "BOTTOMLEFT", 0, -6)
     detail.notesCard:SetPoint("TOPRIGHT", detail.locCard, "BOTTOMRIGHT", 0, -6)
+    detail.notesCard:SetPoint("BOTTOM", canvas, "BOTTOM", 0, 0)
 
     detail.notes = detail.notesCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.notes:SetPoint("TOPLEFT", 2, -2)
     detail.notes:SetPoint("RIGHT", -2, 0)
+    detail.notes:SetPoint("BOTTOM", -2, 2)
     detail.notes:SetJustifyH("LEFT")
     detail.notes:SetWordWrap(true)
+    detail.notes:SetNonSpaceWrap(true)
     detail.notes:SetSpacing(3)
     detail.notes:SetTextColor(0.9, 0.9, 0.9)
-
-    detail.notesCard:FitContent(6)
 
     -- Footer buttons.
     f.backBtn = Design:CreateButton(f, "< Professions", 110, 24)
@@ -1103,7 +1066,18 @@ local function RenderDetail(self)
         else
             row:Hide()
         end
+        -- Force row to wrap and size to content
+        if row:IsShown() then
+            row.name:SetWidth(row.name:GetWidth())
+            local nameH = row.name:GetStringHeight()
+            local iconH = row.icon:GetHeight()
+            local rowH = math.max(nameH, iconH)
+            row:SetHeight(rowH)
+        end
     end
+
+    -- Force material card to fit its content
+    detail.matsCard:FitContent(6)
 
     -- Location card: show ONLY the NPC closest to the player when the
     -- window is open, not the full vendor/trainer roster.
@@ -1137,6 +1111,7 @@ local function RenderDetail(self)
         detail.locCoords:SetText("")
         detail.locAction:SetText("")
     end
+    detail.locCard:FitContent(6)
 
     -- Notes
     local notes = {}
@@ -1149,9 +1124,8 @@ local function RenderDetail(self)
     if step.note then table.insert(notes, Accent() .. "* " .. Text() .. step.note) end
     if step.quests then table.insert(notes, Dim() .. "Requires a quest (see trainer list).") end
     detail.notes:SetText(table.concat(notes, "\n"))
-    if detail.notesCard and detail.notesCard.FitContent then
-        detail.notesCard:FitContent(4)
-    end
+    detail.notesCard:FitContent(4)
+    detail.recipeCard:FitContent(6)
 end
 
 --------------------------------------------------------------------------------
