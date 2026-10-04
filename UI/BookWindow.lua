@@ -564,17 +564,18 @@ function RGXProf.BookWindow:EnsureFrame()
 
     -- Recipe card: icon, title, meta and difficulty together at the top,
     -- using the same RGXUI section skin as every other RGX options surface.
-    detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
+detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
     detail.recipeCard:SetPoint("TOPLEFT", canvas, "TOPLEFT", 2, -6)
     detail.recipeCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, -6)
     detail.recipeCard:SetHeight(100)
-    -- Give the recipe card a distinct background so it reads as a well,
-    -- not flush with the window surface. Use the framework's SetPanelColor
-    -- (positional SetVertexColor on the nine-slice fill - the form Blizzard
-    -- FrameXML uses on this client) with a dark surface tone.
-     if detail.recipeCard.SetPanelColor then
+    -- Recipe card background: tint the nine-slice fill directly with
+    -- pcall-guarded positional SetVertexColor (the form Blizzard FrameXML
+    -- uses on this client). A dark distinct tone so it reads as a well.
+    if detail.recipeCard._panelFill then
         local dr, dg, db = 0.055, 0.055, 0.080
-        detail.recipeCard:SetPanelColor({ dr, dg, db }, nil, 1)
+        for _, tx in ipairs(detail.recipeCard._panelFill) do
+            pcall(tx.SetVertexColor, tx, dr, dg, db, 1)
+        end
     end
 
     detail.icon = detail.recipeCard.content:CreateTexture(nil, "ARTWORK")
@@ -727,27 +728,6 @@ function RGXProf.BookWindow:EnsureFrame()
         })
     end)
 
-    f.prevBtn = Design:CreateButton(f, "< Prev", 90, 24)
-    f.prevBtn:SetPoint("BOTTOMRIGHT", -150, 12)
-    f.prevBtn:SetScript("OnClick", function()
-        local professionID = RGXProf.BookWindow:GetCurrentProfession()
-        if not professionID then return end
-        local page = SelectedPage(professionID)
-        RGXProf_Settings.bookPage = math.max(1, page - 1)
-        RGXProf.BookWindow:Show()
-    end)
-
-    f.nextBtn = Design:CreateButton(f, "Next >", 90, 24)
-    f.nextBtn:SetPoint("BOTTOMRIGHT", -14, 12)
-    f.nextBtn:SetScript("OnClick", function()
-        local professionID = RGXProf.BookWindow:GetCurrentProfession()
-        if not professionID then return end
-        local path = RGXProf.currentExpansion.paths[professionID]
-        local page = SelectedPage(professionID)
-        RGXProf_Settings.bookPage = math.min(#path, page + 1)
-        RGXProf.BookWindow:Show()
-    end)
-
     self.rows = {}
     self.frame = f
 end
@@ -772,6 +752,10 @@ local function RowHighlightSetColor(row, r, g, b, a)
     else
         pcall(row.bg.SetColorTexture, row.bg, r, g, b, a)
     end
+end
+
+local function HighlightAlpha()
+    return 0.28
 end
 
 local function RowHighlightShow(row, show)
@@ -842,7 +826,7 @@ local function GetRow(self, index)
 
     row:SetScript("OnEnter", function(s)
         if not s._selected then
-            RowHighlightSetColor(s, unpack(BRAND_RGB), 0.10)
+            RowHighlightSetColor(s, unpack(BRAND_RGB), HighlightAlpha())
         end
         RowHighlightShow(s, true)
         ShowStepMaterials(s, s._step)
@@ -891,7 +875,7 @@ local function RenderStepList(self)
         row.name:SetText(nameHex .. name .. (step.alternate and (Dim() .. " (alt)") or ""))
 
         if row._selected then
-            RowHighlightSetColor(row, ar, ag, ab, 0.14)
+            RowHighlightSetColor(row, ar, ag, ab, HighlightAlpha())
             RowHighlightShow(row, true)
         else
             RowHighlightShow(row, false)
