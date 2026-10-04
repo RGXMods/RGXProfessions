@@ -448,7 +448,7 @@ function RGXProf.BookWindow:EnsureFrame()
         bg:SetAllPoints()
         local br, bgc, bb = 0.137, 0.137, 0.173
         if Design then br, bgc, bb = Design:Unpack("border") end
-        bg:SetColorTexture(br, bgc, bb, 0.8)
+        ApplyColor(bg, br, bgc, bb, 0.8)
     end
 
     f.close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
@@ -525,8 +525,8 @@ function RGXProf.BookWindow:EnsureFrame()
     -- Recipe card: icon, title, meta and difficulty together at the top,
     -- using the same RGXUI section skin as every other RGX options surface.
     detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
-    detail.recipeCard:SetPoint("TOPLEFT", canvas, "TOPLEFT", 2, 0)
-    detail.recipeCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, 0)
+    detail.recipeCard:SetPoint("TOPLEFT", canvas, "TOPLEFT", 2, -6)
+    detail.recipeCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, -6)
     detail.recipeCard:SetHeight(100)
 
     detail.icon = detail.recipeCard.content:CreateTexture(nil, "ARTWORK")
@@ -557,7 +557,7 @@ function RGXProf.BookWindow:EnsureFrame()
     detail.difficulty:SetJustifyH("RIGHT")
 
     detail.matsCard = UI:CreateSection(canvas, { title = "Materials" })
-    detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -10)
+    detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -6)
     detail.matsCard:SetWidth(198)
     detail.matsCard:SetHeight(116)
     -- Material rows: icon left, name flexible, have/need right-aligned
@@ -589,7 +589,7 @@ function RGXProf.BookWindow:EnsureFrame()
 
     detail.locCard = UI:CreateSection(canvas, { title = "Where to get it" })
     detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "TOPRIGHT", 10, 0)
-    detail.locCard:SetPoint("TOPRIGHT", detail.recipeCard, "BOTTOMRIGHT", 0, -10)
+    detail.locCard:SetPoint("TOPRIGHT", detail.recipeCard, "BOTTOMRIGHT", 0, -6)
     -- Fixed height matching the materials column so the notes card can
     -- anchor below both. No FitContent - this card must never balloon.
     detail.locCard:SetHeight(116)
@@ -645,8 +645,8 @@ function RGXProf.BookWindow:EnsureFrame()
     end)
 
     detail.notesCard = UI:CreateSection(canvas, { title = "Notes" })
-    detail.notesCard:SetPoint("TOPLEFT", detail.matsCard, "BOTTOMLEFT", 0, -10)
-    detail.notesCard:SetPoint("TOPRIGHT", detail.locCard, "BOTTOMRIGHT", 0, -10)
+    detail.notesCard:SetPoint("TOPLEFT", detail.matsCard, "BOTTOMLEFT", 0, -6)
+    detail.notesCard:SetPoint("TOPRIGHT", detail.locCard, "BOTTOMRIGHT", 0, -6)
 
     detail.notes = detail.notesCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.notes:SetPoint("TOPLEFT", 2, -2)
@@ -711,18 +711,32 @@ end
 -- Row highlight helpers. The first row sits on the panel's rounded top
 -- corners, so its highlight is a rounded-corner slice set (clipped to the
 -- panel's curve); every other row uses a flat full-bleed rectangle.
+-- Some Forever beta textures (notably the step-list row backgrounds) reject
+-- the legacy (r,g,b[,a]) argument form for SetColorTexture/SetVertexColor
+-- and only accept a single Color object. Build one via CreateColor when it
+-- exists and pass it through; fall back to the positional form otherwise.
+local function ApplyColor(tex, r, g, b, a)
+    local colorObj = CreateColor and CreateColor(r, g, b, a or 1)
+    if colorObj then
+        if tex.SetColorTexture then tex:SetColorTexture(colorObj) end
+    else
+        tex:SetColorTexture(r, g, b, a or 1)
+    end
+end
+
 local function RowHighlightSetColor(row, r, g, b, a)
     if row.bgIsSlice then
+        local colorObj = CreateColor and CreateColor(r, g, b, a or 1)
         for _, tx in ipairs(row.bgPieces) do
-            tx:SetVertexColor(r, g, b)
-            tx:SetAlpha(a)
+            if colorObj then
+                tx:SetVertexColor(colorObj)
+            else
+                tx:SetVertexColor(r, g, b)
+                tx:SetAlpha(a or 1)
+            end
         end
     else
-        -- SetVertexColor + alpha is the classic-stable form; some Forever
-        -- clients ship a Color-object SetColorTexture signature that rejects
-        -- the (r,g,b,a) call form. row.bg is a plain white texture anyway.
-        row.bg:SetVertexColor(r, g, b)
-        row.bg:SetAlpha(a)
+        ApplyColor(row.bg, r, g, b, a)
     end
 end
 
