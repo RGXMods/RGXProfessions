@@ -614,7 +614,7 @@ detail.recipeCard:FitContent(6)
     detail.matsCard = UI:CreateSection(canvas, { title = "Materials" })
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -6)
     detail.matsCard:SetPoint("TOPRIGHT", canvas, "TOP", -MIDDLE_GAP / 2, -6)
-    detail.matsCard:SetPoint("BOTTOM", detail.notesCard, "TOP", 0, -6)
+    detail.matsCard:SetPoint("BOTTOM", canvas, "BOTTOM", 0, 6)
 
     -- Material rows: each row self-sizes to its wrapped content
     detail.materials = {}
@@ -649,7 +649,7 @@ detail.recipeCard:FitContent(6)
     detail.locCard = UI:CreateSection(canvas, { title = "Where to get it" })
     detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "TOPRIGHT", MIDDLE_GAP, 0)
     detail.locCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -2, -6)
-    detail.locCard:SetPoint("BOTTOM", detail.notesCard, "TOP", 0, -6)
+    detail.locCard:SetPoint("BOTTOM", canvas, "BOTTOM", 0, 6)
 
     -- Location content: structured FontStrings for proper flow
     detail.locHeader = detail.locCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
