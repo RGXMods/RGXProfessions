@@ -572,10 +572,9 @@ function RGXProf.BookWindow:EnsureFrame()
     -- not flush with the window surface. Use the framework's SetPanelColor
     -- (positional SetVertexColor on the nine-slice fill - the form Blizzard
     -- FrameXML uses on this client) with a dark surface tone.
-    if detail.recipeCard.SetPanelColor then
+     if detail.recipeCard.SetPanelColor then
         local dr, dg, db = 0.055, 0.055, 0.080
         detail.recipeCard:SetPanelColor({ dr, dg, db }, nil, 1)
-    end
     end
 
     detail.icon = detail.recipeCard.content:CreateTexture(nil, "ARTWORK")
