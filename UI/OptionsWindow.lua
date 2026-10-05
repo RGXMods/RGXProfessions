@@ -38,7 +38,7 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
     local ver = configPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
     ver:SetPoint("TOPRIGHT", -16, -22)
     ver:SetJustifyH("RIGHT")
-    ver:SetText("v" .. tostring(GetMeta("Version") or "") .. "  by RealmGX")
+        ver:SetText("v" .. tostring(GetMeta("Version") or ""):gsub("^v+", "") .. "  by RealmGX")
     if Design then ver:SetTextColor(Design:Unpack("subtext")) end
 
     local accent = configPanel:CreateTexture(nil, "ARTWORK")

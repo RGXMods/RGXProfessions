@@ -214,19 +214,19 @@ local HEADER_TITLE = StyledHeaderTitle("Profession Leveling Guide")
 local function ShowStepTooltip(owner, step)
     if not step then return end
     GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
-    -- Prefer the crafted ITEM tooltip; fall back to the recipe spell
-    -- only when there is no item to show.
+    -- Prefer the recipe SPELL tooltip: it matches the step name. Path data
+    -- itemIDs were mis-mapped upstream, so items are only the fallback.
     local shown = false
-    if step.itemID then
+    if step.spellID then
+        shown = pcall(GameTooltip.SetHyperlink, GameTooltip, "spell:" .. step.spellID)
+    end
+    if not shown and step.itemID then
         if GameTooltip.SetItemByID then
             shown = pcall(GameTooltip.SetItemByID, GameTooltip, step.itemID)
         end
         if not shown then
             shown = pcall(GameTooltip.SetHyperlink, GameTooltip, "item:" .. step.itemID)
         end
-    end
-    if not shown and step.spellID then
-        shown = pcall(GameTooltip.SetHyperlink, GameTooltip, "spell:" .. step.spellID)
     end
     if shown then
         GameTooltip:Show()
@@ -455,7 +455,7 @@ function RGXProf.BookWindow:EnsureFrame()
     f.headerVer = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     f.headerVer:SetPoint("TOPRIGHT", -46, -8)
     f.headerVer:SetJustifyH("RIGHT")
-    f.headerVer:SetText("v" .. tostring(HeaderMeta("Version") or "?"))
+    f.headerVer:SetText("v" .. tostring(HeaderMeta("Version") or "?"):gsub("^v+", ""))
 
     f.headerAuthor = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.headerAuthor:SetPoint("TOPRIGHT", -46, -24)
