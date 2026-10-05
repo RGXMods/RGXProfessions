@@ -1223,9 +1223,24 @@ local function BuildLanding(self)
         btn:SetPoint("TOPLEFT", originX + col * cellW, -(originY + row * cellH))
 
         btn.icon:SetTexture(prof.icon or 133741)
-        btn.name:SetText(Text() .. prof.name)
         local skill, total = LiveSkill(professionID)
-        btn.skill:SetText(skill and (Dim() .. string.format("Skill %d/%d", skill, total or MaxSkill())) or (Label() .. "Not learned"))
+        if skill then
+            btn.name:SetText(Text() .. prof.name)
+            btn.icon:SetDesaturated(false)
+            btn.skill:SetFontObject("GameFontNormal")
+            if total and skill >= total then
+                btn.skill:SetText(string.format("Skill %d/%d", skill, total))
+                btn.skill:SetTextColor(0.9, 0.7, 0.2)
+            else
+                btn.skill:SetText(string.format("Skill %d/%d", skill, total or MaxSkill()))
+                btn.skill:SetTextColor(0.1, 1, 0.1)
+            end
+        else
+            btn.name:SetText(Dim() .. prof.name)
+            btn.icon:SetDesaturated(true)
+            btn.skill:SetFontObject("GameFontHighlightSmall")
+            btn.skill:SetText(Label() .. "Not learned")
+        end
 
         btn:SetScript("OnClick", function()
             RGXProf.BookWindow:OpenProfession(professionID)
