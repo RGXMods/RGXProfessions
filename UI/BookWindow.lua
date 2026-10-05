@@ -83,10 +83,10 @@ local function Label() return C("label") end
 local BuildLanding
 
 local DIFF_WORDS = {
-    optimal = { text = "Orange - always skill-ups", key = "warning" },
-    medium  = { text = "Yellow - usually a skill-up", key = "accent" },
-    easy    = { text = "Green - rarely a skill-up", key = "success" },
-    trivial = { text = "Gray - no skill-ups", key = "label" },
+    optimal = { text = "Always skill-ups", key = "warning" },
+    medium  = { text = "Usually skill-ups", key = "accent" },
+    easy    = { text = "Rarely skill-ups", key = "success" },
+    trivial = { text = "No more skill-ups", key = "label" },
 }
 
 -- Rank gates: crossing a skill cap like 75 requires training the next rank.
@@ -875,11 +875,8 @@ local function RenderStepList(self)
         end
         row.range:SetText(string.format("%s%d - %d", rangeHex, step.minSkill, step.maxSkill))
 
-        local nameHex = DiffColorHex(StepDifficulty(step, skill))
         local name = step.name or ("Recipe " .. (step.spellID or i))
-        if skill and step.maxSkill <= skill then
-            nameHex = Dim()
-        end
+        local nameHex = (skill and step.maxSkill <= skill) and Dim() or Text()
         row.name:SetText(nameHex .. name .. (step.alternate and (Dim() .. " (alt)") or ""))
 
         if row._selected then
@@ -1022,28 +1019,32 @@ local function RenderDetail(self)
     detail.title:SetText(Text() .. (step.name or ""))
 
     -- Meta block, written for at-a-glance reading:
-    --   line 1: where this step starts, where it takes you
-    --   line 2: exactly what to do - "Craft N more to reach X"
+    --   line 1: exactly what to do - "Craft N more to reach X"
+    --   line 2: training availability on its own line
     local fromSkill = math.max(step.minSkill, skill or step.minSkill)
     local crafts = 0
     if not skill or skill < step.maxSkill then
         crafts = RGXProf.DataManager:GetEstimatedCrafts(fromSkill, step) or 0
     end
-    local metaText = Dim() .. string.format("Skill %d-%d", step.minSkill, step.maxSkill)
-    if step.learnAt then
-        metaText = metaText .. Dim() .. "  -  Learn at " .. step.learnAt
-    end
-    local statusLine
+    local lines = {}
     if skill and skill >= step.maxSkill then
-        statusLine = C("success") .. "Done - move to the next step"
+        table.insert(lines, C("success") .. "Done - move to the next step")
     elseif crafts > 0 then
-        statusLine = Accent() .. "Craft " .. Text() .. crafts .. Accent() .. " more to reach " .. Text() .. step.maxSkill
+        table.insert(lines, Accent() .. "Craft " .. Text() .. crafts .. Accent() .. " more to reach " .. Text() .. step.maxSkill)
+    else
+        table.insert(lines, Dim() .. string.format("Skill %d-%d", step.minSkill, step.maxSkill))
+    end
+    if step.learnAt then
+        if skill and skill >= step.learnAt then
+            table.insert(lines, C("success") .. "Available to train")
+        else
+            table.insert(lines, Dim() .. "Trainable at " .. step.learnAt)
+        end
     end
     if step.alternate then
-        local alt = Dim() .. "Alternate"
-        statusLine = statusLine and (statusLine .. "  " .. alt) or alt
+        table.insert(lines, Dim() .. "Alternate")
     end
-    detail.meta:SetText(statusLine and (metaText .. "\n" .. statusLine) or metaText)
+    detail.meta:SetText(table.concat(lines, "\n"))
 
     -- Difficulty label
     local diff = StepDifficulty(step, skill)
@@ -1143,7 +1144,6 @@ local function RenderDetail(self)
         end
     end
     if step.note then table.insert(notes, Accent() .. "* " .. Text() .. step.note) end
-    if step.quests then table.insert(notes, Dim() .. "Requires a quest (see trainer list).") end
 
     -- Position the spacer below the deeper of the two middle cards so the
     -- notes top edge stays level when the columns have different heights.
