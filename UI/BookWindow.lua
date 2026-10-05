@@ -81,12 +81,13 @@ local function Label() return C("label") end
 -- Forward declaration: the resize hook in EnsureFrame re-runs the landing
 -- layout when the window size changes.
 local BuildLanding
+local RenderDetail
 
 local DIFF_WORDS = {
-    optimal = { text = "Always skill-ups", key = "warning" },
-    medium  = { text = "Usually skill-ups", key = "accent" },
-    easy    = { text = "Rarely skill-ups", key = "success" },
-    trivial = { text = "No more skill-ups", key = "label" },
+    optimal = "Always gives skill-ups",
+    medium  = "Usually gives skill-ups",
+    easy    = "Rarely gives skill-ups",
+    trivial = "No skill-ups left",
 }
 
 -- Rank gates: crossing a skill cap like 75 requires training the next rank.
@@ -400,7 +401,7 @@ function RGXProf.BookWindow:EnsureFrame()
             local tx = header:CreateTexture(nil, "BACKGROUND")
             tx:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\panel_rounded.tga")
             tx:SetTexCoord(u1, u2, v1, v2)
-            tx:SetVertexColor(color[1], color[2], color[3], alpha or 1)
+            pcall(tx.SetVertexColor, tx, color[1], color[2], color[3], alpha or 1)
             return tx
         end
         local tl = piece(0, 0.25, 0, 0.25)
@@ -506,9 +507,10 @@ function RGXProf.BookWindow:EnsureFrame()
     f.landingHint = f.landing:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     f.landingHint:SetPoint("TOP", 0, -10)
 
-    -- Re-lay out the profession grid whenever the window is resized.
+    -- Re-lay out the profession grid and detail page whenever the window is resized.
     f:HookScript("OnSizeChanged", function()
         if f.landing:IsShown() then BuildLanding(self) end
+        if f.guide:IsShown() then RenderDetail(self) end
     end)
 
     -- Guide view: left step list + right detail.
@@ -865,19 +867,13 @@ local function RenderStepList(self)
         row._selected = (i == selected)
         row._step = step
 
-        local rangeHex
-        if skill and step.maxSkill <= skill then
-            rangeHex = Dim()
-        elseif i == currentIdx then
-            rangeHex = Accent()
-        else
-            rangeHex = Label()
-        end
+        -- Range colored by step difficulty relative to live skill
+        local diff = StepDifficulty(step, skill)
+        local rangeHex = (diff and DiffColorHex(diff)) or Label()
         row.range:SetText(string.format("%s%d - %d", rangeHex, step.minSkill, step.maxSkill))
 
         local name = step.name or ("Recipe " .. (step.spellID or i))
-        local nameHex = (skill and step.maxSkill <= skill) and Dim() or Text()
-        row.name:SetText(nameHex .. name .. (step.alternate and (Dim() .. " (alt)") or ""))
+        row.name:SetText(Text() .. name .. (step.alternate and (Dim() .. " (alt)") or ""))
 
         if row._selected then
             RowHighlightSetColor(row, ar, ag, ab, HighlightAlpha())
@@ -887,7 +883,7 @@ local function RenderStepList(self)
         end
 
         if i == currentIdx then
-            row.current:SetColorTexture(ar, ag, ab, 0.9)
+            SetTextureColor(row.current, ar, ag, ab, 0.9)
             row.current:Show()
         else
             row.current:Hide()
@@ -995,7 +991,7 @@ local function NearestNpc(candidates)
     return best
 end
 
-local function RenderDetail(self)
+RenderDetail = function(self)
     local f = self.frame
     local detail = f.detail
     local canvas = detail.canvas
@@ -1018,15 +1014,21 @@ local function RenderDetail(self)
     detail.icon:SetTexture(display.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
     detail.title:SetText(Text() .. (step.name or ""))
 
-    -- Meta block, written for at-a-glance reading:
-    --   line 1: exactly what to do - "Craft N more to reach X"
-    --   line 2: training availability on its own line
+    -- Meta block: three clean lines — difficulty word (colored), craft line (accent), train line (success/dim)
     local fromSkill = math.max(step.minSkill, skill or step.minSkill)
     local crafts = 0
     if not skill or skill < step.maxSkill then
         crafts = RGXProf.DataManager:GetEstimatedCrafts(fromSkill, step) or 0
     end
     local lines = {}
+
+    -- Line 1: difficulty word in the step's difficulty color
+    local diff = StepDifficulty(step, skill)
+    if diff and DIFF_WORDS[diff] then
+        table.insert(lines, DiffColorHex(diff) .. DIFF_WORDS[diff])
+    end
+
+    -- Line 2: craft instruction
     if skill and skill >= step.maxSkill then
         table.insert(lines, C("success") .. "Done - move to the next step")
     elseif crafts > 0 then
@@ -1034,6 +1036,8 @@ local function RenderDetail(self)
     else
         table.insert(lines, Dim() .. string.format("Skill %d-%d", step.minSkill, step.maxSkill))
     end
+
+    -- Line 3: training availability
     if step.learnAt then
         if skill and skill >= step.learnAt then
             table.insert(lines, C("success") .. "Available to train")
@@ -1046,14 +1050,9 @@ local function RenderDetail(self)
     end
     detail.meta:SetText(table.concat(lines, "\n"))
 
-    -- Difficulty label
-    local diff = StepDifficulty(step, skill)
-    if diff and DIFF_WORDS[diff] then
-        local d = DIFF_WORDS[diff]
-        detail.difficulty:SetText(C(d.key) .. d.text)
-    else
-        detail.difficulty:SetText("")
-    end
+    -- Clear the top-right difficulty label (now in meta line 1)
+    detail.difficulty:SetText("")
+
     if detail.recipeCard and detail.recipeCard.FitContent then
         detail.recipeCard:FitContent(6)
     end
@@ -1132,6 +1131,15 @@ local function RenderDetail(self)
         detail.locAction:SetText("")
     end
     detail.locCard:FitContent(6)
+
+    -- Re-assert the 46/54 two-column split after FitContent, which can
+    -- collapse card widths to minimum content width on this client.
+    local canvasW = canvas:GetWidth() or 0
+    if canvasW > 0 then
+        local innerW = canvasW - 16  -- 2 left + 8 right + 6 gap
+        detail.matsCard:SetWidth(math.floor(innerW * 0.46))
+        detail.locCard:SetWidth(math.floor(innerW * 0.54))
+    end
 
     -- Notes: hide the card entirely when there is nothing to say, so the
     -- layout never carries an empty card. No bottom anchor on the text:
