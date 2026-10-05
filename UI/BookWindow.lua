@@ -79,10 +79,10 @@ local function Dim() return C("subtext") end
 local function Label() return C("label") end
 
 local DIFF_WORDS = {
-    optimal = { text = "Orange · always skill-ups", key = "warning" },
-    medium  = { text = "Yellow · usually a skill-up", key = "accent" },
-    easy    = { text = "Green · rarely a skill-up", key = "success" },
-    trivial = { text = "Gray · no skill-ups", key = "label" },
+    optimal = { text = "Orange - always skill-ups", key = "warning" },
+    medium  = { text = "Yellow - usually a skill-up", key = "accent" },
+    easy    = { text = "Green - rarely a skill-up", key = "success" },
+    trivial = { text = "Gray - no skill-ups", key = "label" },
 }
 
 -- Rank gates: crossing a skill cap like 75 requires training the next rank.
@@ -1020,7 +1020,7 @@ local function RenderDetail(self)
     end
     local metaText = Accent() .. string.format("Skill %d-%d", step.minSkill, step.maxSkill)
     if step.learnAt then
-        metaText = metaText .. Dim() .. " · " .. Text() .. string.format("Learn at %d", step.learnAt)
+        metaText = metaText .. Dim() .. " - " .. Text() .. string.format("Learn at %d", step.learnAt)
     end
     local statusLine
     if crafts > 0 then
@@ -1030,7 +1030,7 @@ local function RenderDetail(self)
     end
     if step.alternate then
         local alt = Dim() .. "Alternate"
-        statusLine = statusLine and (statusLine .. Dim() .. " · " .. alt) or alt
+        statusLine = statusLine and (statusLine .. Dim() .. " - " .. alt) or alt
     end
     detail.meta:SetText(statusLine and (metaText .. "\n" .. statusLine) or metaText)
 
@@ -1105,7 +1105,7 @@ local function RenderDetail(self)
             if ok and zname then zone = zname end
         end
         if zone ~= "" then
-            nameLine = nameLine .. Dim() .. " · " .. Text() .. zone
+            nameLine = nameLine .. Dim() .. " - " .. Text() .. zone
         end
         detail.locHeader:SetText(nameLine)
         if target.x and target.y then
@@ -1113,7 +1113,7 @@ local function RenderDetail(self)
         else
             detail.locCoords:SetText("")
         end
-        detail.locAction:SetText(Dim() .. "Closest to you · Click to pin")
+        detail.locAction:SetText(Dim() .. "Closest to you - Click to pin")
     else
         detail.locHeader:SetText(Dim() .. "Trainer-taught; ask any profession trainer.")
         detail.locCoords:SetText("")
@@ -1184,26 +1184,38 @@ local function BuildLanding(self)
 
     local columns = 4
     local rowsNeeded = math.ceil(#professions / columns)
-    local cellW, cellH = 118, 118
+    local availW = landing:GetWidth() or 600
+    local availH = (landing:GetHeight() or 350) - 30 -- reserve the hint strip
+    local cellW = math.min(118, math.floor(availW / columns))
+    local cellH = math.min(118, math.floor(availH / rowsNeeded))
     local gridW = columns * cellW
     local gridH = rowsNeeded * cellH
-    local originX = math.max(0, ((landing:GetWidth() or 600) - gridW) / 2)
-    local originY = math.max(0, ((landing:GetHeight() or 350) - gridH) / 2) + 16
+    local originX = math.max(0, (availW - gridW) / 2)
+    local originY = math.max(0, (availH - gridH) / 2) + 30
+    local btnW = math.max(72, cellW - 10)
+    local btnH = math.max(72, cellH - 10)
+    local iconSize = math.min(38, math.max(24, btnH - 56))
+    local nameFont = btnW < 104 and "GameFontHighlightSmall" or "GameFontNormal"
 
     for index, professionID in ipairs(professions) do
         local prof = RGXProf.Constants.Professions[professionID]
         local btn = landing._buttons[index]
         if not btn then
-            btn = Design:CreateButton(landing, nil, 108, 108)
+            btn = Design:CreateButton(landing, nil, btnW, btnH)
             btn.icon = btn:CreateTexture(nil, "ARTWORK")
-            btn.icon:SetSize(38, 38)
-            btn.icon:SetPoint("TOP", 0, -14)
-            btn.name = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            btn.name:SetPoint("TOP", btn.icon, "BOTTOM", 0, -6)
+            btn.icon:SetPoint("TOP", 0, -8)
+            btn.name = btn:CreateFontString(nil, "OVERLAY", nameFont)
+            btn.name:SetPoint("TOP", btn.icon, "BOTTOM", 0, -4)
             btn.skill = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
             btn.skill:SetPoint("TOP", btn.name, "BOTTOM", 0, -2)
             landing._buttons[index] = btn
         end
+        btn:SetSize(btnW, btnH)
+        btn.icon:SetSize(iconSize, iconSize)
+        btn.name:SetFontObject(nameFont)
+        btn.name:SetWidth(btnW - 8)
+        btn.name:SetWordWrap(true)
+        btn.name:SetNonSpaceWrap(false)
 
         local row = math.floor((index - 1) / columns)
         local col = (index - 1) % columns
