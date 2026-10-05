@@ -1191,26 +1191,24 @@ BuildLanding = function(self)
     local professions = GetGuideProfessions()
     self.frame.landingHint:SetText(Dim() .. "Choose a profession to open its leveling path.")
 
-    local columns = 4
-    local rowsNeeded = math.ceil(#professions / columns)
     local availW = landing:GetWidth() or 600
     local availH = (landing:GetHeight() or 350) - 30 -- reserve the hint strip
-    local cellW = math.min(118, math.floor(availW / columns))
-    local cellH = math.min(118, math.floor(availH / rowsNeeded))
-    local gridW = columns * cellW
-    local gridH = rowsNeeded * cellH
+    local columns = math.max(3, math.min(6, math.floor(availW / 130)))
+    local rowsNeeded = math.ceil(#professions / columns)
+    local cell = math.max(72, math.min(160, math.floor(math.min(availW / columns, availH / rowsNeeded))))
+    local gridW = columns * cell
+    local gridH = rowsNeeded * cell
     local originX = math.max(0, (availW - gridW) / 2)
     local originY = math.max(0, (availH - gridH) / 2) + 30
-    local btnW = math.max(72, cellW - 10)
-    local btnH = math.max(72, cellH - 10)
-    local iconSize = math.min(38, math.max(24, btnH - 56))
-    local nameFont = btnW < 104 and "GameFontHighlightSmall" or "GameFontNormal"
+    local btnSize = cell - 10
+    local iconSize = math.floor(btnSize * 0.36)
+    local nameFont = btnSize < 100 and "GameFontHighlightSmall" or "GameFontNormal"
 
     for index, professionID in ipairs(professions) do
         local prof = RGXProf.Constants.Professions[professionID]
         local btn = landing._buttons[index]
         if not btn then
-            btn = Design:CreateButton(landing, nil, btnW, btnH)
+            btn = Design:CreateButton(landing, nil, btnSize, btnSize)
             btn.icon = btn:CreateTexture(nil, "ARTWORK")
             btn.icon:SetPoint("TOP", 0, -8)
             btn.name = btn:CreateFontString(nil, "OVERLAY", nameFont)
@@ -1219,17 +1217,17 @@ BuildLanding = function(self)
             btn.skill:SetPoint("TOP", btn.name, "BOTTOM", 0, -2)
             landing._buttons[index] = btn
         end
-        btn:SetSize(btnW, btnH)
+        btn:SetSize(btnSize, btnSize)
         btn.icon:SetSize(iconSize, iconSize)
         btn.name:SetFontObject(nameFont)
-        btn.name:SetWidth(btnW - 8)
+        btn.name:SetWidth(btnSize - 8)
         btn.name:SetWordWrap(true)
         btn.name:SetNonSpaceWrap(false)
 
         local row = math.floor((index - 1) / columns)
         local col = (index - 1) % columns
         btn:ClearAllPoints()
-        btn:SetPoint("TOPLEFT", originX + col * cellW, -(originY + row * cellH))
+        btn:SetPoint("TOPLEFT", originX + col * cell, -(originY + row * cell))
 
         btn.icon:SetTexture(prof.icon or 133741)
         local skill, total = LiveSkill(professionID)
