@@ -1014,32 +1014,34 @@ local function RenderDetail(self)
     local player = RGXProf.WowAPI and RGXProf.WowAPI.GetPlayer and RGXProf.WowAPI:GetPlayer() or nil
     local faction = player and player.faction or "Alliance"
 
-    -- Title + icon
+    -- Title + icon. The name always comes from the path data; a resolved
+    -- item link can name the WRONG recipe when a step's itemID is off.
     detail._step = step
     local display = RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
     detail.icon:SetTexture(display.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
-    detail.title:SetText(display.link or (Text() .. (step.name or "")))
+    detail.title:SetText(Text() .. (step.name or ""))
 
-    -- Meta block: structured fields, no sentence-style wrapping.
-    -- Line 1: skill range + learn-at. Line 2: craft status.
+    -- Meta block, written for at-a-glance reading:
+    --   line 1: where this step starts, where it takes you
+    --   line 2: exactly what to do - "Craft N more to reach X"
     local fromSkill = math.max(step.minSkill, skill or step.minSkill)
     local crafts = 0
     if not skill or skill < step.maxSkill then
         crafts = RGXProf.DataManager:GetEstimatedCrafts(fromSkill, step) or 0
     end
-    local metaText = Accent() .. string.format("Skill %d-%d", step.minSkill, step.maxSkill)
+    local metaText = Dim() .. string.format("Skill %d-%d", step.minSkill, step.maxSkill)
     if step.learnAt then
-        metaText = metaText .. Dim() .. " - " .. Text() .. string.format("Learn at %d", step.learnAt)
+        metaText = metaText .. Dim() .. "  -  Learn at " .. step.learnAt
     end
     local statusLine
-    if crafts > 0 then
-        statusLine = Text() .. string.format("Craft about %d", crafts)
-    elseif skill then
-        statusLine = Dim() .. "Completed"
+    if skill and skill >= step.maxSkill then
+        statusLine = C("success") .. "Done - move to the next step"
+    elseif crafts > 0 then
+        statusLine = Accent() .. "Craft " .. Text() .. crafts .. Accent() .. " more to reach " .. Text() .. step.maxSkill
     end
     if step.alternate then
         local alt = Dim() .. "Alternate"
-        statusLine = statusLine and (statusLine .. Dim() .. " - " .. alt) or alt
+        statusLine = statusLine and (statusLine .. "  " .. alt) or alt
     end
     detail.meta:SetText(statusLine and (metaText .. "\n" .. statusLine) or metaText)
 
