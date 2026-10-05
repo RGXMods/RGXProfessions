@@ -53,15 +53,17 @@ function RGXProf.WowAPI:GetProfessionSkill(pName)
 
     local ok, skill, maxSkill = pcall(function()
         if GetProfessions and GetProfessionInfo then
-            for i = 1, 5 do
-                local index = GetProfessions(i)
-                if not index then break end
-                -- name(1), icon(2), skillLevel(3), maxSkill(4) in both the
-                -- classic-era and modern return orders. Reading 4-5 surfaced
-                -- unrelated values on the Forever client.
-                local name, _, skillLevel, skillMax = GetProfessionInfo(index)
-                if name and name == pName then
-                    return skillLevel, skillMax
+            -- GetProfessions() takes no arguments and returns all six
+            -- profession indices at once; calling it with an index would
+            -- only ever re-read the first slot.
+            for _, index in ipairs({ GetProfessions() }) do
+                if index then
+                    -- name(1), icon(2), skillLevel(3), maxSkill(4) in both
+                    -- the classic-era and modern return orders.
+                    local name, _, skillLevel, skillMax = GetProfessionInfo(index)
+                    if name and name == pName then
+                        return skillLevel, skillMax
+                    end
                 end
             end
         end
