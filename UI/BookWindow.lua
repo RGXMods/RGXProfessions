@@ -78,6 +78,10 @@ local function Text() return "|cffffffff" end
 local function Dim() return C("subtext") end
 local function Label() return C("label") end
 
+-- Forward declaration: the resize hook in EnsureFrame re-runs the landing
+-- layout when the window size changes.
+local BuildLanding
+
 local DIFF_WORDS = {
     optimal = { text = "Orange - always skill-ups", key = "warning" },
     medium  = { text = "Yellow - usually a skill-up", key = "accent" },
@@ -501,6 +505,11 @@ function RGXProf.BookWindow:EnsureFrame()
 
     f.landingHint = f.landing:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     f.landingHint:SetPoint("TOP", 0, -10)
+
+    -- Re-lay out the profession grid whenever the window is resized.
+    f:HookScript("OnSizeChanged", function()
+        if f.landing:IsShown() then BuildLanding(self) end
+    end)
 
     -- Guide view: left step list + right detail.
     f.guide = CreateFrame("Frame", nil, f)
@@ -1171,7 +1180,7 @@ end
 -- Landing page
 --------------------------------------------------------------------------------
 
-local function BuildLanding(self)
+BuildLanding = function(self)
     local landing = self.frame.landing
     if landing._buttons then
         for _, b in ipairs(landing._buttons) do b:Hide() end
