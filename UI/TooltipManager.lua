@@ -1,7 +1,6 @@
 RGXProf.TooltipManager = {}
-local f = CreateFrame("Frame")
-f:RegisterEvent("PLAYER_LOGIN")
-f:SetScript("OnEvent", function()
+local RGX = assert(_G.RGXFramework, "RGXProfessions: RGX-Framework not loaded")
+RGX:OnLogin(function()
     if RGXProf.TooltipManager and RGXProf.TooltipManager.AttachWhereNeededTooltips then
         RGXProf.TooltipManager:AttachWhereNeededTooltips()
     end
