@@ -1278,7 +1278,7 @@ local function UpdateProgressFrame(f, professionID)
     local maxSkill = total or MaxSkill()
     local gate = skill and NextGate(tonumber(skill))
     local gateText = gate and (Dim() .. "  -  Train " .. Text() .. gate.rank .. Dim() .. " at " .. gate.cap) or ""
-    f.progressLabel:SetText(skill and (Dim() .. "Skill " .. Text() .. skill .. Dim() .. " / " .. maxSkill .. gateText) or (Dim() .. "Not learned"))
+    f.progressLabel:SetText(skill and (Dim() .. "Skill " .. Text() .. skill .. Dim() .. " / " .. maxSkill .. gateText) or (Dim() .. RGXProf.L.NOT_LEARNED))
     f.progress:SetMinMaxValues(0, maxSkill)
     f.progress:SetValue(skill or 0)
 end
