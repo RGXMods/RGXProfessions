@@ -352,6 +352,14 @@ function RGXProf.BookWindow:EnsureFrame()
     f.sizer:SetScript("OnDragStop", function(s)
         s:SetScript("OnUpdate", nil)
         RGXProf_Settings.bookSize = { f:GetWidth(), f:GetHeight() }
+        -- Flush a resize rebuild throttled away mid-drag so the content
+        -- always settles at the final size.
+        if f._flexPending then
+            f._flexPending = false
+            f._flexAt = 0
+            if f.landing:IsShown() then BuildLanding(self) end
+            if f.guide:IsShown() then RenderDetail(self) end
+        end
     end)
     f.sizer:SetScript("OnEnter", function(s)
         GameTooltip:SetOwner(s, "ANCHOR_LEFT")
@@ -507,8 +515,20 @@ function RGXProf.BookWindow:EnsureFrame()
     f.landingHint = f.landing:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     f.landingHint:SetPoint("TOP", 0, -10)
 
-    -- Re-lay out the profession grid and detail page whenever the window is resized.
+    -- Re-lay out the profession grid and detail page whenever the window
+    -- is resized. Throttled: the manual sizer fires OnSizeChanged every
+    -- frame of the drag, and a full rebuild per tick stutters (the detail
+    -- pass re-queries crafts, reagents, and vendors). A pending rebuild is
+    -- flushed on sizer release so content settles at the final size.
     f:HookScript("OnSizeChanged", function()
+        local now = GetTime()
+        f._flexAt = f._flexAt or 0
+        if now - f._flexAt < 0.08 then
+            f._flexPending = true
+            return
+        end
+        f._flexAt = now
+        f._flexPending = false
         if f.landing:IsShown() then BuildLanding(self) end
         if f.guide:IsShown() then RenderDetail(self) end
     end)
@@ -1193,13 +1213,14 @@ end
 
 BuildLanding = function(self)
     local landing = self.frame.landing
-    if landing._buttons then
-        for _, b in ipairs(landing._buttons) do b:Hide() end
-    else
-        landing._buttons = {}
-    end
+    landing._buttons = landing._buttons or {}
 
     local professions = GetGuideProfessions()
+    -- Park buttons beyond the current roster instead of hide/show cycling
+    -- the whole grid: re-hiding every button on each resize tick flickers.
+    for i = #professions + 1, #landing._buttons do
+        landing._buttons[i]:Hide()
+    end
     self.frame.landingHint:SetText(Dim() .. "Choose a profession to open its leveling path.")
 
     -- Host size is 0 until first layout resolves (0 is truthy in Lua, so
