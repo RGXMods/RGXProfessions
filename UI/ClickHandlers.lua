@@ -36,10 +36,10 @@ RGXProf.ClickHandlers.TrainerClick = function(frame)
             if (npc.zoneID == z) then
                 RGXProf.AdapterManager:SetWaypoint(npc.name, npc.zoneID, npc.x, npc.y)
             else
-                RGXProf.Utils:SendMsg("No trainer in this zone")
+                RGXProf.Utils:SendMsg(RGXProf.L.NO_TRAINER_IN_ZONE)
             end
         else
-            RGXProf.Utils:SendMsg("No trainer in this zone")
+            RGXProf.Utils:SendMsg(RGXProf.L.NO_TRAINER_IN_ZONE)
         end
     end
 end

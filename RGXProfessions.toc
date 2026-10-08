@@ -4,8 +4,8 @@
 ## Notes: The profession leveling bible for WoW Forever. Browse every leveling path, recipe, and reagent like a book.|n|r  |cff8B1538/prof|r to open. |n|r Derived from PLG by LirameiRav (guides from wow-professions.com).
 ## Author: RealmGX, derived from PLG by LirameiRav and Keg
 ## X-Discord: discord.gg/N7kdKAHVVF
-## Category: RGX
-## Group: RGX
+## Category: RealmGX
+## Group: RealmGX
 ## Version: v0.1.1
 ## RequiredDeps: RGX-Framework
 ## SavedVariables: RGXProf_Settings, RGXProf_SimResults
@@ -14,6 +14,7 @@
 
 ## X-Category: Professions
 ## X-License: MIT
+## X-Localizations: enUS, deDE, esES, esMX, frFR, itIT, koKR, ptBR, ptPT, ruRU, zhCN, zhTW
 
 Core/Utils.lua
 
@@ -66,7 +67,7 @@ Core/Core.lua
 
 Constants/Colors.lua
 Constants/SkillUpColors.lua
-Constants/Strings.lua
+Constants/Localization.lua
 
 UI/LayoutDefinitions.lua
 UI\LayoutDefinitions_Training.lua
