@@ -104,6 +104,12 @@ end
 function RGXProf.StateManager:PerformRefresh()
     self.RefreshPending = false
     self:RefreshState()
+    -- Live book: the professions book re-renders (and auto-advances the
+    -- page) on every debounced refresh while it is open. Hooked here,
+    -- not RefreshState, so it still runs when no trade window is open.
+    if RGXProf.BookWindow and RGXProf.BookWindow.Refresh then
+        RGXProf.BookWindow:Refresh()
+    end
 end
 
 -------------------------------------------------------

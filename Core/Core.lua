@@ -33,19 +33,28 @@ function RGXProf:CreateMinimapButton()
         angleKey = "minimapAngle",
         enabledKey = "minimapIconEnabled",
         tooltip = {
-        title = "|cff8B1538RGX|r " .. RGXProf.L.ADDON_TITLE,
-        getLines = function()
-            local L = RGXProf.L
-            return {
-                { left = "|cffffffff" .. L.ADDON_TITLE .. "|r" },
-                { left = "|cff8B1538" .. L.MINIMAP_LEFT_CLICK .. "|r", right = "|cffffffff" .. L.MINIMAP_OPEN_BOOK .. "|r" },
-                { left = "|cff4ecdc4" .. L.MINIMAP_LEFT_DRAG .. "|r", right = "|cffffffff" .. L.MINIMAP_MOVE .. "|r" },
-                { left = "|cffe74c3c" .. L.MINIMAP_CTRL_RIGHT_CLICK .. "|r", right = "|cffffffff" .. L.MINIMAP_HIDE .. "|r" },
-            }
-        end,        },
+            title = "|cff8B1538RGX|r Professions",
+            getLines = function()
+                local L = RGXProf.L
+                return {
+                    { left = "|cffffffffProfession leveling paths|r" },
+                    { left = "|cff8B1538" .. L.MINIMAP_LEFT_CLICK .. "|r", right = "|cffffffff" .. L.MINIMAP_OPEN_BOOK .. "|r" },
+                    { left = "|cff4ecdc4" .. L.MINIMAP_LEFT_DRAG .. "|r", right = "|cffffffff" .. L.MINIMAP_MOVE .. "|r" },
+                    { left = "|cffe74c3c" .. L.MINIMAP_CTRL_RIGHT_CLICK .. "|r", right = "|cffffffff" .. L.MINIMAP_HIDE .. "|r" },
+                }
+            end,
+        },
         onLeftClick = function()
             if RGXProf.BookWindow then
                 RGXProf.BookWindow:Toggle()
+            end
+        end,
+        onRightClick = function()
+            -- Open addon options panel using legacy API (panel is created with CreateFrame)
+            if InterfaceOptionsFrame_OpenToCategory then
+                InterfaceOptionsFrame_OpenToCategory("RGX Professions")
+                -- WoW quirk: first call sometimes doesn't work
+                InterfaceOptionsFrame_OpenToCategory("RGX Professions")
             end
         end,
         onCtrlRight = function(btn)

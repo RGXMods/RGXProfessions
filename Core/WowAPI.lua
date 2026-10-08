@@ -53,15 +53,17 @@ function RGXProf.WowAPI:GetProfessionSkill(pName)
 
     local ok, skill, maxSkill = pcall(function()
         if GetProfessions and GetProfessionInfo then
-            for i = 1, 5 do
-                local index = GetProfessions(i)
-                if not index then break end
-                -- name(1), icon(2), skillLevel(3), maxSkill(4) in both the
-                -- classic-era and modern return orders. Reading 4-5 surfaced
-                -- unrelated values on the Forever client.
-                local name, _, skillLevel, skillMax = GetProfessionInfo(index)
-                if name and name == pName then
-                    return skillLevel, skillMax
+            -- GetProfessions() takes no arguments and returns all six
+            -- profession indices at once; calling it with an index would
+            -- only ever re-read the first slot.
+            for _, index in ipairs({ GetProfessions() }) do
+                if index then
+                    -- name(1), icon(2), skillLevel(3), maxSkill(4) in both
+                    -- the classic-era and modern return orders.
+                    local name, _, skillLevel, skillMax = GetProfessionInfo(index)
+                    if name and name == pName then
+                        return skillLevel, skillMax
+                    end
                 end
             end
         end
@@ -156,46 +158,44 @@ function RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
 
 	local link, icon
 
-	if step.itemID then
+	-- Spell first: the step name describes the recipe and its spellID is the
+	-- reliable identifier (path data itemIDs were mis-mapped upstream, e.g.
+	-- Woolen Cape carried the Reinforced Linen Cape itemID). GetSpellInfo
+	-- returns (name, rank, icon); recipe spells carry the product's icon.
+	if step.spellID then
+		if GetSpellInfo then
+			local _, _, spellIcon = GetSpellInfo(step.spellID)
+			if spellIcon then icon = spellIcon end
+		end
+		if step.name then
+			link = string.format("|cff71d5ff|Hspell:%d|h[%s]|h|r", step.spellID, step.name)
+		end
+	end
+
+	-- Item fallback, for steps that only carry an itemID.
+	if (not icon or not link) and step.itemID then
 		-- GetItemInfoInstant returns immediately (no cache wait).
 		-- Classic shape: itemID, itemType, itemSubType, equipLoc, icon, ...
-		-- Some builds also include itemLink - probe defensively.
 		if C_Item and C_Item.GetItemInfoInstant then
-			local ok, r1, r2, r3, r4, r5, r6, r7 = pcall(C_Item.GetItemInfoInstant, step.itemID)
+			local ok, r1, r2, r3, r4, r5, r6 = pcall(C_Item.GetItemInfoInstant, step.itemID)
 			if ok then
-				-- Prefer a string that looks like an item hyperlink among early returns.
-				for _, v in ipairs({ r1, r2, r3, r4 }) do
-					if type(v) == "string" and v:find("item:") then
-						link = v
-						break
+				if not link then
+					for _, v in ipairs({ r1, r2, r3, r4 }) do
+						if type(v) == "string" and v:find("item:") then
+							link = v
+							break
+						end
 					end
 				end
-				-- Icon is typically r5 on classic, r5 on retail too (after equipLoc).
-				for _, v in ipairs({ r5, r4, r6 }) do
-					if type(v) == "number" then
-						icon = v
-						break
+				if not icon then
+					for _, v in ipairs({ r5, r4, r6 }) do
+						if type(v) == "number" then
+							icon = v
+							break
+						end
 					end
 				end
 			end
-		end
-
-		-- Full info (async). Multi-return only - never a table.
-		-- Slot 10 is icon/texture on both legacy and C_Item shapes.
-		local name, fullLink, _, _, _, _, _, _, _, fullIcon
-		if C_Item and C_Item.GetItemInfo then
-			name, fullLink, _, _, _, _, _, _, _, fullIcon = C_Item.GetItemInfo(step.itemID)
-		elseif GetItemInfo then
-			name, fullLink, _, _, _, _, _, _, _, fullIcon = GetItemInfo(step.itemID)
-		end
-		if fullLink then
-			link = fullLink
-		end
-		if fullIcon then
-			icon = fullIcon
-		end
-		if not name then
-			self:QueueItemLoad(step.itemID)
 		end
 
 		if not icon then
@@ -205,11 +205,6 @@ function RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
 				icon = GetItemIcon(step.itemID)
 			end
 		end
-	end
-
-	-- Spell link always works offline from step data - never leave the field empty.
-	if not link and step.spellID and step.name then
-		link = string.format("|cff71d5ff|Hspell:%d|h[%s]|h|r", step.spellID, step.name)
 	end
 
 	return {

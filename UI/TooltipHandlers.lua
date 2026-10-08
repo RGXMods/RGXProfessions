@@ -19,14 +19,14 @@ RGXProf.TooltipHandlers.RecipeTooltip = function(frame)
         local factor = RGXProf.DataManager:GetRecipeCraftFactor(spellID, skill)
 
         if factor == math.huge then
-            GameTooltip:AddLine(RGXProf.L.TIP_NO_POINTS, 1, 0.2, 0.2)
+            GameTooltip:AddLine("|cffff4040No points|r", 1, 0.2, 0.2)
         elseif factor > 2.5 then
-            GameTooltip:AddLine(RGXProf.L.TIP_CPP_HIGH, 0.5, 1, 0.5)
+            GameTooltip:AddLine("|cff40ff405+ crafts per skill-up|r", 0.5, 1, 0.5)
         elseif factor > 1.5 then
-            GameTooltip:AddLine(RGXProf.L.TIP_CPP_MID, 1, 1, 0.5)
+            GameTooltip:AddLine("|cffffff401.5 crafts per skill-up|r", 1, 1, 0.5)
         elseif factor < 1.0 then
             local up = math.floor((1 / factor) + 0.5) -- round up
-            GameTooltip:AddLine(string.format(RGXProf.L.TIP_BONUS_POINTS, up, (up > 1 and "s" or "")), 1, 1, 1)
+            GameTooltip:AddLine("|cffffffffBonus: "..up .. " point" .. (up > 1 and "s" or "") .. " per craft|r", 1, 1, 1)
         end
     end
     GameTooltip:Show()
