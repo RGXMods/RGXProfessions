@@ -35,11 +35,12 @@ function RGXProf:CreateMinimapButton()
         tooltip = {
             title = "|cff8B1538RGX|r Professions",
             getLines = function()
+                local L = RGXProf.L
                 return {
                     { left = "|cffffffffProfession leveling paths|r" },
-                    { left = "|cff8B1538Left-Click|r", right = "|cffffffffOpen the book|r" },
-                    { left = "|cff4ecdc4Left-Drag|r", right = "|cffffffffMove around minimap|r" },
-                    { left = "|cffe74c3cCtrl+Right-Click|r", right = "|cffffffffHide minimap icon|r" },
+                    { left = "|cff8B1538" .. L.MINIMAP_LEFT_CLICK .. "|r", right = "|cffffffff" .. L.MINIMAP_OPEN_BOOK .. "|r" },
+                    { left = "|cff4ecdc4" .. L.MINIMAP_LEFT_DRAG .. "|r", right = "|cffffffff" .. L.MINIMAP_MOVE .. "|r" },
+                    { left = "|cffe74c3c" .. L.MINIMAP_CTRL_RIGHT_CLICK .. "|r", right = "|cffffffff" .. L.MINIMAP_HIDE .. "|r" },
                 }
             end,
         },
@@ -59,7 +60,7 @@ function RGXProf:CreateMinimapButton()
         onCtrlRight = function(btn)
             btn:SetVisible(false)
             RGXProf_Settings.minimapIconEnabled = false
-            print("[RGXProf] Minimap icon |cffff0000hidden|r. Use |cffffffff/prof icon on|r to show it again.")
+            print(RGXProf.L.CMD_ICON_HIDDEN)
         end,
     })
 

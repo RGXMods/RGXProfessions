@@ -50,12 +50,10 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
     else
         accent:SetColorTexture(0.545, 0.082, 0.220)
     end
-
     local autoOpenCheckbox = CreateFrame("CheckButton", nil, configPanel, "InterfaceOptionsCheckButtonTemplate")
     autoOpenCheckbox:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -26)
     autoOpenCheckbox.Text:SetText("Auto-open the guide when a profession window opens")
     autoOpenCheckbox:SetChecked(self:Setting("autoOpen") == true)
-
     autoOpenCheckbox:SetScript("OnClick", function(self)
         RGXProf.OptionsWindow:SetSetting("autoOpen", self:GetChecked() == true)
     end)
@@ -64,7 +62,6 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
     selectRecipeCheckbox:SetPoint("TOPLEFT", autoOpenCheckbox, "BOTTOMLEFT", 0, -8)
     selectRecipeCheckbox.Text:SetText("Click guide recipes to select them in the profession window")
     selectRecipeCheckbox:SetChecked(self:Setting("selectRecipesInProfessionWindow") ~= false)
-
     selectRecipeCheckbox:SetScript("OnClick", function(self)
         RGXProf.OptionsWindow:SetSetting("selectRecipesInProfessionWindow", self:GetChecked() == true)
     end)
@@ -74,6 +71,5 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
     selectRecipeDescription:SetWidth(520)
     selectRecipeDescription:SetJustifyH("LEFT")
     selectRecipeDescription:SetText("When disabled, recipe clicks still switch the guide's recipe/alternate display but do not expand or change the profession list.")
-
     return configPanel
 end

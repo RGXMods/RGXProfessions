@@ -30,6 +30,10 @@ Derived from PLG (Profession Leveling Guide) by LirameiRav, updated from the ori
 | `/prof preview <profession> <skill>` | Show the preview-steps window for a simulated skill |
 | `/prof icon on/off` | Show or hide the minimap button |
 
+## Language support
+
+RGXProfessions is fully localized for all twelve WoW client locales: enUS (base), deDE, esES, esMX, frFR, itIT, koKR, ptBR, ptPT, ruRU, zhCN, and zhTW. Every user-visible addon string is served from the locale table (`Constants/Localization.lua`), selected by the client's `GetLocale()` with automatic fallback to enUS for any missing key.
+
 ## Compatibility
 
 - WoW Forever beta (Interface 16001, Classic data set).

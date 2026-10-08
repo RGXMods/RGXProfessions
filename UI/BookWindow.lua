@@ -207,7 +207,7 @@ local function StyledHeaderTitle(text)
     end
     return table.concat(words, " ")
 end
-local HEADER_TITLE = StyledHeaderTitle("Profession Leveling Guide")
+local HEADER_TITLE = StyledHeaderTitle("RGX Professions")
 
 -- Real in-game tooltip for a guide step: the crafted item when the step
 -- carries an itemID, otherwise the craft spell. SetHyperlink renders true
@@ -626,7 +626,7 @@ detail.recipeCard:FitContent(6)
     -- the notes card below the deeper of the two via the midRow spacer.
     local MIDDLE_GAP = 6
 
-    detail.matsCard = UI:CreateSection(canvas, { title = "Materials" })
+    detail.matsCard = UI:CreateSection(canvas, { title = RGXProf.L.MATERIALS })
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -6)
     detail.matsCard:SetPoint("TOPRIGHT", canvas, "TOP", -MIDDLE_GAP / 2, -6)
 
@@ -659,7 +659,7 @@ detail.recipeCard:FitContent(6)
         detail.materials[i] = row
     end
 
-    detail.locCard = UI:CreateSection(canvas, { title = "Where to get it" })
+    detail.locCard = UI:CreateSection(canvas, { title = RGXProf.L.WHERE_TO_GET })
     detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "TOPRIGHT", MIDDLE_GAP, 0)
     detail.locCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, -6)
 
@@ -715,17 +715,17 @@ detail.recipeCard:FitContent(6)
     detail.notes:SetTextColor(0.9, 0.9, 0.9)
 
     -- Footer buttons.
-    f.backBtn = Design:CreateButton(f, "< Professions", 110, 24)
+    f.backBtn = Design:CreateButton(f, RGXProf.L.BTN_BACK_PROFESSIONS, 110, 24)
     f.backBtn:SetPoint("BOTTOMLEFT", 14, 12)
-    f.backBtn:SetTooltip("Back", "Return to the profession list.")
+    f.backBtn:SetTooltip("Back", RGXProf.L.TIP_BACK)
     f.backBtn:SetScript("OnClick", function()
         RGXProf_Settings.bookProfessionID = nil
         RGXProf.BookWindow:Show()
     end)
 
-    f.matsBtn = Design:CreateButton(f, "Materials to Max", 130, 24)
+    f.matsBtn = Design:CreateButton(f, RGXProf.L.BTN_MATS_TO_MAX, 130, 24)
     f.matsBtn:SetPoint("BOTTOMLEFT", 134, 12)
-    f.matsBtn:SetTooltip("Materials to Max", "Show everything you still need to reach the skill cap.")
+    f.matsBtn:SetTooltip(RGXProf.L.BTN_MATS_TO_MAX, RGXProf.L.TIP_MATS_TO_MAX)
     f.matsBtn:SetScript("OnClick", function()
         local professionID = RGXProf.BookWindow:GetCurrentProfession()
         if not professionID then return end
@@ -872,8 +872,8 @@ local function RenderStepList(self)
         local rangeHex = (diff and DiffColorHex(diff)) or Label()
         row.range:SetText(string.format("%s%d - %d", rangeHex, step.minSkill, step.maxSkill))
 
-        local name = step.name or ("Recipe " .. (step.spellID or i))
-        row.name:SetText(Text() .. name .. (step.alternate and (Dim() .. " (alt)") or ""))
+        local name = step.name or (RGXProf.L.RECIPE_PREFIX .. (step.spellID or i))
+        row.name:SetText(Text() .. name .. (step.alternate and (Dim() .. RGXProf.L.ALT_SUFFIX) or ""))
 
         if row._selected then
             RowHighlightSetColor(row, ar, ag, ab, HighlightAlpha())
@@ -1080,7 +1080,7 @@ RenderDetail = function(self)
             row:Show()
         elseif i == 1 and #reagents == 0 then
             row.icon:Hide()
-            row.name:SetText(Dim() .. "No reagent data for this step.")
+            row.name:SetText(Dim() .. RGXProf.L.NO_REAGENT_DATA)
             row.count:SetText("")
             row:Show()
         else
@@ -1126,7 +1126,7 @@ RenderDetail = function(self)
         end
         detail.locAction:SetText(Dim() .. "Closest to you - Click to pin")
     else
-        detail.locHeader:SetText(Dim() .. "Trainer-taught; ask any profession trainer.")
+        detail.locHeader:SetText(Dim() .. RGXProf.L.TRAINER_TAUGHT)
         detail.locCoords:SetText("")
         detail.locAction:SetText("")
     end
@@ -1146,12 +1146,13 @@ RenderDetail = function(self)
     -- FitContent must be free to shrink the card to its real height.
     local notes = {}
     if step.keep then
-        table.insert(notes, C("accent") .. "Keep the crafted items for later steps.")
+        table.insert(notes, C("accent") .. RGXProf.L.KEEP_FOR_LATER)
         if step.keepNote then
             table.insert(notes, Text() .. step.keepNote)
         end
     end
     if step.note then table.insert(notes, Accent() .. "* " .. Text() .. step.note) end
+    if step.quests then table.insert(notes, Dim() .. RGXProf.L.REQUIRES_QUEST) end
 
     -- Position the spacer below the deeper of the two middle cards so the
     -- notes top edge stays level when the columns have different heights.
@@ -1246,17 +1247,17 @@ BuildLanding = function(self)
             btn.icon:SetDesaturated(false)
             btn.skill:SetFontObject("GameFontNormal")
             if total and skill >= total then
-                btn.skill:SetText(string.format("Skill %d/%d", skill, total))
+                btn.skill:SetText(string.format(RGXProf.L.SKILL_FRACTION, skill, total))
                 btn.skill:SetTextColor(0.9, 0.7, 0.2)
             else
-                btn.skill:SetText(string.format("Skill %d/%d", skill, total or MaxSkill()))
+                btn.skill:SetText(string.format(RGXProf.L.SKILL_FRACTION, skill, total or MaxSkill()))
                 btn.skill:SetTextColor(0.1, 1, 0.1)
             end
         else
             btn.name:SetText(Dim() .. prof.name)
             btn.icon:SetDesaturated(true)
             btn.skill:SetFontObject("GameFontHighlightSmall")
-            btn.skill:SetText(Label() .. "Not learned")
+            btn.skill:SetText(Label() .. RGXProf.L.NOT_LEARNED)
         end
 
         btn:SetScript("OnClick", function()

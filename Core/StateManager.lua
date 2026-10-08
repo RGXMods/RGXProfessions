@@ -33,13 +33,13 @@ end
 function RGXProf.StateManager:ShowGuideForProfession(pName)
     local professionID = RGXProf.Constants.ProfessionNameToID[pName]
     if not professionID then
-        print("|cffff0000[RGXProf]|r Unknown profession: " .. tostring(pName))
+        print(RGXProf.L.CMD_UNKNOWN_PROF .. tostring(pName))
         return
     end
 
     local path = RGXProf.currentExpansion and RGXProf.currentExpansion.paths and RGXProf.currentExpansion.paths[professionID]
     if not path then
-        print("|cffff0000[RGXProf]|r No guide available for " .. tostring(pName))
+        print(RGXProf.L.NO_GUIDE_AVAILABLE .. tostring(pName))
         return
     end
 
