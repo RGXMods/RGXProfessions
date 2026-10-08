@@ -424,7 +424,7 @@ function RGXProf.BookWindow:EnsureFrame()
     f.headerIcon = header:CreateTexture(nil, "ARTWORK")
     f.headerIcon:SetSize(48, 48)
     f.headerIcon:SetPoint("TOPLEFT", 12, -4)
-    f.headerIcon:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\square.png")
+    f.headerIcon:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\square.tga")
 
     f.headerTitle = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     f.headerTitle:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, 10)
@@ -1316,7 +1316,7 @@ function RGXProf.BookWindow:Show()
     local professionID = self:GetCurrentProfession()
     if professionID then
         local prof = RGXProf.Constants.Professions[professionID]
-        self.frame.headerIcon:SetTexture(prof.icon or "Interface\\AddOns\\RGX-Framework\\media\\square.png")
+        self.frame.headerIcon:SetTexture(prof.icon or "Interface\\AddOns\\RGX-Framework\\media\\square.tga")
         self.frame.headerTitle:SetText(prof.name .. " - Leveling Path")
         UpdateProgressFrame(self.frame, professionID)
 
@@ -1327,7 +1327,7 @@ function RGXProf.BookWindow:Show()
         RenderStepList(self)
         RenderDetail(self)
     else
-        self.frame.headerIcon:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\square.png")
+        self.frame.headerIcon:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\square.tga")
         self.frame.headerTitle:SetText(HEADER_TITLE)
         self.frame.progressLabel:SetText("")
         self.frame.progress:SetMinMaxValues(0, 1)
