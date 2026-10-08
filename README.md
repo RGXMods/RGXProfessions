@@ -6,8 +6,8 @@ Derived from PLG (Profession Leveling Guide) by LirameiRav, updated from the ori
 
 ## Features
 
-- **The Book** — a single window with a button per profession. Click one to read its leveling path page by page.
-- **Next/Previous navigation** — every step in the path is a page: skill range, recipe link and icon, alternate routes, craft counts, and the full material list with have/need counts.
+- **The Book** — a single window with a button per profession. Click one to read its leveling path step by step.
+- **Step list navigation** — every step in the path is a card in the list: skill range, recipe link and icon, alternate routes, craft counts, and the full material list with have/need counts.
 - **Vendor and trainer knowledge** — steps that need purchases show the vendor names for your faction.
 - **Minimap button** — left-click opens the book; drag to move; Ctrl+Right-click hides (`/prof icon on` restores it).
 - **Live trade-window guide** — when a profession window is open, the classic step-by-step guide appears beside it, exactly like PLG.
