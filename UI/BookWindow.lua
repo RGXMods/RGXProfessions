@@ -1202,8 +1202,14 @@ BuildLanding = function(self)
     local professions = GetGuideProfessions()
     self.frame.landingHint:SetText(Dim() .. "Choose a profession to open its leveling path.")
 
-    local availW = landing:GetWidth() or 600
-    local availH = (landing:GetHeight() or 350) - 30 -- reserve the hint strip
+    -- Host size is 0 until first layout resolves (0 is truthy in Lua, so
+    -- a plain `or` fallback never catches it); fall back to the design
+    -- size instead of laying out a collapsed grid, like the framework's
+    -- own column layout does.
+    local availW = landing:GetWidth() or 0
+    if availW <= 0 then availW = 600 end
+    local availH = (landing:GetHeight() or 0) - 30 -- reserve the hint strip
+    if availH <= 0 then availH = 320 end
     local columns = math.max(3, math.min(6, math.floor(availW / 130)))
     local rowsNeeded = math.ceil(#professions / columns)
     local cell = math.max(72, math.min(160, math.floor(math.min(availW / columns, availH / rowsNeeded))))
@@ -1214,6 +1220,12 @@ BuildLanding = function(self)
     local btnSize = cell - 10
     local iconSize = math.floor(btnSize * 0.36)
     local nameFont = btnSize < 100 and "GameFontHighlightSmall" or "GameFontNormal"
+    -- Interior spacing scales with the button so the content keeps its
+    -- proportions at every grid size instead of overflowing small cells
+    -- or rattling around in large ones.
+    local pad = math.max(4, math.floor(btnSize * 0.07))
+    local gap1 = math.max(2, math.floor(btnSize * 0.035))
+    local gap2 = math.max(1, math.floor(btnSize * 0.02))
 
     for index, professionID in ipairs(professions) do
         local prof = RGXProf.Constants.Professions[professionID]
@@ -1221,17 +1233,20 @@ BuildLanding = function(self)
         if not btn then
             btn = Design:CreateButton(landing, nil, btnSize, btnSize)
             btn.icon = btn:CreateTexture(nil, "ARTWORK")
-            btn.icon:SetPoint("TOP", 0, -8)
             btn.name = btn:CreateFontString(nil, "OVERLAY", nameFont)
-            btn.name:SetPoint("TOP", btn.icon, "BOTTOM", 0, -4)
             btn.skill = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-            btn.skill:SetPoint("TOP", btn.name, "BOTTOM", 0, -2)
             landing._buttons[index] = btn
         end
         btn:SetSize(btnSize, btnSize)
+        btn.icon:ClearAllPoints()
+        btn.icon:SetPoint("TOP", 0, -pad)
         btn.icon:SetSize(iconSize, iconSize)
+        btn.name:ClearAllPoints()
+        btn.name:SetPoint("TOP", btn.icon, "BOTTOM", 0, -gap1)
+        btn.skill:ClearAllPoints()
+        btn.skill:SetPoint("TOP", btn.name, "BOTTOM", 0, -gap2)
         btn.name:SetFontObject(nameFont)
-        btn.name:SetWidth(btnSize - 8)
+        btn.name:SetWidth(btnSize - pad * 2)
         btn.name:SetWordWrap(true)
         btn.name:SetNonSpaceWrap(false)
 
