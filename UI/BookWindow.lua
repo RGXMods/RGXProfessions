@@ -298,6 +298,44 @@ end
 -- Frame
 --------------------------------------------------------------------------------
 
+-- Resize bounds for the book window: clamped 640x420..1400x1000. Applied on
+-- the real initialization path (EnsureFrame) before the sizer grip can drag,
+-- and re-applied at drag time by the sizer's OnUpdate clamp.
+local MIN_WIDTH, MAX_WIDTH = 640, 1400
+local MIN_HEIGHT, MAX_HEIGHT = 420, 1000
+
+local function ClampSize(width, height)
+    if width < MIN_WIDTH then width = MIN_WIDTH
+    elseif width > MAX_WIDTH then width = MAX_WIDTH end
+    if height < MIN_HEIGHT then height = MIN_HEIGHT
+    elseif height > MAX_HEIGHT then height = MAX_HEIGHT end
+    return width, height
+end
+
+-- Apply all four resize bounds at window initialization, capability-guarded
+-- the way RegisterEventSafe guards event registration: never call a client
+-- API without probing it first. Where the client exposes the modern
+-- Frame:SetResizeBounds(minW, minH, maxW, maxH) (retail-shaped clients),
+-- publish all four bounds through it. Where the native resize-bound family
+-- is absent entirely (the Forever beta, where SetResizeBounds and
+-- SetMinResize are both nil), fall back to the manual clamp alone without
+-- ever calling an absent API. The retired SetMinResize/SetMaxResize pair
+-- from the issue #11 crash is not revived in either path: on modern clients
+-- the single SetResizeBounds call replaces the pair; on legacy clients
+-- neither is called.
+local function ApplyResizeBounds(frame, width, height)
+    if frame.SetResizeBounds then
+        pcall(frame.SetResizeBounds, frame,
+            MIN_WIDTH, MIN_HEIGHT, MAX_WIDTH, MAX_HEIGHT)
+    end
+    -- The manual clamp always runs, so the restored-or-default size is in
+    -- range even on clients with no native bound API at all.
+    width, height = ClampSize(width, height)
+    if width ~= frame:GetWidth() or height ~= frame:GetHeight() then
+        frame:SetSize(width, height)
+    end
+end
+
 function RGXProf.BookWindow:EnsureFrame()
     if self.frame then return end
 
@@ -325,9 +363,17 @@ function RGXProf.BookWindow:EnsureFrame()
     -- there); clamped 640x420..1400x1000 and persisted to
     -- RGXProf_Settings.bookSize. Every content region below the header is
     -- anchor-driven so the layout reflows.
+    --
+    -- The real init path applies all four resize bounds before the sizer
+    -- grip is usable: the saved RGXProf_Settings.bookSize (or the fixed
+    -- default) is clamped into 640x420..1400x1000 through the
+    -- capability-guarded ApplyResizeBounds, so an out-of-bounds saved size
+    -- is repaired at init and an in-range size passes through unchanged.
     local savedSize = RGXProf_Settings and RGXProf_Settings.bookSize
     if type(savedSize) == "table" and type(savedSize[1]) == "number" and type(savedSize[2]) == "number" then
-        f:SetSize(savedSize[1], savedSize[2])
+        ApplyResizeBounds(f, savedSize[1], savedSize[2])
+    else
+        ApplyResizeBounds(f, WINDOW_WIDTH, WINDOW_HEIGHT)
     end
     f.sizer = CreateFrame("Button", nil, f)
     f.sizer:SetSize(16, 16)
