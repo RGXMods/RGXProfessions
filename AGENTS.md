@@ -52,6 +52,33 @@ tags in GitLab, mirrored to GitHub.
 - Dependencies: keep `## RequiredDeps: RGX-Framework` and any `## X-RGX-Framework-MinVersion` accurate against the framework version line, and match the TOC SavedVariables names (`RGXProf_Settings`, `RGXProf_SimResults`) with the declarative `dbName` values.
 - Repo facts: this addon targets WoW Forever only (interface `16001`) and uses `/prof` (`/prof icon on|off`) as its command surface. The TOC owns the `vX.Y.Z` version and the full load list. Recheck facts in the TOC and README when they change.
 
+## Supported Interface Value Verification Table
+
+Framework-wide reference verified on 2026-10-15 against RGX-Framework `2.7.18`
+(commit `bab23d72c0e793c24c1a5191232514b6b1335ce3`): the six flavor TOCs,
+`tools/ci/flavor-toc-check.mjs`, and the reachable
+[Wago build feed](https://wago.tools/api/builds). Derive the Interface numeric
+as `major * 10000 + minor * 100 + patch`; the final build component is excluded.
+The source column names an observed feed record, not a claim that every flavor
+is a current retail product. RGXProfessions itself still targets only Forever
+(`16001`); this reference does not expand its supported clients.
+
+| Framework flavor | Interface | Derivation | Verified feed source: product / version |
+|---|---|---|---|
+| WoW Forever (Classic beta) | 16001 | `1*10000 + 60*100 + 1` | `wow_classic_beta` / `1.60.1.70374` |
+| Retail | 120105 | `12*10000 + 1*100 + 5` | `wow` / `12.1.5.70391` |
+| Classic Era | 11509 | `1*10000 + 15*100 + 9` | `wow_classic_era` / `1.15.9.70003` |
+| The Burning Crusade Classic | 20506 | `2*10000 + 5*100 + 6` | `wow_anniversary` / `2.5.6.70006` |
+| Wrath of the Lich King Classic | 38002 | `3*10000 + 80*100 + 2` | `wow_classic_titan` / `3.80.2.70315` |
+| Cataclysm Classic | 40402 | `4*10000 + 4*100 + 2` | historical `wow_classic` / `4.4.2.60895` |
+| Mists of Pandaria Classic | 50504 | `5*10000 + 5*100 + 4` | `wow_classic` / `5.5.4.70268` |
+
+No installed client's `.build.info` was available for this verification.
+Before changing a TOC or releasing, re-read the target client's `.build.info`
+as described below; this dated cross-check does not override installed-client
+ground truth. The framework contract and MCP tools remain defined in
+`docs/DECLARATIVE-API.md` and `docs/RGX-MCP.md` in RGX-Framework.
+
 ## Keeping Interface Versions Current
 
 - Ground truth is the game client's own `.build.info` in the WoW installation root: one pipe-delimited row per installed product; the Product column names the flavor and the Version column gives `major.minor.patch.build`. Read it immediately before changing a TOC or releasing.
