@@ -1122,6 +1122,8 @@ RenderDetail = function(self)
     -- Line 2: craft instruction
     if skill and skill >= step.maxSkill then
         table.insert(lines, C("success") .. "Done - move to the next step")
+    elseif step.source == "gather" then
+        table.insert(lines, Accent() .. "Gather until skill " .. Text() .. step.maxSkill)
     elseif crafts > 0 then
         table.insert(lines, Accent() .. "Craft " .. Text() .. crafts .. Accent() .. " more to reach " .. Text() .. step.maxSkill)
     else
@@ -1138,6 +1140,24 @@ RenderDetail = function(self)
     end
     if step.alternate then
         table.insert(lines, Dim() .. "Alternate")
+    end
+    if step.source == "vendor" then
+        table.insert(lines, Dim() .. "Pattern comes from a vendor")
+    elseif step.source == "new" then
+        table.insert(lines, Dim() .. "New recipe in Forever")
+    elseif step.source == "quest" then
+        table.insert(lines, Dim() .. "Learned from a quest")
+    end
+    if step.zones then
+        if step.zones.alliance and step.zones.alliance ~= "" then
+            table.insert(lines, Dim() .. "Alliance: " .. Text() .. step.zones.alliance)
+        end
+        if step.zones.horde and step.zones.horde ~= "" then
+            table.insert(lines, Dim() .. "Horde: " .. Text() .. step.zones.horde)
+        end
+    end
+    if step.note and step.note ~= "" then
+        table.insert(lines, Dim() .. step.note)
     end
     detail.meta:SetText(table.concat(lines, "\n"))
 

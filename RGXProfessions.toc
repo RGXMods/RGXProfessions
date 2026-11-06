@@ -6,7 +6,7 @@
 ## X-Discord: discord.gg/N7kdKAHVVF
 ## Category: RealmGX
 ## Group: RealmGX
-## Version: v0.1.3
+## Version: v0.2.0
 ## RequiredDeps: RGX-Framework
 ## X-RGX-Framework-MinVersion: 2.7.15-beta.4
 ## SavedVariables: RGXProf_Settings, RGXProf_SimResults
@@ -31,6 +31,7 @@ Data\Forever\ProfessionPaths\Leatherworking.lua
 Data\Forever\ProfessionPaths\Mining.lua
 Data\Forever\ProfessionPaths\Skinning.lua
 Data\Forever\ProfessionPaths\Tailoring.lua
+Data\Forever\ProfessionNotes.lua
 
 Data\Classic\NPCs\Trainers.lua
 Data\Classic\NPCs\Vendors.lua
@@ -44,6 +45,7 @@ Data\Classic\ProfessionPaths\Enchanting.lua
 Data\Classic\ProfessionPaths\Engineering.lua
 Data\Classic\ProfessionPaths\Leatherworking.lua
 Data\Classic\Recipes.lua
+Data\Forever\Recipes.lua
 Data\Classic\ZoneNames.lua
 
 Constants/Constants.lua

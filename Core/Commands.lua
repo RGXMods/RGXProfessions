@@ -110,6 +110,13 @@ function RGXProf:HandleSlashCommand(msg)
         else
             RGXProf.BookWindow:Show()
         end
+    elseif command == "tips" then
+        local name, id = ResolveProfessionName(args)
+        if not name then
+            print(RGXProf.L.CMD_TIPS_USAGE)
+            return
+        end
+        RGXProf:PrintProfessionNotes(id, name)
     elseif command == "preview" then
         if args == "" then
             if not RGXProf.CurrentState or not RGXProf.CurrentState.profession then
@@ -135,5 +142,32 @@ function RGXProf:HandleSlashCommand(msg)
         print(RGXProf.L.HELP_SHOW_PROF)
         print(RGXProf.L.HELP_PREVIEW)
         print(RGXProf.L.HELP_ICON)
+        print(RGXProf.L.HELP_TIPS)
+    end
+end
+
+-- Prints a profession's Forever notes (what changed, tips, kit) to chat.
+function RGXProf:PrintProfessionNotes(professionID, displayName)
+    local notes = RGXProf.ForeverNotes and RGXProf.ForeverNotes[professionID]
+    if not notes then
+        print(RGXProf.L.CMD_NO_NOTES)
+        return
+    end
+    print("|cffffff00[RGXProf]|r |cffffffff" .. tostring(displayName) .. "|r - " .. (notes.tagline or ""))
+    if notes.summary and notes.summary ~= "" then print("  " .. notes.summary) end
+    if notes.changes and #notes.changes > 0 then
+        print("|cffffff00" .. RGXProf.L.NOTES_CHANGED .. "|r")
+        for _, change in ipairs(notes.changes) do
+            local source = (change.source and change.source ~= "") and (" |cff9a9a9a[" .. change.source .. "]|r") or ""
+            print("  - " .. change.text .. source)
+        end
+    end
+    if notes.tips and #notes.tips > 0 then
+        print("|cffffff00" .. RGXProf.L.NOTES_TIPS .. "|r")
+        for _, tip in ipairs(notes.tips) do print("  - " .. tip) end
+    end
+    if notes.tools and #notes.tools > 0 then
+        print("|cffffff00" .. RGXProf.L.NOTES_KIT .. "|r")
+        for _, tool in ipairs(notes.tools) do print("  - " .. tool.name .. ": " .. tool.note) end
     end
 end

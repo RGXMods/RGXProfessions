@@ -578,7 +578,19 @@ local function ComputeRemainingBuckets(self, currentSkillLevel, professionPath)
 					if crafts > 0 then
 						local reagents = NormalizeReagentList(RGXProf.Data.Recipes[spellID])
   						
-						for c = 1, crafts do					
+						-- Routes carry exact expected craft counts: add that many crafts of reagents in one go
+						-- instead of stepping skill with the generic (Classic) skill-up factor, which would
+						-- stop short and under-count the materials.
+						if step.crafts then
+							for j = i, #bucketsWithMats do
+								local targetBucket = bucketsWithMats[j]
+								for itemID, countPerCraft in pairs(reagents) do
+									targetBucket.mats[itemID] = (targetBucket.mats[itemID] or 0) + countPerCraft * crafts
+								end
+							end
+							progressedSkillLevel = math.min(stepMax, bucket.skillCap)
+						end
+						for c = 1, (step.crafts and 0 or crafts) do					
 							factor = self:GetRecipeCraftFactor(spellID, progressedSkillLevel)
 							if not factor or factor <= 0 or factor ~= factor then
 								progressedSkillLevel = stepMax
@@ -684,6 +696,12 @@ function RGXProf.DataManager:GetEstimatedCrafts(pointsEarned, step, workingHighS
 	local currentSkill = pointsEarned
 	local skillGap = math.max(0, (workingHighSkill or step.maxSkill)- currentSkill)
 	local factor
+	-- Routes carry their own expected craft count for the whole step (computed from the
+	-- skill-up colours with the real success chance); scale it by the part still to do.
+	local stepSpan = step.maxSkill - step.minSkill
+	if step.crafts and stepSpan > 0 then
+		return math.ceil(step.crafts * skillGap / stepSpan)
+	end
 	if step.colors then
 		factor = self:GetStepColorsCraftFactor(step.colors, step.minSkill)
 	else

@@ -2,7 +2,7 @@
 
 |cff8B1538RGX|r Professions is the profession leveling bible for **WoW Forever** (the Classic beta client, Interface 16001). Browse every profession's full leveling path like a book: a button per profession, then page-by-page steps with recipes, materials, vendor locations, and notes. Requires `RGX-Framework`.
 
-Derived from PLG (Profession Leveling Guide) by LirameiRav, updated from the original Retail version by Keg; default guides from wow-professions.com. Rebranded and extended for the RealmGX addon suite with RGX-Framework integration (events, slash commands, minimap, timers).
+Derived from PLG (Profession Leveling Guide) by LirameiRav, updated from the original Retail version by Keg; Classic, Cata and Mists guides from wow-professions.com; the WoW Forever 1-300 routes, reagents, notes and tips from [WoWSoD Pro](https://wowsod.pro/wow-forever/professions/leveling) (Wowhead Forever data, final pre-launch skill-up colours, regenerated with `tools/gen-forever-guides.py`). Rebranded and extended for the RealmGX addon suite with RGX-Framework integration (events, slash commands, minimap, timers).
 
 ## Features
 
@@ -42,3 +42,7 @@ RGXProfessions is fully localized for all twelve WoW client locales: enUS (base)
 ## Support
 
 Part of the [RealmGX](https://realmgx.com) community project. Join us at discord.gg/N7kdKAHVVF.
+
+## WoW Forever guides
+
+All 12 professions carry the current Forever data: the eight crafting professions have full 1-300 routes with expected craft counts, skill-up colours, where each recipe comes from (trainer, vendor, quest or new in Forever) and per-craft reagents; Fishing, Herbalism, Mining and Skinning have gathering brackets with Alliance and Horde zones. `/prof tips <profession>` prints what Forever changed, tips and kit for a profession. Re-run `tools/gen-forever-guides.py --fetch` to refresh the data.
