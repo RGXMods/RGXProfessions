@@ -550,8 +550,9 @@ end
 --------------------------
 -- calculate remaining mats
 --------------------------
-function RGXProf.DataManager:GetRemainingMaterials(currentSkillLevel, professionPath)
-	local lines = {}
+-- Shared computation: the materials still needed to reach each remaining skill
+-- tier, as { { skillCap = n, mats = { [itemID] = count } }, ... } (nil without tiers).
+local function ComputeRemainingBuckets(self, currentSkillLevel, professionPath)
     local bucketsWithMats = {}
     local buckets = RGXProf.currentExpansion.tiers
     if not buckets or #buckets == 0 then return end
@@ -609,6 +610,13 @@ function RGXProf.DataManager:GetRemainingMaterials(currentSkillLevel, profession
   		end
 	end
 
+    return bucketsWithMats
+end
+
+function RGXProf.DataManager:GetRemainingMaterials(currentSkillLevel, professionPath)
+	local lines = {}
+    local bucketsWithMats = ComputeRemainingBuckets(self, currentSkillLevel, professionPath)
+    if not bucketsWithMats then return end
 
     -- Convert to display lines
     for _, bucket in ipairs(bucketsWithMats) do
@@ -633,6 +641,33 @@ function RGXProf.DataManager:GetRemainingMaterials(currentSkillLevel, profession
 
 
   	return lines
+end
+
+-- Totals for a { [itemID] = count } table against what the player holds.
+-- Pure: `getHave(itemID)` supplies the held count, so it can be tested without a client.
+-- Returns { items = distinct reagents, needed = total units, missing = units still to get }.
+function RGXProf.DataManager.SummarizeMats(mats, getHave)
+	local items, needed, missing = 0, 0, 0
+	for itemID, count in pairs(mats or {}) do
+		items = items + 1
+		needed = needed + count
+		local have = tonumber(getHave and getHave(itemID)) or 0
+		if have < count then missing = missing + (count - have) end
+	end
+	return { items = items, needed = needed, missing = missing }
+end
+
+-- The "to max" totals for a profession path at the current skill, with live bag counts.
+function RGXProf.DataManager:GetRemainingMaterialsSummary(currentSkillLevel, professionPath)
+	if not professionPath then return nil end
+	local buckets = ComputeRemainingBuckets(self, currentSkillLevel, professionPath)
+	local top = buckets and buckets[#buckets]
+	if not top then return nil end
+	local summary = RGXProf.DataManager.SummarizeMats(top.mats, function(itemID)
+		return RGXProf.WowAPI:GetItemCount(itemID, false, false)
+	end)
+	summary.skillCap = top.skillCap
+	return summary
 end
 
 function RGXProf.DataManager:getTierLabel(skillCap)
