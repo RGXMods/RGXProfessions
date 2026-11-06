@@ -13,6 +13,12 @@ local function DeferOutOfSecure(self, fn, label)
 end
 
 RGXProf.Events = {
+    -- Bag contents changed: keep the book page's material counts live. The client
+    -- batches this event, so no extra debounce is needed.
+    BAG_UPDATE_DELAYED = function()
+        local book = RGXProf.BookWindow
+        if book and book.RefreshMaterials then book:RefreshMaterials() end
+    end,
     TRADE_SKILL_SHOW = function(self, event)
         DeferOutOfSecure(self, function()
             self:TRADE_SHOW(event or "TRADE_SKILL_SHOW")

@@ -1057,6 +1057,31 @@ local function NearestNpc(candidates)
     return best
 end
 
+-- Which rows the Materials card shows, in order. The card has 8 rows: reagents first
+-- (6 plus a "+ N more" row when there are more than 7), then the optional to-max
+-- summary, so the summary always fits. Pure function; see tests/MaterialEntries.test.lua.
+-- BEGIN MATERIAL ENTRIES
+function RGXProf.BookWindow.BuildMaterialEntries(reagents, hasSummary)
+    local entries = {}
+    reagents = reagents or {}
+    if #reagents == 0 then
+        entries[1] = { kind = "empty" }
+    else
+        local limit = (#reagents > 7) and 6 or #reagents
+        for i = 1, limit do
+            entries[#entries + 1] = { kind = "reagent", reagent = reagents[i] }
+        end
+        if #reagents > 7 then
+            entries[#entries + 1] = { kind = "more", hidden = #reagents - 6 }
+        end
+    end
+    if hasSummary then
+        entries[#entries + 1] = { kind = "summary" }
+    end
+    return entries
+end
+-- END MATERIAL ENTRIES
+
 RenderDetail = function(self)
     local f = self.frame
     local detail = f.detail
@@ -1127,15 +1152,32 @@ RenderDetail = function(self)
     local displayCrafts = crafts > 0 and crafts or (RGXProf.DataManager:GetEstimatedCrafts(step.minSkill, step) or 1)
     local reagents = step.spellID and RGXProf.DataManager:GetReagentListWithDetails(step.spellID, displayCrafts) or {}
     reagents = reagents or {}
+    -- "To max" totals with live bag counts, one compact row at the end of the card.
+    local summaryText
+    local okS, summary = pcall(function()
+        return RGXProf.DataManager:GetRemainingMaterialsSummary(skill or step.minSkill, path)
+    end)
+    if okS and summary and summary.items > 0 then
+        local color = summary.missing == 0 and C("success") or C("warning")
+        summaryText = Dim() .. string.format(RGXProf.L.MATS_TO_MAX_SUMMARY, summary.skillCap, summary.items)
+            .. " " .. color .. string.format(RGXProf.L.MATS_STILL_NEEDED, summary.missing)
+    end
+    local entries = RGXProf.BookWindow.BuildMaterialEntries(reagents, summaryText ~= nil)
     for i = 1, 8 do
         local row = detail.materials[i]
-        if i == 8 and #reagents > 8 then
+        local entry = entries[i]
+        if entry and entry.kind == "summary" then
             row.icon:Hide()
-            row.name:SetText(Dim() .. string.format("+ %d more", #reagents - 7))
+            row.name:SetText(summaryText)
             row.count:SetText("")
             row:Show()
-        elseif reagents[i] then
-            local reagent = reagents[i]
+        elseif entry and entry.kind == "more" then
+            row.icon:Hide()
+            row.name:SetText(Dim() .. string.format("+ %d more", entry.hidden))
+            row.count:SetText("")
+            row:Show()
+        elseif entry and entry.kind == "reagent" then
+            local reagent = entry.reagent
             row.icon:SetTexture(reagent.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
             row.icon:Show()
             local have = tonumber(reagent.onHandCount) or 0
@@ -1144,7 +1186,7 @@ RenderDetail = function(self)
             row.name:SetText(Text() .. need .. Dim() .. "x " .. Text() .. (reagent.name or tostring(reagent.itemID)))
             row.count:SetText(haveHex .. string.format("%d/%d", have, need))
             row:Show()
-        elseif i == 1 and #reagents == 0 then
+        elseif entry and entry.kind == "empty" then
             row.icon:Hide()
             row.name:SetText(Dim() .. RGXProf.L.NO_REAGENT_DATA)
             row.count:SetText("")
@@ -1450,6 +1492,14 @@ function RGXProf.BookWindow:Refresh()
         end
     end
     RenderStepList(self)
+    RenderDetail(self)
+end
+
+-- Re-render only the detail page (counts and to-max totals) after a bag change.
+function RGXProf.BookWindow:RefreshMaterials()
+    local f = self.frame
+    if not f or not f:IsShown() then return end
+    if not self:GetCurrentProfession() then return end
     RenderDetail(self)
 end
 
