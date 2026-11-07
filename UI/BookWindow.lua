@@ -82,6 +82,7 @@ local function Label() return C("label") end
 -- layout when the window size changes.
 local BuildLanding
 local RenderDetail
+local LayoutDetail
 
 local DIFF_WORDS = {
     optimal = "Always gives skill-ups",
@@ -403,8 +404,6 @@ function RGXProf.BookWindow:EnsureFrame()
         f._sizing = false
         RGXProf_Settings.bookSize = { f:GetWidth(), f:GetHeight() }
         -- One rebuild at the final size.
-        f._flexPending = false
-        f._flexAt = GetTime()
         if f.landing:IsShown() then BuildLanding(self) end
         if f.guide:IsShown() then RenderDetail(self) end
     end)
@@ -568,21 +567,8 @@ function RGXProf.BookWindow:EnsureFrame()
     -- pass re-queries crafts, reagents, and vendors). A pending rebuild is
     -- flushed on sizer release so content settles at the final size.
     f:HookScript("OnSizeChanged", function()
-        if f._sizing then
-            -- Mid-drag: the anchors already reflow the frame; rebuild once on release.
-            f._flexPending = true
-            return
-        end
-        local now = GetTime()
-        f._flexAt = f._flexAt or 0
-        if now - f._flexAt < 0.08 then
-            f._flexPending = true
-            return
-        end
-        f._flexAt = now
-        f._flexPending = false
         if f.landing:IsShown() then BuildLanding(self) end
-        if f.guide:IsShown() then RenderDetail(self) end
+        if f.guide:IsShown() then LayoutDetail(self) end
     end)
 
     -- Guide view: left step list + right detail.
@@ -688,7 +674,6 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
     detail.meta:SetWordWrap(true)
     detail.meta:SetTextColor(0.9, 0.9, 0.9)
 
-detail.recipeCard:FitContent(6)
 
     -- Middle row: two-column proportional layout
     -- Materials card (~46%) | Where to Get It card (~54%)
@@ -1170,10 +1155,6 @@ RenderDetail = function(self)
     -- Clear the top-right difficulty label (now in meta line 1)
     detail.difficulty:SetText("")
 
-    if detail.recipeCard and detail.recipeCard.FitContent then
-        detail.recipeCard:FitContent(6)
-    end
-
     -- Materials: structured rows - icon left, name flexible, count right.
     local displayCrafts = crafts > 0 and crafts or (RGXProf.DataManager:GetEstimatedCrafts(step.minSkill, step) or 1)
     local reagents = step.spellID and RGXProf.DataManager:GetReagentListWithDetails(step.spellID, displayCrafts) or {}
@@ -1220,17 +1201,10 @@ RenderDetail = function(self)
         else
             row:Hide()
         end
-        -- Size each shown row to its wrapped text: the FontString width is
-        -- already constrained by anchors, so GetStringHeight reflects the
-        -- wrapped height immediately after SetText. The icon is 14px tall.
-        if row:IsShown() then
-            local nameH = row.name:GetStringHeight()
-            row:SetHeight(math.max(nameH, 14))
-        end
     end
 
-    -- Force material card to fit its content
-    detail.matsCard:FitContent(6)
+    -- Force material card to fit its content    end
+
 
     -- Location card: show ONLY the NPC closest to the player when the
     -- window is open, not the full vendor/trainer roster.
@@ -1264,17 +1238,6 @@ RenderDetail = function(self)
         detail.locCoords:SetText("")
         detail.locAction:SetText("")
     end
-    detail.locCard:FitContent(6)
-
-    -- Re-assert the 46/54 two-column split after FitContent, which can
-    -- collapse card widths to minimum content width on this client.
-    local canvasW = canvas:GetWidth() or 0
-    if canvasW > 0 then
-        local innerW = canvasW - 16  -- 2 left + 8 right + 6 gap
-        detail.matsCard:SetWidth(math.floor(innerW * 0.46))
-        detail.locCard:SetWidth(math.floor(innerW * 0.54))
-    end
-
     -- Notes: hide the card entirely when there is nothing to say, so the
     -- layout never carries an empty card. No bottom anchor on the text:
     -- FitContent must be free to shrink the card to its real height.
@@ -1288,37 +1251,113 @@ RenderDetail = function(self)
     if step.note then table.insert(notes, Accent() .. "* " .. Text() .. step.note) end
     if step.quests then table.insert(notes, Dim() .. RGXProf.L.REQUIRES_QUEST) end
 
-    -- Position the spacer below the deeper of the two middle cards so the
-    -- notes top edge stays level when the columns have different heights.
-    local canvasTop = canvas:GetTop() or 0
-    local matsBottom = detail.matsCard:GetBottom() or canvasTop
-    local locBottom = detail.locCard:GetBottom() or canvasTop
-    local deepest = math.min(matsBottom, locBottom)
-    local dy = math.max(0, canvasTop - deepest)
-    detail.midRow:ClearAllPoints()
-    detail.midRow:SetPoint("TOPLEFT", canvas, "TOPLEFT", 0, -dy)
-    detail.midRow:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", 0, -dy)
-
     if #notes > 0 then
         detail.notesCard:Show()
         detail.notes:SetText(table.concat(notes, "\n"))
-        detail.notesCard:FitContent(4)
     else
         detail.notesCard:Hide()
     end
 
-    -- Canvas height: ScrollChild canvases never auto-grow from children,
-    -- so compute the content bottom explicitly and size the canvas to it,
-    -- floored at the viewport height so short content never scrolls.
-    local contentBottom
-    if #notes > 0 then
-        contentBottom = detail.notesCard:GetBottom() or deepest
-    else
-        contentBottom = deepest
+    LayoutDetail(self)
+end
+
+-- Geometry only: every card width and height is computed from the canvas width and the text itself,
+-- never read back from frame positions (which are not resolved yet on the frame the text changes) and
+-- never both anchored and sized. That keeps the cards aligned and lets the pane reflow cheaply on
+-- every step of a window resize.
+LayoutDetail = function(self)
+    local f = self.frame
+    local detail = f and f.detail
+    if not (detail and detail.canvas and detail.recipeCard) then return end
+    local canvas = detail.canvas
+    local canvasW = canvas:GetWidth() or 0
+    if canvasW < 50 then canvasW = (detail:GetWidth() or 0) - 16 end
+    if canvasW < 50 then return end
+
+    local GAP = 6
+    local full = math.max(120, canvasW - 10)          -- 2px left margin, 8px right margin
+    local function insets(card) return card.contentTopInset or 42, card.contentBottomInset or 12 end
+    local function textH(fs)
+        local text = fs:GetText()
+        if text == nil or text == "" then return 0 end
+        return fs:GetStringHeight() or 0
     end
-    local contentH = (canvasTop - contentBottom) + 10
-    local viewportH = detail:GetHeight() or 0
-    canvas:SetHeight(math.max(contentH, viewportH))
+    local function place(card, x, y, w, h)
+        card:ClearAllPoints()
+        card:SetPoint("TOPLEFT", canvas, "TOPLEFT", x, -y)
+        card:SetSize(w, h)
+    end
+
+    -- Recipe card: icon + title on top, the meta lines underneath.
+    local rt, rb = insets(detail.recipeCard)
+    local rInner = full - 32
+    detail.title:ClearAllPoints()
+    detail.title:SetPoint("LEFT", detail.icon, "RIGHT", 10, 0)
+    detail.title:SetWidth(math.max(40, rInner - 36 - 10 - 2))
+    detail.meta:ClearAllPoints()
+    detail.meta:SetPoint("TOPLEFT", detail.icon, "BOTTOMLEFT", 0, -8)
+    detail.meta:SetWidth(math.max(40, rInner - 4))
+    local recipeContent = math.max(40, 4 + textH(detail.title)) + 8 + textH(detail.meta)
+    local recipeH = rt + recipeContent + rb + 6
+    place(detail.recipeCard, 2, 0, full, recipeH)
+
+    -- Middle row: Materials 46% | Where to get it 54%, both cards the same height so the row is level.
+    local wM = math.floor((full - GAP) * 0.46)
+    local wL = full - GAP - wM
+
+    local mt, mb = insets(detail.matsCard)
+    local nameW = math.max(30, (wM - 32) - 4 - 18 - 36)
+    local matsContent, shown = 2, 0
+    for i = 1, #detail.materials do
+        local row = detail.materials[i]
+        if row:IsShown() then
+            row.name:ClearAllPoints()
+            row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 4, 0)
+            row.name:SetWidth(nameW)
+            local h = math.max(textH(row.name), 14)
+            row:SetHeight(h)
+            matsContent = matsContent + h + (shown > 0 and 2 or 0)
+            shown = shown + 1
+        end
+    end
+    matsContent = matsContent + 2
+
+    local lt, lb = insets(detail.locCard)
+    local locW = math.max(30, (wL - 32) - 4)
+    local locContent = 2
+    detail.locHeader:ClearAllPoints()
+    detail.locHeader:SetPoint("TOPLEFT", detail.locCard.content, "TOPLEFT", 2, -2)
+    detail.locHeader:SetWidth(locW)
+    detail.locCoords:ClearAllPoints()
+    detail.locCoords:SetPoint("TOPLEFT", detail.locHeader, "BOTTOMLEFT", 0, -2)
+    detail.locCoords:SetWidth(locW)
+    detail.locAction:ClearAllPoints()
+    detail.locAction:SetPoint("TOPLEFT", detail.locCoords, "BOTTOMLEFT", 0, -2)
+    detail.locAction:SetWidth(locW)
+    locContent = locContent + textH(detail.locHeader)
+    local cH, aH = textH(detail.locCoords), textH(detail.locAction)
+    if cH > 0 then locContent = locContent + 2 + cH end
+    if aH > 0 then locContent = locContent + 2 + aH end
+    locContent = locContent + 2
+
+    local rowH = math.max(mt + matsContent + mb + 6, lt + locContent + lb + 6)
+    local rowY = recipeH + GAP
+    place(detail.matsCard, 2, rowY, wM, rowH)
+    place(detail.locCard, 2 + wM + GAP, rowY, wL, rowH)
+
+    -- Notes card: full width below the middle row, only when it has text.
+    local bottom = rowY + rowH
+    if detail.notesCard:IsShown() then
+        local nt, nb = insets(detail.notesCard)
+        detail.notes:ClearAllPoints()
+        detail.notes:SetPoint("TOPLEFT", detail.notesCard.content, "TOPLEFT", 2, -2)
+        detail.notes:SetWidth(math.max(40, (full - 32) - 4))
+        local notesH = nt + 2 + textH(detail.notes) + 2 + nb + 4
+        place(detail.notesCard, 2, bottom + GAP, full, notesH)
+        bottom = bottom + GAP + notesH
+    end
+
+    canvas:SetHeight(math.max(bottom + 10, detail:GetHeight() or 0))
 end
 
 --------------------------------------------------------------------------------
