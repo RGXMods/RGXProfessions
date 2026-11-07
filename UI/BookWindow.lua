@@ -79,6 +79,9 @@ end
 -- Brand highlight: the same crimson as the RGX mark, the version text,
 -- and the window border - deliberately NOT the active theme's primary.
 local function Accent() return "|cff8B1538" end
+-- Instruction text (what to do next): WoW's standard gold, readable on the dark panel and distinct
+-- from the crimson brand accents.
+local function Instruct() return "|cffffd100" end
 local function Text() return "|cffffffff" end
 local function Dim() return C("subtext") end
 local function Label() return C("label") end
@@ -1167,9 +1170,9 @@ RenderDetail = function(self)
     if skill and skill >= step.maxSkill then
         table.insert(lines, C("success") .. "Done - move to the next step")
     elseif step.source == "gather" then
-        table.insert(lines, Accent() .. "Gather until skill " .. Text() .. step.maxSkill)
+        table.insert(lines, Instruct() .. "Gather until skill " .. Text() .. step.maxSkill)
     elseif crafts > 0 then
-        table.insert(lines, Accent() .. "Craft " .. Text() .. crafts .. Accent() .. " more to reach " .. Text() .. step.maxSkill)
+        table.insert(lines, Instruct() .. "Craft " .. Text() .. crafts .. Instruct() .. " more to reach " .. Text() .. step.maxSkill)
     else
         table.insert(lines, Dim() .. string.format("Skill %d-%d", step.minSkill, step.maxSkill))
     end

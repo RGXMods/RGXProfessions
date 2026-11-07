@@ -40,4 +40,9 @@ check(src:find('f.backBtn:SetPoint("TOPLEFT", f.stepPanel, "BOTTOMLEFT", 0, -INS
 check(src:find('f.matsBtn:SetPoint("TOPRIGHT", f.stepPanel, "BOTTOMRIGHT", 0, -INSET)', 1, true), "Materials to Max sits under the step list, right edges aligned")
 check(src:find("math.floor((LIST_WIDTH - FOOTER_GAP) / 2)", 1, true), "the two buttons split the list width exactly (no overflow)")
 check(src:find('row.bgIsSlice = false', 1, true), "step rows use one highlight shape")
+-- 4. The "Craft N more" / "Gather until" instruction lines are gold, not the dark crimson.
+local render = src:sub(assert(src:find("RenderDetail = function(self)", 1, true)), assert(src:find("LayoutDetail = function(self)", 1, true)))
+check(render:find('Instruct() .. "Craft "', 1, true) and render:find('Instruct() .. "Gather until skill "', 1, true), "instruction lines use the gold instruction colour")
+check(not render:find('Accent() .. "Craft "', 1, true) and not render:find('Accent() .. "Gather', 1, true), "instruction lines no longer use the crimson accent")
+check(src:find('local function Instruct() return "|cffffd100" end', 1, true), "instruction colour is WoW gold")
 print("BrandColor.test OK")
