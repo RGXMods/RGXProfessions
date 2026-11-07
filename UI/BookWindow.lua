@@ -22,7 +22,11 @@ local BRAND_RGB = BRAND_BORDER -- accents share the brand crimson
 -- Text-weight tint of the brand crimson: #8B1538 itself is too dark to read on the dark panels.
 local BRAND_TEXT = { 0.929, 0.420, 0.522 }      -- #ED6B85
 local BRAND_TEXT_HEX = "|cffED6B85"
-local BRAND_HEADER_FILL = { 0.110, 0.055, 0.075 } -- crimson-tinted card header band
+local BRAND_HEADER_FILL = { 0.118, 0.118, 0.149 } -- neutral card header band (RGX grey, not red)
+-- Panels and cards use the same neutral grey ring as the other RGX addons; crimson is only an
+-- accent (progress bar, current/selected step, version text).
+local PANEL_BORDER = { 0.200, 0.200, 0.247 }
+local HEADER_TEXT = { 0.922, 0.922, 0.941 }
 local INSET = 8                                  -- padding between a panel edge and its content
 
 --------------------------------------------------------------------------------
@@ -112,8 +116,8 @@ local function BrandSection(section)
         Design:ApplyPanel(header, { color = "surface", radius = 8 })
     end
     header._rgxBranded = true
-    if header.SetPanelColor then header:SetPanelColor(BRAND_HEADER_FILL, BRAND_BORDER, 1) end
-    if header.label then header.label:SetTextColor(BRAND_TEXT[1], BRAND_TEXT[2], BRAND_TEXT[3]) end
+    if header.SetPanelColor then header:SetPanelColor(BRAND_HEADER_FILL, PANEL_BORDER, 1) end
+    if header.label then header.label:SetTextColor(HEADER_TEXT[1], HEADER_TEXT[2], HEADER_TEXT[3]) end
     return section
 end
 
@@ -478,7 +482,7 @@ function RGXProf.BookWindow:EnsureFrame()
 
     -- Brand border: RGX crimson frame ring
     if f.SetPanelColor then
-        f:SetPanelColor(nil, BRAND_BORDER)
+        f:SetPanelColor(nil, PANEL_BORDER)
     end
 
     -- Traditional RGXMods header: dark band, accent line, logo, title,
@@ -629,7 +633,7 @@ function RGXProf.BookWindow:EnsureFrame()
     f.stepPanel:SetPoint("TOPLEFT", 0, 0)
     f.stepPanel:SetPoint("BOTTOMLEFT", 0, 0)
     if f.stepPanel.SetPanelColor then
-        f.stepPanel:SetPanelColor(nil, BRAND_BORDER)
+        f.stepPanel:SetPanelColor(nil, PANEL_BORDER)
     end
 
     -- Step list (wheel-scrolled plain ScrollFrame; portable across flavors).
@@ -659,7 +663,7 @@ function RGXProf.BookWindow:EnsureFrame()
     f.detailPanel:SetPoint("TOPLEFT", LIST_WIDTH + 14, 0)
     f.detailPanel:SetPoint("BOTTOMRIGHT", 0, 0)
     if f.detailPanel.SetPanelColor then
-        f.detailPanel:SetPanelColor(nil, BRAND_BORDER)
+        f.detailPanel:SetPanelColor(nil, PANEL_BORDER)
     end
 
     -- Detail pane (right half): a scrollable card column so the cards can
@@ -877,7 +881,7 @@ local function RowHighlightSetColor(row, r, g, b, a)
 end
 
 local function HighlightAlpha()
-    return 0.28
+    return 0.18
 end
 
 local function RowHighlightShow(row, show)
@@ -1493,7 +1497,7 @@ BuildLanding = function(self)
                 btn.skill:SetTextColor(0.9, 0.7, 0.2)
             else
                 btn.skill:SetText(string.format(RGXProf.L.SKILL_FRACTION, skill, total or MaxSkill()))
-                btn.skill:SetTextColor(BRAND_TEXT[1], BRAND_TEXT[2], BRAND_TEXT[3])
+                btn.skill:SetTextColor(HEADER_TEXT[1], HEADER_TEXT[2], HEADER_TEXT[3])
             end
         else
             btn.name:SetText(Dim() .. prof.name)

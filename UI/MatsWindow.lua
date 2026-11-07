@@ -21,8 +21,9 @@ local ICON = 16
 local COL_W = 38            -- Have / Need column width
 local HEADER_H = 26
 local TAB_H = 20
-local BG_ALPHA = 0.88       -- slightly see-through so it reads as an overlay
-local BRAND = { 0.545, 0.082, 0.220 } -- RGX crimson, same ring as the guide window
+local BG_ALPHA = 0.96       -- near-opaque: the ring layer sits under the fill and must not tint it
+local BRAND = { 0.545, 0.082, 0.220 } -- RGX crimson: accents only (selected tab)
+local RING = { 0.200, 0.200, 0.247 }   -- neutral grey ring, like the other RGX addons
 
 local function D() return _G.RGXDesign end
 local function L(key, fallback) return (RGXProf.L and RGXProf.L[key]) or fallback end
@@ -66,7 +67,7 @@ local function CreatePill(parent)
             local sr, sg, sb = Color("surface", { 0.09, 0.09, 0.11 })
             local br, bg, bb = Color("border", { 0.2, 0.2, 0.25 })
             if on then
-                self:SetPanelColor(BRAND, BRAND, 1)
+                self:SetPanelColor({ 0.30, 0.09, 0.14 }, BRAND, 1)
             else
                 self:SetPanelColor({ sr, sg, sb }, { br, bg, bb }, 1)
             end
@@ -102,7 +103,7 @@ local function CreateRow(parent)
     row.name:SetWordWrap(false)
     row:RegisterForClicks("LeftButtonUp")
     row:SetScript("OnEnter", function(self)
-        self.bg:SetColorTexture(BRAND[1], BRAND[2], BRAND[3], 0.25)
+        self.bg:SetColorTexture(1, 1, 1, 0.07)
         if self.itemID and GameTooltip then
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
             if GameTooltip.SetItemByID then pcall(GameTooltip.SetItemByID, GameTooltip, self.itemID) end
@@ -137,7 +138,7 @@ function W:Build()
         f = design:CreateFrame(UIParent, { name = "RGXProf_MatsWindow", width = w, height = h, square = false, bgAlpha = BG_ALPHA })
         if f.SetPanelColor then
             local sr, sg, sb = Color("surface", { 0.086, 0.086, 0.110 })
-            f:SetPanelColor({ sr, sg, sb }, BRAND, BG_ALPHA)
+            f:SetPanelColor({ sr, sg, sb }, RING, BG_ALPHA)
         end
     else
         f = CreateFrame("Frame", "RGXProf_MatsWindow", UIParent)
@@ -186,7 +187,7 @@ function W:Build()
     divider:SetHeight(1)
     divider:SetPoint("TOPLEFT", PAD, -HEADER_H)
     divider:SetPoint("TOPRIGHT", -PAD, -HEADER_H)
-    divider:SetColorTexture(BRAND[1], BRAND[2], BRAND[3], 0.7)
+    divider:SetColorTexture(1, 1, 1, 0.10)
 
     -- Rank tabs.
     f.tabs = {}
@@ -340,8 +341,9 @@ function W:Place()
     end
 end
 
-local function TabCaption(tier, isLast)
-    return string.format(L("MATS_TIER_TAB", "To %d"), tier.skillCap)
+-- Tabs show just the skill level the rank reaches.
+local function TabCaption(tier)
+    return tostring(tier.skillCap)
 end
 
 function W:LayoutTabs(tiers)
