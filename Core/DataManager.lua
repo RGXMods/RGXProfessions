@@ -682,6 +682,43 @@ function RGXProf.DataManager:GetRemainingMaterialsSummary(currentSkillLevel, pro
 	return summary
 end
 
+-- Everything still needed per remaining rank, ready to display. Each tier is cumulative ("to reach
+-- Expert (225)" includes what Journeyman needs). Items are sorted with what you still have to get
+-- first, then by name. `getInfo(itemID)` returns name, icon, have; it defaults to the live client.
+function RGXProf.DataManager:GetRemainingMaterialsTiers(currentSkillLevel, professionPath, getInfo)
+	if not professionPath then return {} end
+	getInfo = getInfo or function(itemID)
+		local name, _, icon, have = RGXProf.WowAPI:GetReagentInfoByItemID(itemID)
+		return name, icon, have
+	end
+	local buckets = ComputeRemainingBuckets(self, currentSkillLevel or 1, professionPath) or {}
+	local tiers = {}
+	for _, bucket in ipairs(buckets) do
+		local items, needed, have, missing, ready = {}, 0, 0, 0, 0
+		for itemID, count in pairs(bucket.mats or {}) do
+			local name, icon, held = getInfo(itemID)
+			held = tonumber(held) or 0
+			local short = math.max(0, count - held)
+			items[#items + 1] = { itemID = itemID, name = name, icon = icon, need = count, have = held, short = short }
+			needed = needed + count
+			have = have + math.min(held, count)
+			missing = missing + short
+			if short == 0 then ready = ready + 1 end
+		end
+		table.sort(items, function(a, b)
+			if (a.short > 0) ~= (b.short > 0) then return a.short > 0 end
+			local an, bn = a.name or "", b.name or ""
+			if an ~= bn then return an < bn end
+			return a.itemID < b.itemID
+		end)
+		tiers[#tiers + 1] = {
+			skillCap = bucket.skillCap, label = self:getTierLabel(bucket.skillCap), items = items,
+			needed = needed, have = have, missing = missing, ready = ready,
+		}
+	end
+	return tiers
+end
+
 function RGXProf.DataManager:getTierLabel(skillCap)
 	return RGXProf.Constants.TierLabels[skillCap] or string.format(RGXProf.L.SKILL_TIER_FALLBACK, skillCap)
 end

@@ -6,7 +6,7 @@
 ## X-Discord: discord.gg/N7kdKAHVVF
 ## Category: RealmGX
 ## Group: RealmGX
-## Version: v0.2.4
+## Version: v0.2.5
 ## RequiredDeps: RGX-Framework
 ## X-RGX-Framework-MinVersion: 2.7.15-beta.4
 ## SavedVariables: RGXProf_Settings, RGXProf_SimResults
@@ -75,7 +75,6 @@ Constants/Localization.lua
 UI/LayoutDefinitions.lua
 UI\LayoutDefinitions_Training.lua
 UI\LayoutDefinitions_MiniWindow.lua
-UI/LayoutDefinitions_MatsWindow.lua
 UI/FrameRegistry.lua
 UI/TooltipHandlers.lua
 UI/ClickHandlers.lua
