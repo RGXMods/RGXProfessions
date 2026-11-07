@@ -615,7 +615,7 @@ function RGXProf.BookWindow:EnsureFrame()
     -- Guide view: left step list + right detail.
     f.guide = CreateFrame("Frame", nil, f)
     f.guide:SetPoint("TOPLEFT", f.progress, "BOTTOMLEFT", INSET - 1, -(INSET + 4))
-    f.guide:SetPoint("BOTTOMRIGHT", -INSET, 46)
+    f.guide:SetPoint("BOTTOMRIGHT", -INSET, 12 + 26 + INSET) -- room for the footer row under the list
     f.guide:Hide()
 
     -- Rounded panel behind the recipe list column: the same nine-slice
@@ -814,16 +814,24 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
     detail.notes:SetTextColor(0.9, 0.9, 0.9)
 
     -- Footer buttons.
-    f.backBtn = NewButton(f, RGXProf.L.BTN_BACK_PROFESSIONS, 120, 26)
-    f.backBtn:SetPoint("BOTTOMLEFT", INSET, 12)
+    -- Footer buttons fill the width under the step list exactly: two halves with an INSET gap,
+    -- anchored to the list panel's own edges so they always line up with that column.
+    local FOOTER_GAP = INSET
+    local footerW = math.floor((LIST_WIDTH - FOOTER_GAP) / 2)
+    f.backBtn = NewButton(f, RGXProf.L.BTN_BACK_PROFESSIONS, footerW, 26)
+    f.backBtn:SetPoint("TOPLEFT", f.stepPanel, "BOTTOMLEFT", 0, -INSET)
     f.backBtn:SetTooltip("Back", RGXProf.L.TIP_BACK)
     f.backBtn:SetScript("OnClick", function()
         RGXProf_Settings.bookProfessionID = nil
         RGXProf.BookWindow:Show()
     end)
 
-    f.matsBtn = NewButton(f, RGXProf.L.BTN_MATS_TO_MAX, 150, 26)
-    f.matsBtn:SetPoint("LEFT", f.backBtn, "RIGHT", 8, 0)
+    f.matsBtn = NewButton(f, RGXProf.L.BTN_MATS_TO_MAX, footerW, 26)
+    f.matsBtn:SetPoint("TOPRIGHT", f.stepPanel, "BOTTOMRIGHT", 0, -INSET)
+    -- Small font so longer translations ("Matériaux jusqu'au maximum") still fit the half width.
+    for _, b in ipairs({ f.backBtn, f.matsBtn }) do
+        if b.label and b.label.SetFontObject then b.label:SetFontObject("GameFontNormalSmall") end
+    end
     f.matsBtn:SetTooltip(RGXProf.L.BTN_MATS_TO_MAX, RGXProf.L.TIP_MATS_TO_MAX)
     f.matsBtn:SetScript("OnClick", function()
         local professionID = RGXProf.BookWindow:GetCurrentProfession()
