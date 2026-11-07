@@ -65,3 +65,25 @@ check(body.fontString.color[1] > 0.8, "black body text becomes light on the dark
 check(title.fontString.color[1] == 1 and title.fontString.color[2] > 0.7, "brown titles become gold")
 check(white.fontString.color[1] == 1 and white.fontString.color[3] == 1, "already-light text is untouched")
 print("RoundedTheme.test OK")
+
+-- 3. Buttons are rounded and every texture path resolves.
+local bookSrc = read("UI/BookWindow.lua")
+check(bookSrc:find("RGXProf.CreateRoundedButton(parent", 1, true), "the guide builds its buttons through the rounded helper")
+check(select(2, bookSrc:gsub("Design:CreateButton", "")) == 1, "the square framework button remains only as the single fallback")
+check(not bookSrc:find("media\\\\panel_rounded", 1, true), "no texture path points at the missing media\\panel_rounded.tga")
+for _, f in ipairs({ "UI/BookWindow.lua", "UI/LayoutManager.lua", "UI/RoundedButton.lua", "UI/MatsWindow.lua", "UI/MainWindow.lua" }) do
+  for path in read(f):gmatch('"Interface\\\\AddOns\\\\([%w_%-]+\\\\[^"]-%.tga)"') do
+    local rel = path:gsub("\\\\", "/")
+    local addon = rel:match("^([^/]+)/")
+    -- the framework is only checked where a sibling checkout exists (not in CI)
+    if addon == "RGXProfessions" or io.open("../" .. addon .. "/" .. addon .. ".toc", "rb") then
+      local ok = io.open(addon == "RGXProfessions" and rel:gsub("^RGXProfessions/", "") or ("../" .. rel), "rb")
+      check(ok, f .. ": texture exists: " .. path)
+      if ok then ok:close() end
+    end
+  end
+end
+local rb = read("UI/RoundedButton.lua")
+check(rb:find("D:ApplyPanel", 1, true) and rb:find("PANEL_TEX", 1, true), "rounded buttons are built on the framework's rounded panel and texture")
+check(read("RGXProfessions.toc"):find("UI/RoundedButton.lua", 1, true), "the helper is in the TOC")
+print("RoundedTheme (buttons/textures) OK")
