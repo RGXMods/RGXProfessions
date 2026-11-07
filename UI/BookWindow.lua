@@ -640,7 +640,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
     canvas:SetHeight(1)
 
     -- Recipe card: full width, intrinsic height via FitContent
-    detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe" })
+    detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe", square = false })
     detail.recipeCard:SetPoint("TOPLEFT", canvas, "TOPLEFT", 2, 0)
     detail.recipeCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, 0)
 
@@ -690,7 +690,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
     -- the notes card below the deeper of the two via the midRow spacer.
     local MIDDLE_GAP = 6
 
-    detail.matsCard = UI:CreateSection(canvas, { title = RGXProf.L.MATERIALS })
+    detail.matsCard = UI:CreateSection(canvas, { title = RGXProf.L.MATERIALS, square = false })
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -6)
     detail.matsCard:SetPoint("TOPRIGHT", canvas, "TOP", -MIDDLE_GAP / 2, -6)
 
@@ -723,7 +723,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
         detail.materials[i] = row
     end
 
-    detail.locCard = UI:CreateSection(canvas, { title = RGXProf.L.WHERE_TO_GET })
+    detail.locCard = UI:CreateSection(canvas, { title = RGXProf.L.WHERE_TO_GET, square = false })
     detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "TOPRIGHT", MIDDLE_GAP, 0)
     detail.locCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, -6)
 
@@ -765,7 +765,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
 
     -- Notes card: full width below the middle row. No canvas-bottom anchor:
     -- FitContent must be free to shrink the card to its text.
-    detail.notesCard = UI:CreateSection(canvas, { title = "Notes" })
+    detail.notesCard = UI:CreateSection(canvas, { title = "Notes", square = false })
     detail.notesCard:SetPoint("TOPLEFT", detail.midRow, "BOTTOMLEFT", 0, -6)
     detail.notesCard:SetPoint("TOPRIGHT", detail.midRow, "BOTTOMRIGHT", 0, -6)
 
