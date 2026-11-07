@@ -381,6 +381,9 @@ function RGXProf.BookWindow:EnsureFrame()
     f.sizer:RegisterForDrag("LeftButton")
     f.sizer:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
     f.sizer:SetScript("OnDragStart", function(s)
+        -- The pages are rebuilt once, when the drag is released: rebuilding the profession grid or the
+        -- detail cards on every frame of the drag made resizing stutter.
+        f._sizing = true
         s._scale = f:GetEffectiveScale()
         s._left = f:GetLeft()
         s._top = f:GetTop()
@@ -397,15 +400,13 @@ function RGXProf.BookWindow:EnsureFrame()
     end)
     f.sizer:SetScript("OnDragStop", function(s)
         s:SetScript("OnUpdate", nil)
+        f._sizing = false
         RGXProf_Settings.bookSize = { f:GetWidth(), f:GetHeight() }
-        -- Flush a resize rebuild throttled away mid-drag so the content
-        -- always settles at the final size.
-        if f._flexPending then
-            f._flexPending = false
-            f._flexAt = 0
-            if f.landing:IsShown() then BuildLanding(self) end
-            if f.guide:IsShown() then RenderDetail(self) end
-        end
+        -- One rebuild at the final size.
+        f._flexPending = false
+        f._flexAt = GetTime()
+        if f.landing:IsShown() then BuildLanding(self) end
+        if f.guide:IsShown() then RenderDetail(self) end
     end)
     f.sizer:SetScript("OnEnter", function(s)
         GameTooltip:SetOwner(s, "ANCHOR_LEFT")
@@ -567,6 +568,11 @@ function RGXProf.BookWindow:EnsureFrame()
     -- pass re-queries crafts, reagents, and vendors). A pending rebuild is
     -- flushed on sizer release so content settles at the final size.
     f:HookScript("OnSizeChanged", function()
+        if f._sizing then
+            -- Mid-drag: the anchors already reflow the frame; rebuild once on release.
+            f._flexPending = true
+            return
+        end
         local now = GetTime()
         f._flexAt = f._flexAt or 0
         if now - f._flexAt < 0.08 then

@@ -355,6 +355,7 @@ if c6 then
             "sizer-wired: grip registered OnDragStart after bounded init")
         local drag = window.sizer.scripts["OnDragStart"]
         local okDrag = pcall(function() drag(window.sizer) end)
+        check(window._sizing == true, "sizer-wired: pages are not rebuilt mid-drag (rebuild is deferred to release)")
         local upd = window.sizer.scripts["OnUpdate"]
         if okDrag and upd then
             local okUpd = pcall(function() upd(window.sizer) end)
@@ -364,6 +365,7 @@ if c6 then
                 .. tostring(window.width) .. "x" .. tostring(window.height) .. ")")
             local stop = window.sizer.scripts["OnDragStop"]
             local okStop = pcall(function() stop(window.sizer) end)
+            check(window._sizing == false, "sizer-wired: releasing the grip ends the drag and rebuilds once")
             local saved = RGXProf_Settings.bookSize
             check(okStop and type(saved) == "table"
                 and saved[1] == window.width and saved[2] == window.height,
