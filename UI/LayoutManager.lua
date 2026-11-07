@@ -1,5 +1,56 @@
 RGXProf = RGXProf or {}
 RGXProf.LayoutManager = {}
+
+-- RGX theme: every window and card is a rounded framework panel with the RGX crimson ring, the same
+-- surface the guide (BookWindow) uses. Falls back to the old backdrops only if RGXDesign is missing.
+local BRAND_BORDER = { 0.545, 0.082, 0.220 }
+local function ThemeDesign()
+    local D = _G.RGXDesign
+    if D and type(D.ApplyPanel) == "function" then return D end
+end
+
+-- Paint an existing frame as a rounded RGX card (fill + 1px crimson ring).
+function RGXProf.LayoutManager:ApplyCard(frame, colorKey)
+    local D = ThemeDesign()
+    if not D then return false end
+    if frame._rgxCard == true then return true end
+    D:ApplyPanel(frame, { color = colorKey or "panelAlt" })
+    if frame.SetPanelColor then frame:SetPanelColor(nil, BRAND_BORDER) end
+    frame._rgxCard = true
+    return true
+end
+
+-- A themed window shell that keeps what the windows rely on from PortraitFrameTemplate: a global
+-- <name>Portrait texture, a title, a close button and the 60px header the layouts reserve.
+local function CreateThemedWindow(name, layout)
+    local D = ThemeDesign()
+    local f = D:CreateFrame(UIParent, { name = name, width = layout.width, height = layout.height, square = false })
+    if f.SetPanelColor then f:SetPanelColor(nil, BRAND_BORDER) end
+
+    local portrait = f:CreateTexture(name .. "Portrait", "ARTWORK")
+    portrait:SetSize(40, 40)
+    portrait:SetPoint("TOPLEFT", 12, -10)
+    portrait:SetTexture(RGXProf.Constants and RGXProf.Constants.Textures and RGXProf.Constants.Textures.default)
+    f.portrait = portrait
+
+    f.TitleText = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    f.TitleText:SetPoint("LEFT", portrait, "RIGHT", 10, 0)
+    f.TitleText:SetPoint("RIGHT", f, "RIGHT", -34, 0)
+    f.TitleText:SetJustifyH("LEFT")
+    f.TitleText:SetWordWrap(false)
+
+    local divider = f:CreateTexture(nil, "ARTWORK")
+    divider:SetHeight(1)
+    divider:SetPoint("TOPLEFT", 10, -58)
+    divider:SetPoint("TOPRIGHT", -10, -58)
+    divider:SetColorTexture(BRAND_BORDER[1], BRAND_BORDER[2], BRAND_BORDER[3], 0.8)
+
+    f.CloseButton = CreateFrame("Button", nil, f, "UIPanelCloseButton")
+    f.CloseButton:SetPoint("TOPRIGHT", -4, -4)
+    f.CloseButton:SetScript("OnClick", function() f:Hide() end)
+    if type(UISpecialFrames) == "table" then table.insert(UISpecialFrames, name) end
+    return f
+end
 ----------------------------------
 -- Main layout dispatcher
 -- Recursively travels through Layouts from backFrame through children tables
@@ -29,18 +80,20 @@ end
 
 function RGXProf.LayoutManager:CreateBackFrame(name, layout)
     local template = layout.template or "BackdropTemplate"
-    local backFrame = CreateFrame("Frame", name, UIParent, template)
+    local themed = template == "PortraitFrameTemplate" and ThemeDesign() ~= nil
+    local backFrame = themed and CreateThemedWindow(name, layout) or CreateFrame("Frame", name, UIParent, template)
 
     --gave up and setting it manually
     if layout.width then backFrame:SetWidth(layout.width) end
     if layout.height then backFrame:SetHeight(layout.height) end
     backFrame:SetPoint("CENTER")
 
-    if backFrame.TitleText and layout.title then
-        backFrame.TitleText:SetText(layout.title)
+    if backFrame.TitleText and (layout.title or layout.titleText) then
+        backFrame.TitleText:SetText(layout.title or layout.titleText)
     end
 
-    if layout.textureSettings then
+    -- The parchment background belongs to the old Blizzard frame, not the RGX panel.
+    if layout.textureSettings and not themed then
         local txtr = layout.textureSettings
         backFrame.texture = backFrame:CreateTexture(nil, txtr.layer)
         backFrame.texture:SetTexture(txtr.texture)
@@ -49,7 +102,7 @@ function RGXProf.LayoutManager:CreateBackFrame(name, layout)
         if txtr.height then backFrame.texture:SetHeight(txtr.height) end
     end
 
-    if layout.backdrop then
+    if layout.backdrop and not themed then
         backFrame:SetBackdrop(layout.backdrop)
         backFrame:SetBackdropBorderColor(1, 1, 1, 1)
     end
@@ -223,7 +276,9 @@ function RGXProf.LayoutManager:CreateSection(parent, childInfo, context)
     end
     local backdrop = childInfo.backdrop or (childInfo.outline and RGXProf.Layouts.Defaults.backdrop)
 
-    if backdrop and backdrop.style.bgFile then
+    if backdrop and self:ApplyCard(section) then
+        -- rounded RGX card replaces the gold dialog / tooltip-edge backdrops
+    elseif backdrop and backdrop.style.bgFile then
         section:SetBackdrop(backdrop.style)
         section:SetBackdropColor(unpack(backdrop.color))
         section:SetBackdropBorderColor(unpack(backdrop.borderColor))
@@ -279,16 +334,17 @@ function RGXProf.LayoutManager:CreateScrollFrame(parent, childInfo, context)
     container:SetSize((childInfo.width or parent:GetWidth()-4), (childInfo.height or 90) + 12)
     container:SetPoint("TOPLEFT", parent, "TOPLEFT", 2, -20) -- slight nudge outwards
 
-    container:SetBackdrop({
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 14,
-        insets = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    container:SetBackdropBorderColor(1, 1, 1, 1)
+    if not self:ApplyCard(container) then
+        container:SetBackdrop({
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            edgeSize = 14,
+            insets = { left = 2, right = 2, top = 2, bottom = 2 },
+        })
+        container:SetBackdropBorderColor(1, 1, 1, 1)
+    end
 
     local scroll = CreateFrame("ScrollFrame", childInfo.name, container, "UIPanelScrollFrameTemplate, BackdropTemplate")
     scroll:SetSize(parent:GetWidth()-16, (childInfo.height or 90))
-    scroll:SetBackdropBorderColor(1, 1, 1, 1)  -- white border
 
     local content = CreateFrame("Frame", childInfo.name.."_Content", scroll, "BackdropTemplate")
     content:SetSize(scroll:GetWidth(), scroll:GetHeight()-24)
@@ -338,6 +394,16 @@ function RGXProf.LayoutManager:CreateFontString(parent, childInfo, context)
     fs:SetJustifyV(childInfo.justifyV or "TOP")
 
     local r, g, b = unpack(childInfo.color or RGXProf.Constants.Colors.RGB.BLK)
+    -- The layouts were drawn for a parchment background (black body text, dark-brown titles). On the
+    -- dark RGX panels those are unreadable, so dark colours map to the theme's light text: gold for
+    -- the brown title colour, near-white for body text. Coloured text (green, yellow, white) is kept.
+    if ThemeDesign() and (0.299 * r + 0.587 * g + 0.114 * b) < 0.35 then
+        if r > b + 0.05 then
+            r, g, b = 1, 0.82, 0
+        else
+            r, g, b = 0.92, 0.92, 0.92
+        end
+    end
     fs:SetTextColor(r, g, b, 1)
     fs:SetText(childInfo.text or childInfo.name or "???")
     fs:SetShadowColor(0, 0, 0, 0.8)
