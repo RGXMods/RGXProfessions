@@ -78,6 +78,13 @@ local function Text() return "|cffffffff" end
 local function Dim() return C("subtext") end
 local function Label() return C("label") end
 
+-- Guide data stores "keep" as true/false (Classic) or 1/0; 0 must not count as keep, because in Lua
+-- 0 is true and every step would then claim its crafts are needed later.
+local function IsKeep(step)
+    local k = step and step.keep
+    return k == true or (type(k) == "number" and k > 0)
+end
+
 -- Forward declaration: the resize hook in EnsureFrame re-runs the landing
 -- layout when the window size changes.
 local BuildLanding
@@ -842,7 +849,6 @@ local function GetRow(self, index)
     local content = self.frame.stepContent
     row = CreateFrame("Button", nil, content)
     row:SetHeight(ROW_HEIGHT)
-    row:SetPoint("RIGHT")
 
     -- Highlight layer. Row 1 sits on the panel's rounded top corners:
     -- nine-slice the same rounded panel texture (rounded top corners,
@@ -920,7 +926,9 @@ local function RenderStepList(self)
 
     for i, step in ipairs(path) do
         local row = GetRow(self, i)
-        row:SetPoint("TOPLEFT", 0, -((i - 1) * ROW_HEIGHT))
+        row:ClearAllPoints()
+        row:SetPoint("TOPLEFT", f.stepContent, "TOPLEFT", 0, -((i - 1) * ROW_HEIGHT))
+        row:SetPoint("TOPRIGHT", f.stepContent, "TOPRIGHT", 0, -((i - 1) * ROW_HEIGHT))
         row._selected = (i == selected)
         row._step = step
 
@@ -1147,9 +1155,6 @@ RenderDetail = function(self)
             table.insert(lines, Dim() .. "Horde: " .. Text() .. step.zones.horde)
         end
     end
-    if step.note and step.note ~= "" then
-        table.insert(lines, Dim() .. step.note)
-    end
     detail.meta:SetText(table.concat(lines, "\n"))
 
     -- Clear the top-right difficulty label (now in meta line 1)
@@ -1242,14 +1247,14 @@ RenderDetail = function(self)
     -- layout never carries an empty card. No bottom anchor on the text:
     -- FitContent must be free to shrink the card to its real height.
     local notes = {}
-    if step.keep then
+    if IsKeep(step) then
         table.insert(notes, C("accent") .. RGXProf.L.KEEP_FOR_LATER)
         if step.keepNote then
             table.insert(notes, Text() .. step.keepNote)
         end
     end
-    if step.note then table.insert(notes, Accent() .. "* " .. Text() .. step.note) end
-    if step.quests then table.insert(notes, Dim() .. RGXProf.L.REQUIRES_QUEST) end
+    if step.note and step.note ~= "" then table.insert(notes, Text() .. step.note) end
+    if type(step.quests) == "table" and #step.quests > 0 then table.insert(notes, Dim() .. RGXProf.L.REQUIRES_QUEST) end
 
     if #notes > 0 then
         detail.notesCard:Show()
