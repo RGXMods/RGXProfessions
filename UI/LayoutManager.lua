@@ -3,7 +3,7 @@ RGXProf.LayoutManager = {}
 
 -- RGX theme: every window and card is a rounded framework panel with the RGX crimson ring, the same
 -- surface the guide (BookWindow) uses. Falls back to the old backdrops only if RGXDesign is missing.
-local BRAND_BORDER = { 0.545, 0.082, 0.220 }
+local BRAND_BORDER = { 0.200, 0.200, 0.247 } -- neutral RGX grey ring (crimson is reserved for small accents)
 local function ThemeDesign()
     local D = _G.RGXDesign
     if D and type(D.ApplyPanel) == "function" then return D end
@@ -43,7 +43,7 @@ local function CreateThemedWindow(name, layout)
     divider:SetHeight(1)
     divider:SetPoint("TOPLEFT", 10, -58)
     divider:SetPoint("TOPRIGHT", -10, -58)
-    divider:SetColorTexture(BRAND_BORDER[1], BRAND_BORDER[2], BRAND_BORDER[3], 0.8)
+    divider:SetColorTexture(1, 1, 1, 0.10)
 
     f.CloseButton = CreateFrame("Button", nil, f, "UIPanelCloseButton")
     f.CloseButton:SetPoint("TOPRIGHT", -4, -4)
@@ -462,7 +462,7 @@ function RGXProf.LayoutManager:CreateButton(parent, childInfo, context)
     RGXProf.LayoutManager:HookTooltip( btn, childInfo.tooltipIntent )
     RGXProf.LayoutManager:HookClick( btn, childInfo.onClickIntent )
     if btn._rgxHover then
-        btn:HookScript("OnEnter", function(self) if self.SetPanelColor then self:SetPanelColor({ 0.15, 0.10, 0.12 }, BRAND_BORDER) end end)
+        btn:HookScript("OnEnter", function(self) if self.SetPanelColor then self:SetPanelColor({ 0.13, 0.13, 0.16 }, BRAND_BORDER) end end)
         btn:HookScript("OnLeave", function(self) if self.SetPanelColor then self:SetPanelColor({ 0.086, 0.086, 0.110 }, BRAND_BORDER) end end)
     end
 

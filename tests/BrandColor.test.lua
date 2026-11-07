@@ -21,15 +21,15 @@ local pre = src:match("(local BRAND_BORDER = .-local INSET = %d+[^\n]*\n)")
 assert(pre, "brand constants block")
 local sqpGreen = { 0.345, 0.745, 0.506 }
 local Design = { ApplyPanel = function(_, f) f.SetPanelColor = function(s, fill, border) s.fill, s.border = fill, border end end }
-local chunk = assert(loadstring("local Design = ...\n" .. pre .. src:sub(a, b + 4) .. "\nreturn BrandSection, BRAND_TEXT"))
-local BrandSection, BRAND_TEXT = chunk(Design)
+local chunk = assert(loadstring("local Design = ...\n" .. pre .. src:sub(a, b + 4) .. "\nreturn BrandSection, HEADER_TEXT, PANEL_BORDER"))
+local BrandSection, HEADER_TEXT, PANEL_BORDER = chunk(Design)
 local label = { color = sqpGreen }
 function label:SetTextColor(r, g, bl) self.color = { r, g, bl } end
 local header = { label = label, SetBackdrop = function(s, v) s.backdrop = v end, backdrop = "square" }
 BrandSection({ header = header })
 check(header.backdrop == nil, "the square header backdrop is removed")
-check(header.fill and header.border and header.border[1] > 0.5 and header.border[2] < 0.1, "header is a rounded crimson band")
-check(label.color[1] == BRAND_TEXT[1] and label.color[2] == BRAND_TEXT[2], "header title is RGXProfessions crimson, not the shared green")
+check(header.fill and header.border == PANEL_BORDER and header.fill[1] == header.fill[2], "header is a rounded neutral grey band (RGX look, not red)")
+check(label.color[1] == HEADER_TEXT[1] and label.color[2] == HEADER_TEXT[2] and label.color[2] ~= sqpGreen[2], "header title uses RGXProfessions' own text colour, not the shared green")
 check(BrandSection({}) ~= nil, "a section without a header is left alone")
 
 -- 3. Padding/alignment rules.
@@ -40,4 +40,12 @@ check(src:find('f.backBtn:SetPoint("TOPLEFT", f.stepPanel, "BOTTOMLEFT", 0, -INS
 check(src:find('f.matsBtn:SetPoint("TOPRIGHT", f.stepPanel, "BOTTOMRIGHT", 0, -INSET)', 1, true), "Materials to Max sits under the step list, right edges aligned")
 check(src:find("math.floor((LIST_WIDTH - FOOTER_GAP) / 2)", 1, true), "the two buttons split the list width exactly (no overflow)")
 check(src:find('row.bgIsSlice = false', 1, true), "step rows use one highlight shape")
+-- 4. The "Craft N more" / "Gather until" instruction lines are gold, not the dark crimson.
+local render = src:sub(assert(src:find("RenderDetail = function(self)", 1, true)), assert(src:find("LayoutDetail = function(self)", 1, true)))
+check(render:find('Instruct() .. "Craft "', 1, true) and render:find('Instruct() .. "Gather until skill "', 1, true), "instruction lines use the gold instruction colour")
+check(not render:find('Accent() .. "Craft "', 1, true) and not render:find('Accent() .. "Gather', 1, true), "instruction lines no longer use the crimson accent")
+check(src:find('local function Instruct() return "|cffffd100" end', 1, true), "instruction colour is WoW gold")
+-- 5. Panels use the neutral grey ring; crimson is not used as a panel border.
+check(not src:find("SetPanelColor(nil, BRAND_BORDER)", 1, true), "no panel is ringed in crimson")
+check(select(2, src:gsub("SetPanelColor%(nil, PANEL_BORDER%)", "")) == 3, "window, step list and detail panels use the neutral ring")
 print("BrandColor.test OK")

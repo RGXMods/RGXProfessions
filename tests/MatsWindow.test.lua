@@ -78,7 +78,7 @@ MW:Show({ icon = 1, name = "Tailoring", currentSkill = 100, path = { { maxSkill 
 local f = MW.frame
 check(f:IsShown(), "the window shows")
 check(f.title.text == "Tailoring" and f.sub.text:find("100", 1, true) and f.sub.text:find("300", 1, true), "title bar shows the profession and skill / cap")
-check(#f.tabs == 2 and f.tabs[1].text.text == "To 150" and f.tabs[2].text.text == "To 225", "one tab per rank")
+check(#f.tabs == 2 and f.tabs[1].text.text == "150" and f.tabs[2].text.text == "225", "one tab per rank, labelled with just the skill level")
 check(MW.selectedCap == 225 and f.tabs[2]._on and not f.tabs[1]._on, "the final cap is selected by default")
 check(f.tierHeader.text:find("Expert", 1, true), "tier header names the rank")
 check(f.totals.text:find("3 items", 1, true) and f.totals.text:find("23 to get", 1, true), "totals line")
@@ -109,6 +109,9 @@ IsControlKeyDown = function() return false end
 f.onOnMouseWheel(f, -1)
 check(math.abs(RGXProf_Settings.matsScale - 1.55) < 1e-9, "the plain mouse wheel does not scale")
 check(f.grip and f.grip.onOnDragStart and f.grip.onOnDragStop, "a corner grip resizes the overlay")
+local matsSrc = read("UI/MatsWindow.lua")
+check(matsSrc:find("f:SetPanelColor({ sr, sg, sb }, RING, BG_ALPHA)", 1, true), "the overlay background is grey with a grey ring, not red")
+check(not matsSrc:find("SetColorTexture(BRAND[1], BRAND[2], BRAND[3]", 1, true), "no crimson divider or row hover")
 MW:Hide()
 check(not f:IsShown(), "hides")
 print("MatsWindow.test OK")
