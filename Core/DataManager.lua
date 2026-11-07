@@ -407,7 +407,7 @@ function RGXProf.DataManager:DetermineTraining(playerFaction, step, recipe, prof
 			step.maxSkill
 			)
 		table.insert(instructions, craftText)
-		if step.keep then table.insert(instructions, RGXProf.L.KEEP) end
+		if step.keep == true or (type(step.keep) == "number" and step.keep > 0) then table.insert(instructions, RGXProf.L.KEEP) end
 	end
 
 	if step.note then

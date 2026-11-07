@@ -123,7 +123,7 @@ def main():
             assert steps and steps[0]["minSkill"] == 1 and steps[-1]["maxSkill"] == 300, slug
             lines = ["RGXProf.ForeverPaths = RGXProf.ForeverPaths or {}", "", header.strip(), f"RGXProf.ForeverPaths.{pname} = {{"]
             for st in steps:
-                f = [f"keep = 0, minSkill = {st['minSkill']}, maxSkill = {st['maxSkill']}", f"spellID = {st['spellID']}", f"name = {lua_str(st['name'])}"]
+                f = [f"minSkill = {st['minSkill']}, maxSkill = {st['maxSkill']}", f"spellID = {st['spellID']}", f"name = {lua_str(st['name'])}"]
                 if st["colors"]:
                     c = st["colors"]; f.append(f"colors = {{ y = {c['y']}, g = {c['g']}, r = {c['r']} }}")
                 if st["learnAt"] is not None:
@@ -145,7 +145,7 @@ def main():
             assert n["brackets"], slug
             lines = ["RGXProf.ForeverPaths = RGXProf.ForeverPaths or {}", "", header.strip(), f"RGXProf.ForeverPaths.{pname} = {{"]
             for br in n["brackets"]:
-                f = [f"keep = 0, minSkill = {br['minSkill']}, maxSkill = {br['maxSkill']}", f"name = {lua_str(br['what'])}"]
+                f = [f"minSkill = {br['minSkill']}, maxSkill = {br['maxSkill']}", f"name = {lua_str(br['what'])}"]
                 if br["items"]:
                     f.append(f"itemID = {br['items'][0][0]}")
                 f.append('source = "gather"')
