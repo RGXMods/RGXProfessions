@@ -19,6 +19,11 @@ local HEADER_HEIGHT = 60
 
 local BRAND_BORDER = { 0.545, 0.082, 0.220 } -- RGX crimson #8B1538
 local BRAND_RGB = BRAND_BORDER -- accents share the brand crimson
+-- Text-weight tint of the brand crimson: #8B1538 itself is too dark to read on the dark panels.
+local BRAND_TEXT = { 0.929, 0.420, 0.522 }      -- #ED6B85
+local BRAND_TEXT_HEX = "|cffED6B85"
+local BRAND_HEADER_FILL = { 0.110, 0.055, 0.075 } -- crimson-tinted card header band
+local INSET = 8                                  -- padding between a panel edge and its content
 
 --------------------------------------------------------------------------------
 -- Textures: this Forever beta client is inconsistent across builds - some
@@ -93,6 +98,22 @@ end
 
 -- Guide data stores "keep" as true/false (Classic) or 1/0; 0 must not count as keep, because in Lua
 -- 0 is true and every step would then claim its crafts are needed later.
+-- Card headers come from the framework, which colours them with the SHARED theme colour - another
+-- RGX addon (SimpleQuestPlates sets it to green) would otherwise paint RGXProfessions' headers. Repaint
+-- each header as a rounded band in RGXProfessions' own crimson.
+local function BrandSection(section)
+    local header = section and section.header
+    if not header then return section end
+    if header.SetBackdrop then pcall(header.SetBackdrop, header, nil) end
+    if Design and Design.ApplyPanel and not header._rgxBranded then
+        Design:ApplyPanel(header, { color = "surface", radius = 8 })
+    end
+    header._rgxBranded = true
+    if header.SetPanelColor then header:SetPanelColor(BRAND_HEADER_FILL, BRAND_BORDER, 1) end
+    if header.label then header.label:SetTextColor(BRAND_TEXT[1], BRAND_TEXT[2], BRAND_TEXT[3]) end
+    return section
+end
+
 local function IsKeep(step)
     local k = step and step.keep
     return k == true or (type(k) == "number" and k > 0)
@@ -575,8 +596,8 @@ function RGXProf.BookWindow:EnsureFrame()
 
     -- Landing page: profession grid with live skill under each.
     f.landing = CreateFrame("Frame", nil, f)
-    f.landing:SetPoint("TOPLEFT", f.progress, "BOTTOMLEFT", 7, -8)
-    f.landing:SetPoint("BOTTOMRIGHT", -8, 12)
+    f.landing:SetPoint("TOPLEFT", f.progress, "BOTTOMLEFT", INSET - 1, -(INSET + 4))
+    f.landing:SetPoint("BOTTOMRIGHT", -INSET, 12)
 
     f.landingHint = f.landing:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     f.landingHint:SetPoint("TOP", 0, -10)
@@ -593,8 +614,8 @@ function RGXProf.BookWindow:EnsureFrame()
 
     -- Guide view: left step list + right detail.
     f.guide = CreateFrame("Frame", nil, f)
-    f.guide:SetPoint("TOPLEFT", f.progress, "BOTTOMLEFT", 7, -8)
-    f.guide:SetPoint("BOTTOMRIGHT", -8, 44)
+    f.guide:SetPoint("TOPLEFT", f.progress, "BOTTOMLEFT", INSET - 1, -(INSET + 4))
+    f.guide:SetPoint("BOTTOMRIGHT", -INSET, 46)
     f.guide:Hide()
 
     -- Rounded panel behind the recipe list column: the same nine-slice
@@ -610,14 +631,15 @@ function RGXProf.BookWindow:EnsureFrame()
 
     -- Step list (wheel-scrolled plain ScrollFrame; portable across flavors).
     f.stepScroll = CreateFrame("ScrollFrame", nil, f.stepPanel)
-    f.stepScroll:SetPoint("TOPLEFT", 0, 0)
-    f.stepScroll:SetPoint("BOTTOMRIGHT", 0, 6)
+    f.stepScroll:SetPoint("TOPLEFT", INSET, -INSET)
+    f.stepScroll:SetPoint("BOTTOMRIGHT", -INSET, INSET)
     f.stepScroll:EnableMouse(true)
     f.stepScroll:EnableMouseWheel(true)
 
     f.stepContent = CreateFrame("Frame", nil, f.stepScroll)
-    f.stepContent:SetSize(LIST_WIDTH, 1)
+    f.stepContent:SetSize(LIST_WIDTH - INSET * 2, 1)
     f.stepScroll:SetScrollChild(f.stepContent)
+    f.stepScroll:HookScript("OnSizeChanged", function(_, w) if w and w > 1 then f.stepContent:SetWidth(w) end end)
 
     f.stepScroll:SetScript("OnMouseWheel", function(_, delta)
         local viewH = f.stepScroll:GetHeight() or 1
@@ -643,8 +665,8 @@ function RGXProf.BookWindow:EnsureFrame()
     -- scroll inset cancels out and the first card sits tight under the
     -- panel top.
     local detail = CreateFrame("Frame", nil, f.guide)
-    detail:SetPoint("TOPLEFT", LIST_WIDTH + 24, 8)
-    detail:SetPoint("BOTTOMRIGHT", 0, 0)
+    detail:SetPoint("TOPLEFT", f.detailPanel, "TOPLEFT", 0, 0)
+    detail:SetPoint("BOTTOMRIGHT", f.detailPanel, "BOTTOMRIGHT", 0, 0)
     f.detail = detail
 
 local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
@@ -653,7 +675,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
     canvas:SetHeight(1)
 
     -- Recipe card: full width, intrinsic height via FitContent
-    detail.recipeCard = UI:CreateSection(canvas, { title = "Recipe", square = false })
+    detail.recipeCard = BrandSection(UI:CreateSection(canvas, { title = "Recipe", square = false }))
     detail.recipeCard:SetPoint("TOPLEFT", canvas, "TOPLEFT", 2, 0)
     detail.recipeCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, 0)
 
@@ -703,7 +725,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
     -- the notes card below the deeper of the two via the midRow spacer.
     local MIDDLE_GAP = 6
 
-    detail.matsCard = UI:CreateSection(canvas, { title = RGXProf.L.MATERIALS, square = false })
+    detail.matsCard = BrandSection(UI:CreateSection(canvas, { title = RGXProf.L.MATERIALS, square = false }))
     detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -6)
     detail.matsCard:SetPoint("TOPRIGHT", canvas, "TOP", -MIDDLE_GAP / 2, -6)
 
@@ -736,7 +758,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
         detail.materials[i] = row
     end
 
-    detail.locCard = UI:CreateSection(canvas, { title = RGXProf.L.WHERE_TO_GET, square = false })
+    detail.locCard = BrandSection(UI:CreateSection(canvas, { title = RGXProf.L.WHERE_TO_GET, square = false }))
     detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "TOPRIGHT", MIDDLE_GAP, 0)
     detail.locCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, -6)
 
@@ -778,7 +800,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
 
     -- Notes card: full width below the middle row. No canvas-bottom anchor:
     -- FitContent must be free to shrink the card to its text.
-    detail.notesCard = UI:CreateSection(canvas, { title = "Notes", square = false })
+    detail.notesCard = BrandSection(UI:CreateSection(canvas, { title = "Notes", square = false }))
     detail.notesCard:SetPoint("TOPLEFT", detail.midRow, "BOTTOMLEFT", 0, -6)
     detail.notesCard:SetPoint("TOPRIGHT", detail.midRow, "BOTTOMRIGHT", 0, -6)
 
@@ -793,7 +815,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
 
     -- Footer buttons.
     f.backBtn = NewButton(f, RGXProf.L.BTN_BACK_PROFESSIONS, 120, 26)
-    f.backBtn:SetPoint("BOTTOMLEFT", 14, 12)
+    f.backBtn:SetPoint("BOTTOMLEFT", INSET, 12)
     f.backBtn:SetTooltip("Back", RGXProf.L.TIP_BACK)
     f.backBtn:SetScript("OnClick", function()
         RGXProf_Settings.bookProfessionID = nil
@@ -869,7 +891,7 @@ local function GetRow(self, index)
     -- nine-slice the same rounded panel texture (rounded top corners,
     -- solid body) so the fill terminates inside the curve instead of
     -- poking past the rounded border. Other rows keep the flat fill.
-    row.bgIsSlice = (index == 1)
+    row.bgIsSlice = false -- rows sit inside the panel padding, clear of its rounded corners
     if row.bgIsSlice then
         local R = 12
         local function piece(u1, u2, v1, v2)
@@ -1263,7 +1285,7 @@ RenderDetail = function(self)
     -- FitContent must be free to shrink the card to its real height.
     local notes = {}
     if IsKeep(step) then
-        table.insert(notes, C("accent") .. RGXProf.L.KEEP_FOR_LATER)
+        table.insert(notes, BRAND_TEXT_HEX .. RGXProf.L.KEEP_FOR_LATER)
         if step.keepNote then
             table.insert(notes, Text() .. step.keepNote)
         end
@@ -1295,7 +1317,7 @@ LayoutDetail = function(self)
     if canvasW < 50 then return end
 
     local GAP = 6
-    local full = math.max(120, canvasW - 10)          -- 2px left margin, 8px right margin
+    local full = math.max(120, canvasW)                -- padding is the scroll page inset
     local function insets(card) return card.contentTopInset or 42, card.contentBottomInset or 12 end
     local function textH(fs)
         local text = fs:GetText()
@@ -1319,7 +1341,7 @@ LayoutDetail = function(self)
     detail.meta:SetWidth(math.max(40, rInner - 4))
     local recipeContent = math.max(40, 4 + textH(detail.title)) + 8 + textH(detail.meta)
     local recipeH = rt + recipeContent + rb + 6
-    place(detail.recipeCard, 2, 0, full, recipeH)
+    place(detail.recipeCard, 0, 0, full, recipeH)
 
     -- Middle row: Materials 46% | Where to get it 54%, both cards the same height so the row is level.
     local wM = math.floor((full - GAP) * 0.46)
@@ -1362,8 +1384,8 @@ LayoutDetail = function(self)
 
     local rowH = math.max(mt + matsContent + mb + 6, lt + locContent + lb + 6)
     local rowY = recipeH + GAP
-    place(detail.matsCard, 2, rowY, wM, rowH)
-    place(detail.locCard, 2 + wM + GAP, rowY, wL, rowH)
+    place(detail.matsCard, 0, rowY, wM, rowH)
+    place(detail.locCard, wM + GAP, rowY, wL, rowH)
 
     -- Notes card: full width below the middle row, only when it has text.
     local bottom = rowY + rowH
@@ -1373,7 +1395,7 @@ LayoutDetail = function(self)
         detail.notes:SetPoint("TOPLEFT", detail.notesCard.content, "TOPLEFT", 2, -2)
         detail.notes:SetWidth(math.max(40, (full - 32) - 4))
         local notesH = nt + 2 + textH(detail.notes) + 2 + nb + 4
-        place(detail.notesCard, 2, bottom + GAP, full, notesH)
+        place(detail.notesCard, 0, bottom + GAP, full, notesH)
         bottom = bottom + GAP + notesH
     end
 
@@ -1460,7 +1482,7 @@ BuildLanding = function(self)
                 btn.skill:SetTextColor(0.9, 0.7, 0.2)
             else
                 btn.skill:SetText(string.format(RGXProf.L.SKILL_FRACTION, skill, total or MaxSkill()))
-                btn.skill:SetTextColor(0.1, 1, 0.1)
+                btn.skill:SetTextColor(BRAND_TEXT[1], BRAND_TEXT[2], BRAND_TEXT[3])
             end
         else
             btn.name:SetText(Dim() .. prof.name)

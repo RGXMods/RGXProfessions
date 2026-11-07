@@ -46,7 +46,7 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
     accent:SetPoint("TOPLEFT", 16, -44)
     accent:SetPoint("TOPRIGHT", -16, -44)
     if Design then
-        accent:SetColorTexture(Design:Unpack("primary"))
+        accent:SetColorTexture(0.545, 0.082, 0.220) -- RGXProfessions crimson, not the shared theme colour
     else
         accent:SetColorTexture(0.545, 0.082, 0.220)
     end
