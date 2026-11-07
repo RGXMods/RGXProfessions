@@ -1,8 +1,8 @@
 --=====================================================================================
 -- RGXProfessions - UI/MatsWindow.lua
 -- "Materials to Max": everything still needed for each remaining rank of a profession, with live
--- bag counts. A rounded RGX window: header (icon, profession, skill), one tab per remaining rank,
--- a totals line with a progress bar, and an aligned Material / Have / Need list. Rows show the
+-- bag counts. A minimal, scalable rounded RGX overlay: slim title bar (icon, profession, skill), one
+-- tab per remaining rank, a totals line with a progress bar, and an aligned Material / Have / Need list. Rows show the
 -- item tooltip on hover and link the item on shift-click. Counts refresh on bag changes.
 --=====================================================================================
 
@@ -10,13 +10,18 @@ RGXProf = RGXProf or {}
 RGXProf.MatsWindow = RGXProf.MatsWindow or {}
 local W = RGXProf.MatsWindow
 
-local WIDTH, HEIGHT = 420, 480
-local PAD = 12
-local ROW_H = 22
-local ICON = 18
-local COL_W = 46            -- Have / Need column width
-local HEADER_H = 58
-local TAB_H = 24
+-- Minimal overlay: compact by default, resizable from the corner grip and scalable with
+-- Ctrl + mouse wheel. Size, scale and position are remembered.
+local WIDTH, HEIGHT = 300, 330
+local MIN_W, MIN_H, MAX_W, MAX_H = 240, 200, 640, 900
+local MIN_SCALE, MAX_SCALE = 0.6, 1.6
+local PAD = 8
+local ROW_H = 20
+local ICON = 16
+local COL_W = 38            -- Have / Need column width
+local HEADER_H = 26
+local TAB_H = 20
+local BG_ALPHA = 0.88       -- slightly see-through so it reads as an overlay
 local BRAND = { 0.545, 0.082, 0.220 } -- RGX crimson, same ring as the guide window
 
 local function D() return _G.RGXDesign end
@@ -118,17 +123,27 @@ local function CreateRow(parent)
     return row
 end
 
+local function Clamp(v, lo, hi) if v < lo then return lo elseif v > hi then return hi end return v end
+
 function W:Build()
     if self.frame then return end
     local design = D()
+    local saved = RGXProf_Settings or {}
+    local size = type(saved.matsSize) == "table" and saved.matsSize or {}
+    local w = Clamp(tonumber(size[1]) or WIDTH, MIN_W, MAX_W)
+    local h = Clamp(tonumber(size[2]) or HEIGHT, MIN_H, MAX_H)
     local f
     if design then
-        f = design:CreateFrame(UIParent, { name = "RGXProf_MatsWindow", width = WIDTH, height = HEIGHT, square = false })
-        if f.SetPanelColor then f:SetPanelColor(nil, BRAND) end
+        f = design:CreateFrame(UIParent, { name = "RGXProf_MatsWindow", width = w, height = h, square = false, bgAlpha = BG_ALPHA })
+        if f.SetPanelColor then
+            local sr, sg, sb = Color("surface", { 0.086, 0.086, 0.110 })
+            f:SetPanelColor({ sr, sg, sb }, BRAND, BG_ALPHA)
+        end
     else
         f = CreateFrame("Frame", "RGXProf_MatsWindow", UIParent)
-        f:SetSize(WIDTH, HEIGHT)
+        f:SetSize(w, h)
     end
+    f:SetScale(Clamp(tonumber(saved.matsScale) or 1, MIN_SCALE, MAX_SCALE))
     f:SetFrameStrata("DIALOG")
     f:SetToplevel(true)
     f:SetClampedToScreen(true)
@@ -141,53 +156,61 @@ function W:Build()
         local point, _, relPoint, x, y = s:GetPoint()
         if RGXProf_Settings then RGXProf_Settings.matsPosition = { point, relPoint, x, y } end
     end)
+    -- Ctrl + mouse wheel scales the whole overlay; plain wheel still scrolls the list.
+    f:EnableMouseWheel(true)
+    f:SetScript("OnMouseWheel", function(s, delta)
+        if not (IsControlKeyDown and IsControlKeyDown()) then return end
+        W:SetScale((s:GetScale() or 1) + delta * 0.05)
+    end)
     if type(UISpecialFrames) == "table" then table.insert(UISpecialFrames, "RGXProf_MatsWindow") end
     f:Hide()
 
-    -- Header: profession icon, title, skill line, close button, crimson divider.
+    -- Slim title bar: small icon, profession name, skill range on the right, close button.
     f.icon = f:CreateTexture(nil, "ARTWORK")
-    f.icon:SetSize(36, 36)
-    f.icon:SetPoint("TOPLEFT", PAD, -11)
-    f.title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    f.title:SetPoint("TOPLEFT", f.icon, "TOPRIGHT", 10, -1)
-    f.title:SetPoint("RIGHT", f, "RIGHT", -36, 0)
+    f.icon:SetSize(16, 16)
+    f.icon:SetPoint("TOPLEFT", PAD + 2, -6)
+    f.close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
+    f.close:SetSize(22, 22)
+    f.close:SetPoint("TOPRIGHT", -2, -2)
+    f.close:SetScript("OnClick", function() f:Hide() end)
+    f.sub = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    f.sub:SetPoint("RIGHT", f.close, "LEFT", -2, 0)
+    f.sub:SetJustifyH("RIGHT")
+    f.sub:SetTextColor(DIM[1], DIM[2], DIM[3])
+    f.title = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    f.title:SetPoint("LEFT", f.icon, "RIGHT", 6, 0)
+    f.title:SetPoint("RIGHT", f.sub, "LEFT", -6, 0)
     f.title:SetJustifyH("LEFT")
     f.title:SetWordWrap(false)
-    f.sub = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.sub:SetPoint("TOPLEFT", f.title, "BOTTOMLEFT", 0, -4)
-    f.sub:SetPoint("RIGHT", f, "RIGHT", -36, 0)
-    f.sub:SetJustifyH("LEFT")
-    f.sub:SetTextColor(DIM[1], DIM[2], DIM[3])
-    f.close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
-    f.close:SetPoint("TOPRIGHT", -4, -4)
-    f.close:SetScript("OnClick", function() f:Hide() end)
     local divider = f:CreateTexture(nil, "ARTWORK")
     divider:SetHeight(1)
     divider:SetPoint("TOPLEFT", PAD, -HEADER_H)
     divider:SetPoint("TOPRIGHT", -PAD, -HEADER_H)
-    divider:SetColorTexture(BRAND[1], BRAND[2], BRAND[3], 0.8)
+    divider:SetColorTexture(BRAND[1], BRAND[2], BRAND[3], 0.7)
 
     -- Rank tabs.
     f.tabs = {}
     f.tabBar = CreateFrame("Frame", nil, f)
-    f.tabBar:SetPoint("TOPLEFT", PAD, -(HEADER_H + 10))
-    f.tabBar:SetPoint("TOPRIGHT", -PAD, -(HEADER_H + 10))
+    f.tabBar:SetPoint("TOPLEFT", PAD, -(HEADER_H + 6))
+    f.tabBar:SetPoint("TOPRIGHT", -PAD, -(HEADER_H + 6))
     f.tabBar:SetHeight(TAB_H)
 
     -- Totals line + progress bar (share of the needed units already in your bags).
-    local totalsY = HEADER_H + 10 + TAB_H + 10
-    f.tierHeader = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    local totalsY = HEADER_H + 6 + TAB_H + 6
+    f.tierHeader = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.tierHeader:SetPoint("TOPLEFT", PAD + 2, -totalsY)
     f.tierHeader:SetPoint("RIGHT", f, "RIGHT", -PAD, 0)
     f.tierHeader:SetJustifyH("LEFT")
+    f.tierHeader:SetWordWrap(false)
     f.totals = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.totals:SetPoint("TOPLEFT", f.tierHeader, "BOTTOMLEFT", 0, -4)
+    f.totals:SetPoint("TOPLEFT", f.tierHeader, "BOTTOMLEFT", 0, -2)
     f.totals:SetPoint("RIGHT", f, "RIGHT", -PAD, 0)
     f.totals:SetJustifyH("LEFT")
+    f.totals:SetWordWrap(false)
     f.bar = CreateFrame("StatusBar", nil, f)
-    f.bar:SetPoint("TOPLEFT", f.totals, "BOTTOMLEFT", 0, -6)
+    f.bar:SetPoint("TOPLEFT", f.totals, "BOTTOMLEFT", 0, -4)
     f.bar:SetPoint("RIGHT", f, "RIGHT", -PAD - 2, 0)
-    f.bar:SetHeight(4)
+    f.bar:SetHeight(3)
     f.bar:SetStatusBarTexture("Interface\\Buttons\\WHITE8x8")
     f.bar:SetStatusBarColor(GREEN[1], GREEN[2], GREEN[3])
     f.bar:SetMinMaxValues(0, 1)
@@ -195,57 +218,110 @@ function W:Build()
     barBg:SetAllPoints()
     barBg:SetColorTexture(1, 1, 1, 0.08)
 
-    -- List card: column headers + scrolling rows.
-    local listTop = totalsY + 52
-    f.list = design and design:CreateFrame(f, { color = "panelAlt", square = false }) or CreateFrame("Frame", nil, f)
+    -- List: column headers + scrolling rows, straight on the overlay (no nested card).
+    local listTop = totalsY + 36
+    f.list = CreateFrame("Frame", nil, f)
     f.list:SetPoint("TOPLEFT", PAD, -listTop)
-    f.list:SetPoint("BOTTOMRIGHT", -PAD, PAD)
+    f.list:SetPoint("BOTTOMRIGHT", -PAD, PAD + 6)
 
     local cols = CreateFrame("Frame", nil, f.list)
-    cols:SetPoint("TOPLEFT", 6, -6)
-    cols:SetPoint("TOPRIGHT", -6, -6)
-    cols:SetHeight(16)
-    local function colLabel(text, anchorRight, width, justify)
+    cols:SetPoint("TOPLEFT", 0, 0)
+    cols:SetPoint("TOPRIGHT", 0, 0)
+    cols:SetHeight(14)
+    local function colLabel(text, width, justify)
         local fs = cols:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         fs:SetText(text)
         fs:SetJustifyH(justify)
+        fs:SetTextColor(DIM[1], DIM[2], DIM[3])
         if width then fs:SetWidth(width) end
         return fs
     end
-    f.colNeed = colLabel(L("MATS_COL_NEED", "Need"), nil, COL_W, "RIGHT")
-    f.colNeed:SetPoint("RIGHT", cols, "RIGHT", -6, 0)
-    f.colHave = colLabel(L("MATS_COL_HAVE", "Have"), nil, COL_W, "RIGHT")
+    f.colNeed = colLabel(L("MATS_COL_NEED", "Need"), COL_W, "RIGHT")
+    f.colNeed:SetPoint("RIGHT", cols, "RIGHT", -4, 0)
+    f.colHave = colLabel(L("MATS_COL_HAVE", "Have"), COL_W, "RIGHT")
     f.colHave:SetPoint("RIGHT", f.colNeed, "LEFT", -4, 0)
-    f.colItem = colLabel(L("MATS_COL_ITEM", "Material"), nil, nil, "LEFT")
+    f.colItem = colLabel(L("MATS_COL_ITEM", "Material"), nil, "LEFT")
     f.colItem:SetPoint("LEFT", cols, "LEFT", 4 + ICON + 6, 0)
     local rule = f.list:CreateTexture(nil, "ARTWORK")
     rule:SetHeight(1)
-    rule:SetPoint("TOPLEFT", cols, "BOTTOMLEFT", 0, -3)
-    rule:SetPoint("TOPRIGHT", cols, "BOTTOMRIGHT", 0, -3)
+    rule:SetPoint("TOPLEFT", cols, "BOTTOMLEFT", 0, -2)
+    rule:SetPoint("TOPRIGHT", cols, "BOTTOMRIGHT", 0, -2)
     rule:SetColorTexture(1, 1, 1, 0.12)
 
     f.scroll = CreateFrame("ScrollFrame", nil, f.list)
-    f.scroll:SetPoint("TOPLEFT", cols, "BOTTOMLEFT", 0, -6)
-    f.scroll:SetPoint("BOTTOMRIGHT", f.list, "BOTTOMRIGHT", -6, 6)
+    f.scroll:SetPoint("TOPLEFT", cols, "BOTTOMLEFT", 0, -4)
+    f.scroll:SetPoint("BOTTOMRIGHT", f.list, "BOTTOMRIGHT", 0, 0)
     f.scroll:EnableMouseWheel(true)
     f.content = CreateFrame("Frame", nil, f.scroll)
     f.content:SetSize(1, 1)
     f.scroll:SetScrollChild(f.content)
-    f.scroll:SetScript("OnSizeChanged", function(s, w) f.content:SetWidth(math.max(1, w or 1)) end)
+    f.scroll:SetScript("OnSizeChanged", function(s, sw) f.content:SetWidth(math.max(1, sw or 1)) end)
     f.scroll:SetScript("OnMouseWheel", function(s, delta)
+        if IsControlKeyDown and IsControlKeyDown() then
+            W:SetScale((f:GetScale() or 1) + delta * 0.05)
+            return
+        end
         local maxOff = math.max(0, (f.content:GetHeight() or 0) - (s:GetHeight() or 0))
         local off = math.min(maxOff, math.max(0, (s:GetVerticalScroll() or 0) - delta * ROW_H * 3))
         s:SetVerticalScroll(off)
     end)
 
-    f.empty = f.list:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    f.empty:SetPoint("TOPLEFT", f.scroll, "TOPLEFT", 8, -16)
-    f.empty:SetPoint("RIGHT", f.scroll, "RIGHT", -8, 0)
+    f.empty = f.list:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    f.empty:SetPoint("TOPLEFT", f.scroll, "TOPLEFT", 4, -12)
+    f.empty:SetPoint("RIGHT", f.scroll, "RIGHT", -4, 0)
     f.empty:SetJustifyH("CENTER")
     f.empty:SetTextColor(DIM[1], DIM[2], DIM[3])
 
+    -- Corner grip: drag to resize (manual sizing; the client lacks the native resize-bounds API).
+    f.grip = CreateFrame("Button", nil, f)
+    f.grip:SetSize(14, 14)
+    f.grip:SetPoint("BOTTOMRIGHT", -3, 3)
+    f.grip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    f.grip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+    f.grip:RegisterForDrag("LeftButton")
+    f.grip:SetScript("OnDragStart", function(g)
+        g._scale = f:GetEffectiveScale()
+        g._left, g._top = f:GetLeft(), f:GetTop()
+        g:SetScript("OnUpdate", function(self)
+            local mx, my = GetCursorPosition()
+            W:SetSize(mx / self._scale - self._left, self._top - my / self._scale, self._left, self._top)
+        end)
+    end)
+    f.grip:SetScript("OnDragStop", function(g)
+        g:SetScript("OnUpdate", nil)
+        if RGXProf_Settings then
+            RGXProf_Settings.matsSize = { f:GetWidth(), f:GetHeight() }
+            local point, _, relPoint, x, y = f:GetPoint()
+            RGXProf_Settings.matsPosition = { point, relPoint, x, y }
+        end
+    end)
+    f:SetScript("OnSizeChanged", function() if W._tiers then W:LayoutTabs(W._tiers) end end)
+
     f.rows = {}
     self.frame = f
+end
+
+--- Resize, clamped; keeps the top-left corner where it is while dragging.
+function W:SetSize(width, height, left, top)
+    local f = self.frame
+    if not f then return end
+    width, height = Clamp(width or f:GetWidth(), MIN_W, MAX_W), Clamp(height or f:GetHeight(), MIN_H, MAX_H)
+    if left and top then
+        f:ClearAllPoints()
+        f:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+    end
+    f:SetSize(width, height)
+    return width, height
+end
+
+--- Scale the overlay (Ctrl + mouse wheel), clamped and remembered.
+function W:SetScale(scale)
+    local f = self.frame
+    if not f then return end
+    scale = Clamp(math.floor((scale or 1) * 100 + 0.5) / 100, MIN_SCALE, MAX_SCALE)
+    f:SetScale(scale)
+    if RGXProf_Settings then RGXProf_Settings.matsScale = scale end
+    return scale
 end
 
 function W:Place()
@@ -274,7 +350,7 @@ function W:LayoutTabs(tiers)
     for i = count + 1, #f.tabs do f.tabs[i]:Hide() end
     if count == 0 then return end
     local gap = 6
-    local width = (f.tabBar:GetWidth() > 10 and f.tabBar:GetWidth() or (WIDTH - PAD * 2))
+    local width = (f.tabBar:GetWidth() > 10 and f.tabBar:GetWidth()) or ((f:GetWidth() or WIDTH) - PAD * 2)
     local tabW = math.floor((width - gap * (count - 1)) / count)
     for i, tier in ipairs(tiers) do
         local tab = f.tabs[i] or CreatePill(f.tabBar)
@@ -337,14 +413,15 @@ function W:Refresh()
     local pathMax = info.path and info.path[#info.path] and info.path[#info.path].maxSkill or maxCap
 
     f.icon:SetTexture(info.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
-    f.title:SetText(L("MATS_WINDOW_TITLE", "Materials to Max"))
-    f.sub:SetText((info.name and (info.name .. "  -  ") or "") .. string.format(L("MATS_SKILL_LINE", "Skill %d  ->  %d"), skill, pathMax))
+    f.title:SetText(info.name or L("MATS_WINDOW_TITLE", "Materials to Max"))
+    f.sub:SetText(string.format(L("MATS_SKILL_LINE", "%d / %d"), skill, pathMax))
 
     -- Keep the chosen rank across refreshes; default to the final cap.
     local selected
     for _, tier in ipairs(tiers) do if tier.skillCap == self.selectedCap then selected = tier end end
     selected = selected or tiers[#tiers]
     self.selectedCap = selected and selected.skillCap
+    self._tiers = tiers
     self:LayoutTabs(tiers)
 
     local missingNames = false
@@ -357,7 +434,7 @@ function W:Refresh()
         self:RenderRows(nil)
     else
         f.tierHeader:SetText(string.format(L("MATS_TIER_HEADER", "To reach %s (%d)"), selected.label, selected.skillCap))
-        f.totals:SetText(string.format(L("MATS_TOTALS", "%d materials  -  %d ready  -  %d still to get"),
+        f.totals:SetText(string.format(L("MATS_TOTALS", "%d items, %d ready, %d to get"),
             #selected.items, selected.ready, selected.missing))
         if selected.missing == 0 and #selected.items > 0 then
             f.totals:SetTextColor(GREEN[1], GREEN[2], GREEN[3])

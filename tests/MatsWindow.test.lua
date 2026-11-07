@@ -47,6 +47,8 @@ local function frame(kind, name)
     if k == "ClearAllPoints" then return function(s) s.points = {} end end
     if k == "SetScript" then return function(s, n, fn) s["on" .. n] = fn end end
     if k == "GetVerticalScroll" then return function() return 0 end end
+    if k == "SetScale" then return function(s, v) s.scale = v end end
+    if k == "GetScale" then return function(s) return s.scale or 1 end end
     if k == "CreateTexture" then return function() return frame("Texture") end end
     if k == "CreateFontString" then return function() return frame("FontString") end end
     return function(s) return s end
@@ -75,17 +77,17 @@ local MW = RGXProf.MatsWindow
 MW:Show({ icon = 1, name = "Tailoring", currentSkill = 100, path = { { maxSkill = 300 } } })
 local f = MW.frame
 check(f:IsShown(), "the window shows")
-check(f.sub.text:find("Tailoring", 1, true) and f.sub.text:find("100", 1, true) and f.sub.text:find("300", 1, true), "header shows profession and skill -> cap")
+check(f.title.text == "Tailoring" and f.sub.text:find("100", 1, true) and f.sub.text:find("300", 1, true), "title bar shows the profession and skill / cap")
 check(#f.tabs == 2 and f.tabs[1].text.text == "To 150" and f.tabs[2].text.text == "To 225", "one tab per rank")
 check(MW.selectedCap == 225 and f.tabs[2]._on and not f.tabs[1]._on, "the final cap is selected by default")
 check(f.tierHeader.text:find("Expert", 1, true), "tier header names the rank")
-check(f.totals.text:find("3 materials", 1, true) and f.totals.text:find("23 still", 1, true), "totals line")
+check(f.totals.text:find("3 items", 1, true) and f.totals.text:find("23 to get", 1, true), "totals line")
 local shown = 0
 for _, row in ipairs(f.rows) do if row.shown then shown = shown + 1 end end
 check(shown == 3, "one row per material (" .. shown .. ")")
 check(f.rows[1].have.text == "0" and f.rows[1].need.text == "5", "have / need columns")
-check(f.rows[2].points[1][5] == -22 and #f.rows[2].points == 2, "rows stack at the row height and span the list")
-check(f.content.h == 66, "the scroll content is exactly as tall as the rows")
+check(f.rows[2].points[1][5] == -20 and #f.rows[2].points == 2, "rows stack at the (compact) row height and span the list")
+check(f.content.h == 60, "the scroll content is exactly as tall as the rows")
 
 f.tabs[1].onOnClick()
 check(MW.selectedCap == 150 and f.tabs[1]._on, "clicking a tab selects that rank")
@@ -96,6 +98,17 @@ check(shown == 2, "the list follows the selected rank")
 liveTiers = {}
 MW:Refresh()
 check(f.empty.shown and f.empty.text:lower():find("cap", 1, true), "at the cap the window says so instead of an empty list")
+-- Minimal overlay: compact default, see-through, resizable within bounds, Ctrl+wheel scaling remembered.
+check(f.w == 300 and f.h == 330, "compact default size (" .. f.w .. "x" .. f.h .. ")")
+check(MW:SetSize(100, 5000) and f.w == 240 and f.h == 900, "resizing is clamped to 240x200 .. 640x900")
+check(MW:SetScale(5) == 1.6 and RGXProf_Settings.matsScale == 1.6, "scale is clamped and saved")
+IsControlKeyDown = function() return true end
+f.onOnMouseWheel(f, -1)
+check(math.abs(RGXProf_Settings.matsScale - 1.55) < 1e-9, "Ctrl + mouse wheel scales the overlay")
+IsControlKeyDown = function() return false end
+f.onOnMouseWheel(f, -1)
+check(math.abs(RGXProf_Settings.matsScale - 1.55) < 1e-9, "the plain mouse wheel does not scale")
+check(f.grip and f.grip.onOnDragStart and f.grip.onOnDragStop, "a corner grip resizes the overlay")
 MW:Hide()
 check(not f:IsShown(), "hides")
 print("MatsWindow.test OK")
