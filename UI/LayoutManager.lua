@@ -445,13 +445,26 @@ function RGXProf.LayoutManager:CreateButton(parent, childInfo, context)
     local btn = CreateFrame("BUTTON", myName, parent)
 
     btn:SetSize(childInfo.width or RGXProf.Layouts.Defaults.button.width, childInfo.height or RGXProf.Layouts.Defaults.button.height)
-    local tex = btn:CreateTexture(nil, "BACKGROUND")
-    tex:SetAllPoints(btn)
+    -- Icon tiles sit on a rounded RGX button face with the icon inset inside the curve.
+    local D = ThemeDesign()
+    local tex = btn:CreateTexture(nil, "ARTWORK")
+    if D then
+        D:ApplyPanel(btn, { color = "surface", radius = 8 })
+        if btn.SetPanelColor then btn:SetPanelColor(nil, BRAND_BORDER) end
+        tex:SetPoint("TOPLEFT", 4, -4)
+        tex:SetPoint("BOTTOMRIGHT", -4, 4)
+        btn._rgxHover = true   -- painted after HookTooltip installs its scripts (see below)
+    else
+        tex:SetAllPoints(btn)
+    end
     tex:SetTexture(childInfo.texture)
-    btn:SetNormalTexture(tex)
     btn.texture = tex
     RGXProf.LayoutManager:HookTooltip( btn, childInfo.tooltipIntent )
     RGXProf.LayoutManager:HookClick( btn, childInfo.onClickIntent )
+    if btn._rgxHover then
+        btn:HookScript("OnEnter", function(self) if self.SetPanelColor then self:SetPanelColor({ 0.15, 0.10, 0.12 }, BRAND_BORDER) end end)
+        btn:HookScript("OnLeave", function(self) if self.SetPanelColor then self:SetPanelColor({ 0.086, 0.086, 0.110 }, BRAND_BORDER) end end)
+    end
 
     return btn
 end

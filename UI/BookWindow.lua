@@ -78,6 +78,19 @@ local function Text() return "|cffffffff" end
 local function Dim() return C("subtext") end
 local function Label() return C("label") end
 
+-- The framework owns the rounded panel texture; ask it for the path (it moved once already) and keep
+-- the current location as the fallback.
+local function PanelTexture()
+    if RGXProf.PanelTexture then return RGXProf.PanelTexture() end
+    return (Design and Design.PANEL_TEX) or "Interface\\AddOns\\RGX-Framework\\libraries\\design\\panel_rounded.tga"
+end
+
+-- Buttons are rounded RGX buttons (UI/RoundedButton.lua); the framework's square button is only the fallback.
+local function NewButton(parent, text, width, height)
+    if RGXProf.CreateRoundedButton then return RGXProf.CreateRoundedButton(parent, text, width, height) end
+    return Design:CreateButton(parent, text, width, height)
+end
+
 -- Guide data stores "keep" as true/false (Classic) or 1/0; 0 must not count as keep, because in Lua
 -- 0 is true and every step would then claim its crafts are needed later.
 local function IsKeep(step)
@@ -460,7 +473,7 @@ function RGXProf.BookWindow:EnsureFrame()
     local function HeaderFill(color, alpha)
         local function piece(u1, u2, v1, v2)
             local tx = header:CreateTexture(nil, "BACKGROUND")
-            tx:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\panel_rounded.tga")
+            tx:SetTexture(PanelTexture())
             tx:SetTexCoord(u1, u2, v1, v2)
             pcall(tx.SetVertexColor, tx, color[1], color[2], color[3], alpha or 1)
             return tx
@@ -779,7 +792,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
     detail.notes:SetTextColor(0.9, 0.9, 0.9)
 
     -- Footer buttons.
-    f.backBtn = Design:CreateButton(f, RGXProf.L.BTN_BACK_PROFESSIONS, 110, 24)
+    f.backBtn = NewButton(f, RGXProf.L.BTN_BACK_PROFESSIONS, 120, 26)
     f.backBtn:SetPoint("BOTTOMLEFT", 14, 12)
     f.backBtn:SetTooltip("Back", RGXProf.L.TIP_BACK)
     f.backBtn:SetScript("OnClick", function()
@@ -787,8 +800,8 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
         RGXProf.BookWindow:Show()
     end)
 
-    f.matsBtn = Design:CreateButton(f, RGXProf.L.BTN_MATS_TO_MAX, 130, 24)
-    f.matsBtn:SetPoint("BOTTOMLEFT", 134, 12)
+    f.matsBtn = NewButton(f, RGXProf.L.BTN_MATS_TO_MAX, 150, 26)
+    f.matsBtn:SetPoint("LEFT", f.backBtn, "RIGHT", 8, 0)
     f.matsBtn:SetTooltip(RGXProf.L.BTN_MATS_TO_MAX, RGXProf.L.TIP_MATS_TO_MAX)
     f.matsBtn:SetScript("OnClick", function()
         local professionID = RGXProf.BookWindow:GetCurrentProfession()
@@ -861,7 +874,7 @@ local function GetRow(self, index)
         local R = 12
         local function piece(u1, u2, v1, v2)
             local tx = row:CreateTexture(nil, "BACKGROUND")
-            tx:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\panel_rounded.tga")
+            tx:SetTexture(PanelTexture())
             tx:SetTexCoord(u1, u2, v1, v2)
             return tx
         end
@@ -1412,7 +1425,7 @@ BuildLanding = function(self)
         local prof = RGXProf.Constants.Professions[professionID]
         local btn = landing._buttons[index]
         if not btn then
-            btn = Design:CreateButton(landing, nil, btnSize, btnSize)
+            btn = NewButton(landing, nil, btnSize, btnSize)
             btn.icon = btn:CreateTexture(nil, "ARTWORK")
             btn.name = btn:CreateFontString(nil, "OVERLAY", nameFont)
             btn.skill = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
