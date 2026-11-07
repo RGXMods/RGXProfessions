@@ -1,70 +1,410 @@
+--=====================================================================================
+-- RGXProfessions - UI/MatsWindow.lua
+-- "Materials to Max": everything still needed for each remaining rank of a profession, with live
+-- bag counts. A rounded RGX window: header (icon, profession, skill), one tab per remaining rank,
+-- a totals line with a progress bar, and an aligned Material / Have / Need list. Rows show the
+-- item tooltip on hover and link the item on shift-click. Counts refresh on bag changes.
+--=====================================================================================
+
 RGXProf = RGXProf or {}
-RGXProf.MatsWindow = RGXProf.MatsWindow or {
-    layoutGroup = "MatsWindow",
-    layoutRoot = "BackFrame",
-    UIElements = {},
-    initializedUI = false,
-    -- MatsV_Header = {},
-    MatsV_Body = {}
-}
-function RGXProf.MatsWindow:InitLayoutContext()
-    return {
-        layoutGroup = RGXProf.Layouts[self.layoutGroup],
-        layoutRoot = RGXProf.Layouts[self.layoutGroup][self.layoutRoot],
-        ui = self.UIElements,
-    }
-end
----Show the Remaining Materials window after clicking the Calculate button
----@param professionInfo {} the profession info to show in the Remaining Materials window
-function RGXProf.MatsWindow:Show(professionInfo)
+RGXProf.MatsWindow = RGXProf.MatsWindow or {}
+local W = RGXProf.MatsWindow
 
-    if not self.initializedUI then
-        self.context = self:InitLayoutContext()
-        RGXProf.LayoutManager:BuildLayout(self.context)
-        self.initializedUI = true
+local WIDTH, HEIGHT = 420, 480
+local PAD = 12
+local ROW_H = 22
+local ICON = 18
+local COL_W = 46            -- Have / Need column width
+local HEADER_H = 58
+local TAB_H = 24
+local BRAND = { 0.545, 0.082, 0.220 } -- RGX crimson, same ring as the guide window
+
+local function D() return _G.RGXDesign end
+local function L(key, fallback) return (RGXProf.L and RGXProf.L[key]) or fallback end
+local function Color(key, fallback)
+    local design = D()
+    if design and design.Unpack then
+        local ok, r, g, b = pcall(design.Unpack, design, key)
+        if ok and r then return r, g, b end
     end
-    self:Render(professionInfo)
+    return fallback[1], fallback[2], fallback[3]
 end
 
----Fill and show the Remaining Materials window
----@param professionInfo {} the profession info to show in the Remaining Materials window
-function RGXProf.MatsWindow:Render(professionInfo)
-    local ui = self.UIElements
-    local frame = ui.backFrame
+local GREEN = { 0.30, 0.85, 0.40 }
+local AMBER = { 1.00, 0.70, 0.20 }
+local DIM = { 0.62, 0.62, 0.66 }
 
-    frame:Show()
-    
-    ----------------------------------------------------------
-    -- Render all the frames with their data
-    ----------------------------------------------------------
-    self:SetPortrait(professionInfo.icon)
-
-    self.MatsV_Body:Render(professionInfo, self)
-end
-
---- @param professionInfo Profession
-function RGXProf.MatsWindow.MatsV_Body:Render(professionInfo, parent)
-
-    local ui = parent.UIElements
-    local content = ui.Mats.content
-    local scrollLineTemplate = RGXProf.Layouts.MatsWindow.Mats.scrollContent
-
-    local contentLines = RGXProf.DataManager:GetRemainingMaterials(professionInfo.currentSkill, professionInfo.path)
-    RGXProf.LayoutManager:FillScrollContent(
-        scrollLineTemplate,
-        content,
-        contentLines,
-        parent.context
-    )
-end
-
-function RGXProf.MatsWindow:SetPortrait(icon)
-    local portraitFrame = _G[self.UIElements.backFrame:GetName().."Portrait"]
-    -- SetPortraitToTexture is a classic-era global the Forever client no
-    -- longer exposes. Fall back to a plain texture set when it is absent.
-    if type(SetPortraitToTexture) == "function" and portraitFrame and portraitFrame.SetTexture then
-        pcall(SetPortraitToTexture, portraitFrame, icon)
-    elseif portraitFrame and portraitFrame.SetTexture then
-        portraitFrame:SetTexture(icon)
+local function LiveSkill(info)
+    if info.professionID and RGXProf.WowAPI and RGXProf.WowAPI.GetProfessionSkill then
+        local prof = RGXProf.Constants and RGXProf.Constants.Professions and RGXProf.Constants.Professions[info.professionID]
+        if prof then
+            local ok, earned = pcall(RGXProf.WowAPI.GetProfessionSkill, RGXProf.WowAPI, prof.name)
+            if ok and tonumber(earned) then return tonumber(earned) end
+        end
     end
+    return tonumber(info.currentSkill) or 1
+end
+
+-- A rounded pill used for the rank tabs; selected tabs fill with the brand crimson.
+local function CreatePill(parent)
+    local b = CreateFrame("Button", nil, parent)
+    b:SetHeight(TAB_H)
+    if D() then D():ApplyPanel(b, { color = "surface" }) end
+    b.text = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    b.text:SetPoint("LEFT", 6, 0)
+    b.text:SetPoint("RIGHT", -6, 0)
+    b.text:SetJustifyH("CENTER")
+    b.text:SetWordWrap(false)
+    function b:SetSelected(on)
+        self._on = on
+        if self.SetPanelColor then
+            local sr, sg, sb = Color("surface", { 0.09, 0.09, 0.11 })
+            local br, bg, bb = Color("border", { 0.2, 0.2, 0.25 })
+            if on then
+                self:SetPanelColor(BRAND, BRAND, 1)
+            else
+                self:SetPanelColor({ sr, sg, sb }, { br, bg, bb }, 1)
+            end
+        end
+        self.text:SetTextColor(on and 1 or 0.78, on and 1 or 0.78, on and 1 or 0.80)
+    end
+    b:SetScript("OnEnter", function(self) if not self._on then self.text:SetTextColor(1, 1, 1) end end)
+    b:SetScript("OnLeave", function(self) self:SetSelected(self._on) end)
+    return b
+end
+
+local function CreateRow(parent)
+    local row = CreateFrame("Button", nil, parent)
+    row:SetHeight(ROW_H)
+    row.bg = row:CreateTexture(nil, "BACKGROUND")
+    row.bg:SetAllPoints()
+    row.bg:SetColorTexture(1, 1, 1, 0)
+    row.icon = row:CreateTexture(nil, "ARTWORK")
+    row.icon:SetSize(ICON, ICON)
+    row.icon:SetPoint("LEFT", 4, 0)
+    row.need = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    row.need:SetPoint("RIGHT", -6, 0)
+    row.need:SetWidth(COL_W)
+    row.need:SetJustifyH("RIGHT")
+    row.have = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    row.have:SetPoint("RIGHT", row.need, "LEFT", -4, 0)
+    row.have:SetWidth(COL_W)
+    row.have:SetJustifyH("RIGHT")
+    row.name = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    row.name:SetPoint("LEFT", row.icon, "RIGHT", 6, 0)
+    row.name:SetPoint("RIGHT", row.have, "LEFT", -6, 0)
+    row.name:SetJustifyH("LEFT")
+    row.name:SetWordWrap(false)
+    row:RegisterForClicks("LeftButtonUp")
+    row:SetScript("OnEnter", function(self)
+        self.bg:SetColorTexture(BRAND[1], BRAND[2], BRAND[3], 0.25)
+        if self.itemID and GameTooltip then
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            if GameTooltip.SetItemByID then pcall(GameTooltip.SetItemByID, GameTooltip, self.itemID) end
+            GameTooltip:AddLine(L("MATS_SHIFT_LINK", "Shift-click to link in chat."), DIM[1], DIM[2], DIM[3])
+            GameTooltip:Show()
+        end
+    end)
+    row:SetScript("OnLeave", function(self)
+        self.bg:SetColorTexture(1, 1, 1, self._stripe and 0.03 or 0)
+        if GameTooltip then GameTooltip:Hide() end
+    end)
+    row:SetScript("OnClick", function(self)
+        if self.itemID and IsShiftKeyDown and IsShiftKeyDown() then
+            local _, link = RGXProf.WowAPI:GetItemInfo(self.itemID)
+            if link and ChatEdit_InsertLink then ChatEdit_InsertLink(link) end
+        end
+    end)
+    return row
+end
+
+function W:Build()
+    if self.frame then return end
+    local design = D()
+    local f
+    if design then
+        f = design:CreateFrame(UIParent, { name = "RGXProf_MatsWindow", width = WIDTH, height = HEIGHT, square = false })
+        if f.SetPanelColor then f:SetPanelColor(nil, BRAND) end
+    else
+        f = CreateFrame("Frame", "RGXProf_MatsWindow", UIParent)
+        f:SetSize(WIDTH, HEIGHT)
+    end
+    f:SetFrameStrata("DIALOG")
+    f:SetToplevel(true)
+    f:SetClampedToScreen(true)
+    f:SetMovable(true)
+    f:EnableMouse(true)
+    f:RegisterForDrag("LeftButton")
+    f:SetScript("OnDragStart", function(s) s:StartMoving() end)
+    f:SetScript("OnDragStop", function(s)
+        s:StopMovingOrSizing()
+        local point, _, relPoint, x, y = s:GetPoint()
+        if RGXProf_Settings then RGXProf_Settings.matsPosition = { point, relPoint, x, y } end
+    end)
+    if type(UISpecialFrames) == "table" then table.insert(UISpecialFrames, "RGXProf_MatsWindow") end
+    f:Hide()
+
+    -- Header: profession icon, title, skill line, close button, crimson divider.
+    f.icon = f:CreateTexture(nil, "ARTWORK")
+    f.icon:SetSize(36, 36)
+    f.icon:SetPoint("TOPLEFT", PAD, -11)
+    f.title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    f.title:SetPoint("TOPLEFT", f.icon, "TOPRIGHT", 10, -1)
+    f.title:SetPoint("RIGHT", f, "RIGHT", -36, 0)
+    f.title:SetJustifyH("LEFT")
+    f.title:SetWordWrap(false)
+    f.sub = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    f.sub:SetPoint("TOPLEFT", f.title, "BOTTOMLEFT", 0, -4)
+    f.sub:SetPoint("RIGHT", f, "RIGHT", -36, 0)
+    f.sub:SetJustifyH("LEFT")
+    f.sub:SetTextColor(DIM[1], DIM[2], DIM[3])
+    f.close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
+    f.close:SetPoint("TOPRIGHT", -4, -4)
+    f.close:SetScript("OnClick", function() f:Hide() end)
+    local divider = f:CreateTexture(nil, "ARTWORK")
+    divider:SetHeight(1)
+    divider:SetPoint("TOPLEFT", PAD, -HEADER_H)
+    divider:SetPoint("TOPRIGHT", -PAD, -HEADER_H)
+    divider:SetColorTexture(BRAND[1], BRAND[2], BRAND[3], 0.8)
+
+    -- Rank tabs.
+    f.tabs = {}
+    f.tabBar = CreateFrame("Frame", nil, f)
+    f.tabBar:SetPoint("TOPLEFT", PAD, -(HEADER_H + 10))
+    f.tabBar:SetPoint("TOPRIGHT", -PAD, -(HEADER_H + 10))
+    f.tabBar:SetHeight(TAB_H)
+
+    -- Totals line + progress bar (share of the needed units already in your bags).
+    local totalsY = HEADER_H + 10 + TAB_H + 10
+    f.tierHeader = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    f.tierHeader:SetPoint("TOPLEFT", PAD + 2, -totalsY)
+    f.tierHeader:SetPoint("RIGHT", f, "RIGHT", -PAD, 0)
+    f.tierHeader:SetJustifyH("LEFT")
+    f.totals = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    f.totals:SetPoint("TOPLEFT", f.tierHeader, "BOTTOMLEFT", 0, -4)
+    f.totals:SetPoint("RIGHT", f, "RIGHT", -PAD, 0)
+    f.totals:SetJustifyH("LEFT")
+    f.bar = CreateFrame("StatusBar", nil, f)
+    f.bar:SetPoint("TOPLEFT", f.totals, "BOTTOMLEFT", 0, -6)
+    f.bar:SetPoint("RIGHT", f, "RIGHT", -PAD - 2, 0)
+    f.bar:SetHeight(4)
+    f.bar:SetStatusBarTexture("Interface\\Buttons\\WHITE8x8")
+    f.bar:SetStatusBarColor(GREEN[1], GREEN[2], GREEN[3])
+    f.bar:SetMinMaxValues(0, 1)
+    local barBg = f.bar:CreateTexture(nil, "BACKGROUND")
+    barBg:SetAllPoints()
+    barBg:SetColorTexture(1, 1, 1, 0.08)
+
+    -- List card: column headers + scrolling rows.
+    local listTop = totalsY + 52
+    f.list = design and design:CreateFrame(f, { color = "panelAlt", square = false }) or CreateFrame("Frame", nil, f)
+    f.list:SetPoint("TOPLEFT", PAD, -listTop)
+    f.list:SetPoint("BOTTOMRIGHT", -PAD, PAD)
+
+    local cols = CreateFrame("Frame", nil, f.list)
+    cols:SetPoint("TOPLEFT", 6, -6)
+    cols:SetPoint("TOPRIGHT", -6, -6)
+    cols:SetHeight(16)
+    local function colLabel(text, anchorRight, width, justify)
+        local fs = cols:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        fs:SetText(text)
+        fs:SetJustifyH(justify)
+        if width then fs:SetWidth(width) end
+        return fs
+    end
+    f.colNeed = colLabel(L("MATS_COL_NEED", "Need"), nil, COL_W, "RIGHT")
+    f.colNeed:SetPoint("RIGHT", cols, "RIGHT", -6, 0)
+    f.colHave = colLabel(L("MATS_COL_HAVE", "Have"), nil, COL_W, "RIGHT")
+    f.colHave:SetPoint("RIGHT", f.colNeed, "LEFT", -4, 0)
+    f.colItem = colLabel(L("MATS_COL_ITEM", "Material"), nil, nil, "LEFT")
+    f.colItem:SetPoint("LEFT", cols, "LEFT", 4 + ICON + 6, 0)
+    local rule = f.list:CreateTexture(nil, "ARTWORK")
+    rule:SetHeight(1)
+    rule:SetPoint("TOPLEFT", cols, "BOTTOMLEFT", 0, -3)
+    rule:SetPoint("TOPRIGHT", cols, "BOTTOMRIGHT", 0, -3)
+    rule:SetColorTexture(1, 1, 1, 0.12)
+
+    f.scroll = CreateFrame("ScrollFrame", nil, f.list)
+    f.scroll:SetPoint("TOPLEFT", cols, "BOTTOMLEFT", 0, -6)
+    f.scroll:SetPoint("BOTTOMRIGHT", f.list, "BOTTOMRIGHT", -6, 6)
+    f.scroll:EnableMouseWheel(true)
+    f.content = CreateFrame("Frame", nil, f.scroll)
+    f.content:SetSize(1, 1)
+    f.scroll:SetScrollChild(f.content)
+    f.scroll:SetScript("OnSizeChanged", function(s, w) f.content:SetWidth(math.max(1, w or 1)) end)
+    f.scroll:SetScript("OnMouseWheel", function(s, delta)
+        local maxOff = math.max(0, (f.content:GetHeight() or 0) - (s:GetHeight() or 0))
+        local off = math.min(maxOff, math.max(0, (s:GetVerticalScroll() or 0) - delta * ROW_H * 3))
+        s:SetVerticalScroll(off)
+    end)
+
+    f.empty = f.list:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    f.empty:SetPoint("TOPLEFT", f.scroll, "TOPLEFT", 8, -16)
+    f.empty:SetPoint("RIGHT", f.scroll, "RIGHT", -8, 0)
+    f.empty:SetJustifyH("CENTER")
+    f.empty:SetTextColor(DIM[1], DIM[2], DIM[3])
+
+    f.rows = {}
+    self.frame = f
+end
+
+function W:Place()
+    local f = self.frame
+    f:ClearAllPoints()
+    local saved = RGXProf_Settings and RGXProf_Settings.matsPosition
+    if type(saved) == "table" and saved[1] then
+        f:SetPoint(saved[1], UIParent, saved[2] or saved[1], saved[3] or 0, saved[4] or 0)
+        return
+    end
+    local book = RGXProf.BookWindow and RGXProf.BookWindow.frame
+    if book and book:IsShown() then
+        f:SetPoint("TOPLEFT", book, "TOPRIGHT", 8, 0)
+    else
+        f:SetPoint("CENTER")
+    end
+end
+
+local function TabCaption(tier, isLast)
+    return string.format(L("MATS_TIER_TAB", "To %d"), tier.skillCap)
+end
+
+function W:LayoutTabs(tiers)
+    local f = self.frame
+    local count = #tiers
+    for i = count + 1, #f.tabs do f.tabs[i]:Hide() end
+    if count == 0 then return end
+    local gap = 6
+    local width = (f.tabBar:GetWidth() > 10 and f.tabBar:GetWidth() or (WIDTH - PAD * 2))
+    local tabW = math.floor((width - gap * (count - 1)) / count)
+    for i, tier in ipairs(tiers) do
+        local tab = f.tabs[i] or CreatePill(f.tabBar)
+        f.tabs[i] = tab
+        tab:ClearAllPoints()
+        tab:SetPoint("TOPLEFT", f.tabBar, "TOPLEFT", (i - 1) * (tabW + gap), 0)
+        tab:SetWidth(tabW)
+        tab.text:SetText(TabCaption(tier, i == count))
+        tab:SetScript("OnClick", function()
+            self.selectedCap = tier.skillCap
+            self:Refresh()
+        end)
+        tab:SetSelected(tier.skillCap == self.selectedCap)
+        tab:Show()
+    end
+end
+
+function W:RenderRows(tier)
+    local f = self.frame
+    local items = tier and tier.items or {}
+    for i, item in ipairs(items) do
+        local row = f.rows[i] or CreateRow(f.content)
+        f.rows[i] = row
+        row:ClearAllPoints()
+        row:SetPoint("TOPLEFT", f.content, "TOPLEFT", 0, -(i - 1) * ROW_H)
+        row:SetPoint("TOPRIGHT", f.content, "TOPRIGHT", 0, -(i - 1) * ROW_H)
+        row._stripe = (i % 2 == 0)
+        row.bg:SetColorTexture(1, 1, 1, row._stripe and 0.03 or 0)
+        row.itemID = item.itemID
+        row.icon:SetTexture(item.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
+        local done = item.short == 0
+        row.name:SetText(item.name or ((L("ITEM_ID_FALLBACK", "ItemID:")) .. " " .. item.itemID))
+        if done then
+            row.name:SetTextColor(DIM[1], DIM[2], DIM[3])
+            row.icon:SetDesaturated(true)
+            row.have:SetTextColor(GREEN[1], GREEN[2], GREEN[3])
+        else
+            row.name:SetTextColor(0.95, 0.95, 0.95)
+            row.icon:SetDesaturated(false)
+            row.have:SetTextColor(AMBER[1], AMBER[2], AMBER[3])
+        end
+        row.have:SetText(tostring(item.have))
+        row.need:SetText(tostring(item.need))
+        row.need:SetTextColor(0.95, 0.95, 0.95)
+        row:Show()
+    end
+    for i = #items + 1, #f.rows do f.rows[i]:Hide() end
+    f.content:SetHeight(math.max(1, #items * ROW_H))
+    local maxOff = math.max(0, #items * ROW_H - (f.scroll:GetHeight() or 0))
+    if (f.scroll:GetVerticalScroll() or 0) > maxOff then f.scroll:SetVerticalScroll(maxOff) end
+end
+
+function W:Refresh()
+    local f, info = self.frame, self.info
+    if not (f and info and f:IsShown()) then return end
+    local skill = LiveSkill(info)
+    local tiers = RGXProf.DataManager:GetRemainingMaterialsTiers(skill, info.path)
+    local maxCap = 0
+    for _, tier in ipairs(tiers) do maxCap = math.max(maxCap, tier.skillCap) end
+    local pathMax = info.path and info.path[#info.path] and info.path[#info.path].maxSkill or maxCap
+
+    f.icon:SetTexture(info.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
+    f.title:SetText(L("MATS_WINDOW_TITLE", "Materials to Max"))
+    f.sub:SetText((info.name and (info.name .. "  -  ") or "") .. string.format(L("MATS_SKILL_LINE", "Skill %d  ->  %d"), skill, pathMax))
+
+    -- Keep the chosen rank across refreshes; default to the final cap.
+    local selected
+    for _, tier in ipairs(tiers) do if tier.skillCap == self.selectedCap then selected = tier end end
+    selected = selected or tiers[#tiers]
+    self.selectedCap = selected and selected.skillCap
+    self:LayoutTabs(tiers)
+
+    local missingNames = false
+    if not selected then
+        f.tierHeader:SetText("")
+        f.totals:SetText("")
+        f.bar:SetValue(1)
+        f.empty:SetText(L("MATS_AT_CAP", "Nothing left to gather - you are at the skill cap."))
+        f.empty:Show()
+        self:RenderRows(nil)
+    else
+        f.tierHeader:SetText(string.format(L("MATS_TIER_HEADER", "To reach %s (%d)"), selected.label, selected.skillCap))
+        f.totals:SetText(string.format(L("MATS_TOTALS", "%d materials  -  %d ready  -  %d still to get"),
+            #selected.items, selected.ready, selected.missing))
+        if selected.missing == 0 and #selected.items > 0 then
+            f.totals:SetTextColor(GREEN[1], GREEN[2], GREEN[3])
+        else
+            f.totals:SetTextColor(0.85, 0.85, 0.85)
+        end
+        f.bar:SetValue(selected.needed > 0 and (selected.have / selected.needed) or 1)
+        if #selected.items == 0 then
+            f.empty:SetText(L("MATS_NO_DATA", "No material data for this route."))
+            f.empty:Show()
+        else
+            f.empty:Hide()
+        end
+        self:RenderRows(selected)
+        for _, item in ipairs(selected.items) do if not item.name then missingNames = true end end
+    end
+
+    -- Item names stream in from the server; re-render a few times until they have all arrived.
+    if missingNames and (self._nameRetries or 0) < 5 and C_Timer and C_Timer.After then
+        self._nameRetries = (self._nameRetries or 0) + 1
+        C_Timer.After(0.5, function() W:Refresh() end)
+    elseif not missingNames then
+        self._nameRetries = 0
+    end
+end
+
+--- Show the window for a profession: { icon, name, professionID, currentSkill, path }.
+function W:Show(info)
+    if not info or not info.path then return end
+    self:Build()
+    if self.info and self.info.path ~= info.path then self.selectedCap = nil end
+    self.info = info
+    self._nameRetries = 0
+    if not self.frame:IsShown() then self:Place() end
+    self.frame:Show()
+    self.frame:Raise()
+    self:Refresh()
+end
+
+function W:Hide()
+    if self.frame then self.frame:Hide() end
+end
+
+function W:IsShown()
+    return self.frame ~= nil and self.frame:IsShown()
+end
+
+function W:Toggle(info)
+    if self:IsShown() then self:Hide() else self:Show(info) end
 end

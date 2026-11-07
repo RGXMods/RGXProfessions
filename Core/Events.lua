@@ -15,10 +15,6 @@ end
 RGXProf.Events = {
     -- Bag contents changed: keep the book page's material counts live. The client
     -- batches this event, so no extra debounce is needed.
-    BAG_UPDATE_DELAYED = function()
-        local book = RGXProf.BookWindow
-        if book and book.RefreshMaterials then book:RefreshMaterials() end
-    end,
     TRADE_SKILL_SHOW = function(self, event)
         DeferOutOfSecure(self, function()
             self:TRADE_SHOW(event or "TRADE_SKILL_SHOW")
@@ -51,10 +47,17 @@ RGXProf.Events = {
     TRADE_SKILL_LIST_UPDATE = function(self)
         RGXProf.StateManager:RequestRefresh()
     end,
+    -- Bag contents changed: keep the guide page and the Materials to Max window counts live (one
+    -- handler: a second BAG_UPDATE_DELAYED key in this table used to overwrite the first). The
+    -- client batches this event, so no extra debounce is needed.
     BAG_UPDATE_DELAYED = function(self)
+        local book = RGXProf.BookWindow
+        if book and book.RefreshMaterials then book:RefreshMaterials() end
+        if RGXProf.MatsWindow and RGXProf.MatsWindow.Refresh then RGXProf.MatsWindow:Refresh() end
         RGXProf.StateManager:RequestRefresh()
     end,
     GET_ITEM_INFO_RECEIVED = function(self, ...)
+        if RGXProf.MatsWindow and RGXProf.MatsWindow.Refresh then RGXProf.MatsWindow:Refresh() end
         RGXProf.StateManager:RequestRefresh()
     end,
     ADDON_LOADED = function(self, event, addonName)

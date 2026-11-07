@@ -797,6 +797,8 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
         local skill = LiveSkill(professionID)
         RGXProf.MatsWindow:Show({
             icon = prof.icon,
+            name = prof.name,
+            professionID = professionID,
             currentSkill = skill or 1,
             path = RGXProf.currentExpansion.paths[professionID],
         })
