@@ -25,7 +25,7 @@ function RGXProf.MainWindow:SetupUI()
 
     if RGXProf.IsSimulation then
         RGXProf._simUsedRecipes = nil
-        local btn = RGXProf.CreateRoundedButton(RGXProf.MainWindow.UIElements.backFrame, RGXProf.L.SIM_NEXT, 70, 22)
+        local btn = RGXProf.NewButton(RGXProf.MainWindow.UIElements.backFrame, RGXProf.L.SIM_NEXT, 70, 22)
         _G.RGXProfSimNextButton = btn
         btn:SetPoint("TOPRIGHT", RGXProf.MainWindow.UIElements.backFrame, "TOPRIGHT", -10, -10)
         btn:SetScript("OnClick", function()

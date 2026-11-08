@@ -21,9 +21,11 @@ local ICON = 16
 local COL_W = 38            -- Have / Need column width
 local HEADER_H = 26
 local TAB_H = 20
-local BG_ALPHA = 1.0        -- opaque grey: the red ring layer sits under the fill and must not tint it
-local BRAND = { 0.545, 0.082, 0.220 } -- RGX crimson: accents only (selected tab)
-local RING = BRAND                   -- red RGX ring; the fill stays grey
+local BG_ALPHA = 1.0        -- opaque grey: the ring layer sits under the fill and must not tint it
+-- Brand pair from UI/Theme.lua; the framework's RGX Material Round style draws the window, tabs and
+-- buttons from it.
+local BRAND = RGXProf.Brand.primary
+local ACCENT = RGXProf.Brand.accent
 
 local function D() return _G.RGXDesign end
 local function L(key, fallback) return (RGXProf.L and RGXProf.L[key]) or fallback end
@@ -51,31 +53,21 @@ local function LiveSkill(info)
     return tonumber(info.currentSkill) or 1
 end
 
--- A rounded pill used for the rank tabs; selected tabs fill with the brand crimson.
+-- A rank tab: a framework button (rounded in Material Round). The selected tab is outlined in the ring
+-- colour with accent text; the framework's own hover/leave paint is re-asserted after each hover.
 local function CreatePill(parent)
-    local b = CreateFrame("Button", nil, parent)
-    b:SetHeight(TAB_H)
-    if D() then D():ApplyPanel(b, { color = "surface" }) end
-    b.text = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    b.text:SetPoint("LEFT", 6, 0)
-    b.text:SetPoint("RIGHT", -6, 0)
-    b.text:SetJustifyH("CENTER")
-    b.text:SetWordWrap(false)
+    local b = RGXProf.NewButton(parent, "", 10, TAB_H)
+    b.text = b.label
+    if b.label then b.label:SetFontObject("GameFontHighlightSmall") end
     function b:SetSelected(on)
         self._on = on
         if self.SetPanelColor then
-            local sr, sg, sb = Color("surface", { 0.09, 0.09, 0.11 })
-            local br, bg, bb = Color("border", { 0.2, 0.2, 0.25 })
-            if on then
-                self:SetPanelColor({ 0.118, 0.118, 0.149 }, BRAND, 1)
-            else
-                self:SetPanelColor({ sr, sg, sb }, { br, bg, bb }, 1)
-            end
+            local br, bg, bb = Color("border", { 0.137, 0.137, 0.173 })
+            self:SetPanelColor(nil, on and BRAND or { br, bg, bb }, 1)
         end
-        if on then self.text:SetTextColor(0.929, 0.420, 0.522) else self.text:SetTextColor(0.78, 0.78, 0.80) end
+        if on then self.text:SetTextColor(ACCENT[1], ACCENT[2], ACCENT[3]) else self.text:SetTextColor(0.78, 0.78, 0.80) end
     end
-    b:SetScript("OnEnter", function(self) if not self._on then self.text:SetTextColor(1, 1, 1) end end)
-    b:SetScript("OnLeave", function(self) self:SetSelected(self._on) end)
+    b:HookScript("OnLeave", function(self) self:SetSelected(self._on) end)
     return b
 end
 
@@ -126,7 +118,7 @@ end
 
 local function Clamp(v, lo, hi) if v < lo then return lo elseif v > hi then return hi end return v end
 
-function W:Build()
+local function BuildWindow(self)
     if self.frame then return end
     local design = D()
     local saved = RGXProf_Settings or {}
@@ -136,10 +128,6 @@ function W:Build()
     local f
     if design then
         f = design:CreateFrame(UIParent, { name = "RGXProf_MatsWindow", width = w, height = h, square = false, bgAlpha = BG_ALPHA })
-        if f.SetPanelColor then
-            local sr, sg, sb = Color("surface", { 0.086, 0.086, 0.110 })
-            f:SetPanelColor({ sr, sg, sb }, RING, BG_ALPHA)
-        end
     else
         f = CreateFrame("Frame", "RGXProf_MatsWindow", UIParent)
         f:SetSize(w, h)
@@ -316,6 +304,12 @@ function W:Build()
 
     f.rows = {}
     self.frame = f
+end
+
+-- The overlay is built inside RGXProfessions' theme (its primary/accent in RGX Material Round).
+function W:Build()
+    if self.frame then return end
+    RGXProf.Themed(function() BuildWindow(self) end)
 end
 
 --- Resize, clamped; keeps the top-left corner where it is while dragging.

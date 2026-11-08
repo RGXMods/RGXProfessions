@@ -257,6 +257,9 @@ local function runCase(savedSize, label)
     window.resizeBounds = nil
     calls = {}
 
+    -- UI/Theme.lua loads before BookWindow in the TOC; BookWindow reads the brand pair at load.
+    local themeFile = assert(io.open("UI/Theme.lua", "rb")); local themeSrc = themeFile:read("*a"); themeFile:close()
+    local freshTheme = assert(loadstring(themeSrc, "UI/Theme.lua"))
     local freshAddon = assert(loadstring(addonSrc, "UI/BookWindow.lua"))
 
     Design.CreateFrame = function(parent, opts)
@@ -270,6 +273,7 @@ local function runCase(savedSize, label)
     end
 
     local ok, err = pcall(function()
+        freshTheme()
         freshAddon()
         RGXProf.BookWindow:EnsureFrame()
     end)

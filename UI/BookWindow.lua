@@ -17,15 +17,14 @@ local ROW_HEIGHT = 20
 local BANNER_HEIGHT = 22
 local HEADER_HEIGHT = 60
 
-local BRAND_BORDER = { 0.545, 0.082, 0.220 } -- RGX crimson #8B1538
-local BRAND_RGB = BRAND_BORDER -- accents share the brand crimson
--- Text-weight tint of the brand crimson: #8B1538 itself is too dark to read on the dark panels.
-local BRAND_TEXT = { 0.929, 0.420, 0.522 }      -- #ED6B85
-local BRAND_TEXT_HEX = "|cffED6B85"
-local BRAND_HEADER_FILL = { 0.118, 0.118, 0.149 } -- neutral card header band (RGX grey, not red)
--- Borders are the RGX red; backgrounds stay grey; red text is kept for a few accents (card titles,
--- the big craft number, the progress bars) and never used for body text.
-local PANEL_BORDER = BRAND_BORDER -- red RGX ring on panels and cards; fills stay grey
+-- Brand colours come from one place (UI/Theme.lua): the primary is the panel ring, the accent is the
+-- text tint. The framework's RGX Material Round style draws the panels, cards, headers and buttons from
+-- that pair; this file only uses the pair for its few hand-drawn accents (progress bars, the big number).
+local BRAND_BORDER = RGXProf.Brand.primary
+local BRAND_RGB = BRAND_BORDER
+local BRAND_TEXT = RGXProf.Brand.accent
+local BRAND_TEXT_HEX = string.format("|cff%02X%02X%02X", math.floor(BRAND_TEXT[1] * 255 + 0.5),
+    math.floor(BRAND_TEXT[2] * 255 + 0.5), math.floor(BRAND_TEXT[3] * 255 + 0.5))
 local HEADER_TEXT = { 0.922, 0.922, 0.941 }
 local INSET = 8                                  -- padding between a panel edge and its content
 local HEADER_GAP = 8                             -- breathing room under a card header title
@@ -91,41 +90,19 @@ local function Text() return "|cffffffff" end
 local function Dim() return C("subtext") end
 local function Label() return C("label") end
 
--- The framework owns the rounded panel texture; ask it for the path (it moved once already) and keep
--- the current location as the fallback.
-local function PanelTexture()
-    if RGXProf.PanelTexture then return RGXProf.PanelTexture() end
-    return (Design and Design.PANEL_TEX) or "Interface\\AddOns\\RGX-Framework\\libraries\\design\\panel_rounded.tga"
-end
-
--- Buttons are rounded RGX buttons (UI/RoundedButton.lua); the framework's square button is only the fallback.
-local function NewButton(parent, text, width, height)
-    if RGXProf.CreateRoundedButton then return RGXProf.CreateRoundedButton(parent, text, width, height) end
-    return Design:CreateButton(parent, text, width, height)
-end
+-- The framework owns the rounded panel texture and the buttons; both come from UI/Theme.lua.
+local PanelTexture = RGXProf.PanelTexture
+local NewButton = RGXProf.NewButton
 
 -- Guide data stores "keep" as true/false (Classic) or 1/0; 0 must not count as keep, because in Lua
 -- 0 is true and every step would then claim its crafts are needed later.
--- Card headers come from the framework, which colours them with the SHARED theme colour - another
--- RGX addon (SimpleQuestPlates sets it to green) would otherwise paint RGXProfessions' headers. Repaint
--- each header as a rounded band in RGXProfessions' own crimson.
-local function BrandSection(section)
-    local header = section and section.header
-    if not header then return section end
-    if header.SetBackdrop then pcall(header.SetBackdrop, header, nil) end
-    if Design and Design.ApplyPanel and not header._rgxBranded then
-        Design:ApplyPanel(header, { color = "surface", radius = 8 })
-    end
-    header._rgxBranded = true
-    if header.SetPanelColor then header:SetPanelColor(BRAND_HEADER_FILL, PANEL_BORDER, 1) end
-    if header.label then
-        header.label:SetTextColor(BRAND_TEXT[1], BRAND_TEXT[2], BRAND_TEXT[3])
-        -- Line the title up with the card's content: the header sits 10px in and the content 16px in,
-        -- so the title starts 6px inside its band.
-        if header.label.ClearAllPoints and header.label.SetPoint then
-            header.label:ClearAllPoints()
-            header.label:SetPoint("LEFT", 6, 0)
-        end
+-- Card headers come from the framework's RGX Material Round style (rounded band, the mod's accent as
+-- the title colour). The framework puts the title 4px left of the content below it; line them up.
+local function AlignSection(section)
+    local label = section and section.header and section.header.label
+    if label and label.ClearAllPoints and label.SetPoint then
+        label:ClearAllPoints()
+        label:SetPoint("LEFT", 6, 0)
     end
     return section
 end
@@ -391,7 +368,7 @@ local function ApplyResizeBounds(frame, width, height)
     end
 end
 
-function RGXProf.BookWindow:EnsureFrame()
+local function BuildFrame(self)
     if self.frame then return end
 
     local f = Design:CreateFrame(UIParent, {
@@ -487,9 +464,6 @@ function RGXProf.BookWindow:EnsureFrame()
     end
 
     -- Brand border: RGX crimson frame ring
-    if f.SetPanelColor then
-        f:SetPanelColor(nil, PANEL_BORDER)
-    end
 
     -- Traditional RGXMods header: dark band, accent line, logo, title,
     -- subtitle and brand - the same layout as the framework options panels.
@@ -656,9 +630,6 @@ function RGXProf.BookWindow:EnsureFrame()
     f.stepPanel = Design:CreateFrame(f.guide, { width = LIST_WIDTH })
     f.stepPanel:SetPoint("TOPLEFT", 0, 0)
     f.stepPanel:SetPoint("BOTTOMLEFT", 0, 0)
-    if f.stepPanel.SetPanelColor then
-        f.stepPanel:SetPanelColor(nil, PANEL_BORDER)
-    end
 
     -- Step list (wheel-scrolled plain ScrollFrame; portable across flavors).
     f.stepScroll = CreateFrame("ScrollFrame", nil, f.stepPanel)
@@ -686,9 +657,6 @@ function RGXProf.BookWindow:EnsureFrame()
     f.detailPanel = Design:CreateFrame(f.guide)
     f.detailPanel:SetPoint("TOPLEFT", LIST_WIDTH + 14, 0)
     f.detailPanel:SetPoint("BOTTOMRIGHT", 0, 0)
-    if f.detailPanel.SetPanelColor then
-        f.detailPanel:SetPanelColor(nil, PANEL_BORDER)
-    end
 
     -- Detail pane (right half): a scrollable card column so the cards can
     -- never overflow the window height; the canvas grows and the scroll
@@ -708,7 +676,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
     -- Recipe card ("next up"): icon + recipe name on the left, the big craft count on the right, then
     -- the one-line instruction, the skill-up colour ladder, any training note, and a progress bar
     -- through this step. Everything is positioned in LayoutDetail from explicit sizes.
-    detail.recipeCard = BrandSection(UI:CreateSection(canvas, { title = RGXProf.L.NEXT_UP, square = false }))
+    detail.recipeCard = AlignSection(UI:CreateSection(canvas, { title = RGXProf.L.NEXT_UP, square = false }))
     local rc = detail.recipeCard.content
 
     detail.icon = rc:CreateTexture(nil, "ARTWORK")
@@ -758,7 +726,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
 
     -- Middle row: Materials 46% | Where 54%. Cards are positioned and sized in LayoutDetail (one anchor
     -- plus an explicit size each); nothing here depends on another frame's measured position.
-    detail.matsCard = BrandSection(UI:CreateSection(canvas, { title = RGXProf.L.MATERIALS, square = false }))
+    detail.matsCard = AlignSection(UI:CreateSection(canvas, { title = RGXProf.L.MATERIALS, square = false }))
 
     -- Material rows: each row self-sizes to its wrapped content and shows the real item tooltip.
     detail.materials = {}
@@ -799,7 +767,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
         detail.materials[i] = row
     end
 
-    detail.locCard = BrandSection(UI:CreateSection(canvas, { title = RGXProf.L.WHERE_TO_GET, square = false }))
+    detail.locCard = AlignSection(UI:CreateSection(canvas, { title = RGXProf.L.WHERE_TO_GET, square = false }))
     local lc = detail.locCard.content
 
     detail.locHeader = lc:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -838,7 +806,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
     detail.locHit:SetScript("OnLeave", function() GameTooltip:Hide() end)
     detail.locHit:Hide()
 
-    detail.notesCard = BrandSection(UI:CreateSection(canvas, { title = "Notes", square = false }))
+    detail.notesCard = AlignSection(UI:CreateSection(canvas, { title = "Notes", square = false }))
     detail.notes = detail.notesCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.notes:SetJustifyH("LEFT")
     detail.notes:SetWordWrap(true)
@@ -881,6 +849,13 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
 
     self.rows = {}
     self.frame = f
+end
+
+-- Everything the guide draws is built inside RGXProfessions' theme: its primary/accent in the framework's
+-- RGX Material Round style (rounded panels, cards, headers and buttons).
+function RGXProf.BookWindow:EnsureFrame()
+    if self.frame then return end
+    RGXProf.Themed(function() BuildFrame(self) end)
 end
 
 --------------------------------------------------------------------------------
