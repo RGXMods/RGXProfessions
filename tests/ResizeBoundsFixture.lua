@@ -47,6 +47,7 @@ local function makeFrame()
     frame.SetFrameStrata = function() end
     frame.SetToplevel = function() end
     frame.RegisterForDrag = function() end
+    frame.RegisterForClicks = frame.RegisterForClicks or function() end
     frame.SetScript = function(_, name, fn) frame.scripts[name] = fn end
     frame.HookScript = function(_, name, fn)
         local prev = frame.scripts[name]

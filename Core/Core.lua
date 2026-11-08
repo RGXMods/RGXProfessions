@@ -50,16 +50,10 @@ function RGXProf:CreateMinimapButton()
             end
         end,
         onRightClick = function()
-            -- Open addon options panel using legacy API (panel is created with CreateFrame)
-            if InterfaceOptionsFrame_OpenToCategory then
-                InterfaceOptionsFrame_OpenToCategory("RGX Professions")
-                -- WoW quirk: first call sometimes doesn't work
-                InterfaceOptionsFrame_OpenToCategory("RGX Professions")
-            end
+            if RGXProf.OptionsWindow and RGXProf.OptionsWindow.Toggle then RGXProf.OptionsWindow:Toggle() end
         end,
-        onCtrlRight = function(btn)
-            btn:SetVisible(false)
-            RGXProf_Settings.minimapIconEnabled = false
+        onCtrlRight = function()
+            RGXProf.OptionsWindow:SetMinimapIcon(false)
             print(RGXProf.L.CMD_ICON_HIDDEN)
         end,
     })

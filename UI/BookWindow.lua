@@ -23,11 +23,12 @@ local BRAND_RGB = BRAND_BORDER -- accents share the brand crimson
 local BRAND_TEXT = { 0.929, 0.420, 0.522 }      -- #ED6B85
 local BRAND_TEXT_HEX = "|cffED6B85"
 local BRAND_HEADER_FILL = { 0.118, 0.118, 0.149 } -- neutral card header band (RGX grey, not red)
--- Panels and cards use the same neutral grey ring as the other RGX addons; crimson is only an
--- accent (progress bar, current/selected step, version text).
-local PANEL_BORDER = { 0.200, 0.200, 0.247 }
+-- Borders are the RGX red; backgrounds stay grey; red text is kept for a few accents (card titles,
+-- the big craft number, the progress bars) and never used for body text.
+local PANEL_BORDER = BRAND_BORDER -- red RGX ring on panels and cards; fills stay grey
 local HEADER_TEXT = { 0.922, 0.922, 0.941 }
 local INSET = 8                                  -- padding between a panel edge and its content
+local HEADER_GAP = 8                             -- breathing room under a card header title
 
 --------------------------------------------------------------------------------
 -- Textures: this Forever beta client is inconsistent across builds - some
@@ -117,7 +118,15 @@ local function BrandSection(section)
     end
     header._rgxBranded = true
     if header.SetPanelColor then header:SetPanelColor(BRAND_HEADER_FILL, PANEL_BORDER, 1) end
-    if header.label then header.label:SetTextColor(HEADER_TEXT[1], HEADER_TEXT[2], HEADER_TEXT[3]) end
+    if header.label then
+        header.label:SetTextColor(BRAND_TEXT[1], BRAND_TEXT[2], BRAND_TEXT[3])
+        -- Line the title up with the card's content: the header sits 10px in and the content 16px in,
+        -- so the title starts 6px inside its band.
+        if header.label.ClearAllPoints and header.label.SetPoint then
+            header.label:ClearAllPoints()
+            header.label:SetPoint("LEFT", 6, 0)
+        end
+    end
     return section
 end
 
@@ -140,7 +149,7 @@ local DIFF_WORDS = {
 }
 
 -- Rank gates: crossing a skill cap like 75 requires training the next rank.
--- Derived from Constants.TierLabels so every expansion tracks its own cadence.
+-- Built from Constants.TierLabels so every expansion tracks its own cadence.
 local function BuildRankGates()
     local gates = {}
     local labels = RGXProf.Constants and RGXProf.Constants.TierLabels
@@ -247,16 +256,13 @@ local function DiffColorHex(diffKey)
     return Text()
 end
 
--- Header-only addon title: the first letter of each word carries the
--- brand highlight; the rest keeps the font's default color.
-local function StyledHeaderTitle(text)
-    local words = {}
-    for word in text:gmatch("%S+") do
-        words[#words + 1] = Accent() .. word:sub(1, 1) .. "|r" .. word:sub(2)
-    end
-    return table.concat(words, " ")
+-- Title in the RGX family style: "RGX" in the RGX red, a white pipe, then the product name with its
+-- first letter in RGXProfessions' own coral (the two reds are deliberately different).
+local function BrandTitle(name)
+    name = name or "Professions"
+    return "|cff8B1538RGX|r |cffffffff||r |cffED6B85" .. name:sub(1, 1) .. "|r|cffffffff" .. name:sub(2) .. "|r"
 end
-local HEADER_TITLE = StyledHeaderTitle("RGX Professions")
+local HEADER_TITLE = BrandTitle("Professions")
 
 -- Real in-game tooltip for a guide step: the crafted item when the step
 -- carries an itemID, otherwise the craft spell. SetHyperlink renders true
@@ -601,6 +607,24 @@ function RGXProf.BookWindow:EnsureFrame()
     f.close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
     f.close:SetPoint("TOPRIGHT", -4, -4)
 
+    -- Settings gear: opens the RGX settings window (minimap icon, auto-open, recipe clicks).
+    f.gear = CreateFrame("Button", nil, f)
+    f.gear:SetSize(18, 18)
+    f.gear:SetPoint("RIGHT", f.close, "LEFT", 2, 0)
+    f.gear:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
+    f.gear:SetHighlightTexture("Interface\\Buttons\\UI-OptionsButton")
+    local gearHi = f.gear.GetHighlightTexture and f.gear:GetHighlightTexture()
+    if gearHi and gearHi.SetAlpha then gearHi:SetAlpha(0.5) end
+    f.gear:SetScript("OnClick", function()
+        if RGXProf.OptionsWindow and RGXProf.OptionsWindow.Toggle then RGXProf.OptionsWindow:Toggle() end
+    end)
+    f.gear:SetScript("OnEnter", function(s)
+        GameTooltip:SetOwner(s, "ANCHOR_BOTTOM")
+        GameTooltip:SetText(RGXProf.L.SETTINGS, 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    f.gear:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
     -- Landing page: profession grid with live skill under each.
     f.landing = CreateFrame("Frame", nil, f)
     f.landing:SetPoint("TOPLEFT", f.progress, "BOTTOMLEFT", INSET - 1, -(INSET + 4))
@@ -681,143 +705,144 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
     detail.canvas = canvas
     canvas:SetHeight(1)
 
-    -- Recipe card: full width, intrinsic height via FitContent
-    detail.recipeCard = BrandSection(UI:CreateSection(canvas, { title = "Recipe", square = false }))
-    detail.recipeCard:SetPoint("TOPLEFT", canvas, "TOPLEFT", 2, 0)
-    detail.recipeCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, 0)
+    -- Recipe card ("next up"): icon + recipe name on the left, the big craft count on the right, then
+    -- the one-line instruction, the skill-up colour ladder, any training note, and a progress bar
+    -- through this step. Everything is positioned in LayoutDetail from explicit sizes.
+    detail.recipeCard = BrandSection(UI:CreateSection(canvas, { title = RGXProf.L.NEXT_UP, square = false }))
+    local rc = detail.recipeCard.content
 
-    -- Recipe card background: tint the nine-slice fill directly with
-    -- pcall-guarded positional SetVertexColor (the form Blizzard FrameXML
-    -- uses on this client). A dark distinct tone so it reads as a well.
-    if detail.recipeCard._panelFill then
-        local dr, dg, db = 0.055, 0.055, 0.080
-        for _, tx in ipairs(detail.recipeCard._panelFill) do
-            pcall(tx.SetVertexColor, tx, dr, dg, db, 1)
-        end
-    end
+    detail.icon = rc:CreateTexture(nil, "ARTWORK")
+    detail.icon:SetSize(44, 44)
+    detail.icon:SetPoint("TOPLEFT", 0, -HEADER_GAP)
 
-    detail.icon = detail.recipeCard.content:CreateTexture(nil, "ARTWORK")
-    detail.icon:SetSize(36, 36)
-    detail.icon:SetPoint("TOPLEFT", 2, -4)
-
-    detail.title = detail.recipeCard.content:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    detail.title = rc:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     detail.title:SetPoint("LEFT", detail.icon, "RIGHT", 10, 0)
-    detail.title:SetPoint("RIGHT", -2, 0)
     detail.title:SetJustifyH("LEFT")
     detail.title:SetWordWrap(true)
 
-    detail.titleHover = CreateFrame("Frame", nil, detail.recipeCard.content)
-    detail.titleHover:SetAllPoints(detail.title)
+    -- Hovering the icon or the name shows the real recipe tooltip.
+    detail.titleHover = CreateFrame("Frame", nil, rc)
+    detail.titleHover:SetPoint("TOPLEFT", detail.icon, "TOPLEFT", 0, 0)
+    detail.titleHover:SetPoint("BOTTOMRIGHT", detail.title, "BOTTOMRIGHT", 0, 0)
     detail.titleHover:EnableMouse(true)
     detail.titleHover:SetScript("OnEnter", function(s) ShowStepTooltip(s, detail._step) end)
     detail.titleHover:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
-    detail.difficulty = detail.recipeCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    detail.difficulty:SetPoint("TOPRIGHT", -2, 0)
-    detail.difficulty:SetJustifyH("RIGHT")
+    detail.stat = rc:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+    detail.stat:SetJustifyH("RIGHT")
+    detail.statLabel = rc:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    detail.statLabel:SetJustifyH("RIGHT")
+    detail.statLabel:SetTextColor(0.62, 0.62, 0.66)
 
-    detail.meta = detail.recipeCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    detail.meta:SetPoint("TOPLEFT", detail.icon, "BOTTOMLEFT", 0, -8)
-    detail.meta:SetPoint("RIGHT", detail.difficulty, "LEFT", -8, 0)
+    detail.instruct = rc:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    detail.instruct:SetJustifyH("LEFT")
+    detail.instruct:SetWordWrap(true)
+    detail.ladder = rc:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    detail.ladder:SetJustifyH("LEFT")
+    detail.ladder:SetWordWrap(true)
+    detail.meta = rc:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.meta:SetJustifyH("LEFT")
     detail.meta:SetWordWrap(true)
-    detail.meta:SetTextColor(0.9, 0.9, 0.9)
 
+    detail.stepBar = CreateFrame("StatusBar", nil, rc)
+    detail.stepBar:SetHeight(6)
+    detail.stepBar:SetStatusBarTexture("Interface\\Buttons\\WHITE8x8")
+    detail.stepBar:SetStatusBarColor(BRAND_TEXT[1], BRAND_TEXT[2], BRAND_TEXT[3])
+    detail.stepBar:SetMinMaxValues(0, 1)
+    local stepBarBg = detail.stepBar:CreateTexture(nil, "BACKGROUND")
+    stepBarBg:SetAllPoints()
+    SetTextureColor(stepBarBg, 1, 1, 1, 0.08)
+    detail.barCaption = rc:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    detail.barCaption:SetJustifyH("LEFT")
+    detail.barCaption:SetTextColor(0.62, 0.62, 0.66)
 
-    -- Middle row: two-column proportional layout
-    -- Materials card (~46%) | Where to Get It card (~54%)
-    -- NO bottom anchors here: a ScrollChild canvas never auto-grows from
-    -- children, so anchoring cards to the canvas bottom collapses them.
-    -- Cards flow top-down with intrinsic heights; RenderDetail positions
-    -- the notes card below the deeper of the two via the midRow spacer.
-    local MIDDLE_GAP = 6
-
+    -- Middle row: Materials 46% | Where 54%. Cards are positioned and sized in LayoutDetail (one anchor
+    -- plus an explicit size each); nothing here depends on another frame's measured position.
     detail.matsCard = BrandSection(UI:CreateSection(canvas, { title = RGXProf.L.MATERIALS, square = false }))
-    detail.matsCard:SetPoint("TOPLEFT", detail.recipeCard, "BOTTOMLEFT", 0, -6)
-    detail.matsCard:SetPoint("TOPRIGHT", canvas, "TOP", -MIDDLE_GAP / 2, -6)
 
-    -- Material rows: each row self-sizes to its wrapped content; heights
-    -- are measured and applied in RenderDetail.
+    -- Material rows: each row self-sizes to its wrapped content and shows the real item tooltip.
     detail.materials = {}
     for i = 1, 8 do
         local row = CreateFrame("Frame", nil, detail.matsCard.content)
         if i == 1 then
-            row:SetPoint("TOPLEFT", 2, -2)
-            row:SetPoint("TOPRIGHT", -2, -2)
+            row:SetPoint("TOPLEFT", 0, -HEADER_GAP)
+            row:SetPoint("TOPRIGHT", 0, -HEADER_GAP)
         else
-            row:SetPoint("TOPLEFT", detail.materials[i - 1], "BOTTOMLEFT", 0, -2)
-            row:SetPoint("TOPRIGHT", detail.materials[i - 1], "BOTTOMRIGHT", 0, -2)
+            row:SetPoint("TOPLEFT", detail.materials[i - 1], "BOTTOMLEFT", 0, -3)
+            row:SetPoint("TOPRIGHT", detail.materials[i - 1], "BOTTOMRIGHT", 0, -3)
         end
+        row:EnableMouse(true)
         row.icon = row:CreateTexture(nil, "ARTWORK")
-        row.icon:SetSize(14, 14)
+        row.icon:SetSize(16, 16)
         row.icon:SetPoint("TOPLEFT", 0, 0)
         row.name = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 4, 0)
-        row.name:SetPoint("RIGHT", row, "RIGHT", -36, 0)
+        row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 6, -1)
         row.name:SetJustifyH("LEFT")
         row.name:SetWordWrap(true)
         row.name:SetNonSpaceWrap(true)
         row.count = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        row.count:SetPoint("TOPRIGHT", -2, 0)
+        row.count:SetPoint("TOPRIGHT", 0, -1)
         row.count:SetJustifyH("RIGHT")
         row.count:SetTextColor(0.9, 0.9, 0.9)
+        row:SetScript("OnEnter", function(s)
+            if not (s.itemID and GameTooltip) then return end
+            GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
+            local shown = GameTooltip.SetItemByID and pcall(GameTooltip.SetItemByID, GameTooltip, s.itemID)
+            if not shown then pcall(GameTooltip.SetHyperlink, GameTooltip, "item:" .. s.itemID) end
+            if s.need then
+                GameTooltip:AddLine(string.format("You have %d of %d needed", s.have or 0, s.need), 0.62, 0.62, 0.66)
+            end
+            GameTooltip:Show()
+        end)
+        row:SetScript("OnLeave", function() GameTooltip:Hide() end)
         row:Hide()
         detail.materials[i] = row
     end
 
     detail.locCard = BrandSection(UI:CreateSection(canvas, { title = RGXProf.L.WHERE_TO_GET, square = false }))
-    detail.locCard:SetPoint("TOPLEFT", detail.matsCard, "TOPRIGHT", MIDDLE_GAP, 0)
-    detail.locCard:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -8, -6)
+    local lc = detail.locCard.content
 
-    -- Location content: structured FontStrings for proper flow
-    detail.locHeader = detail.locCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    detail.locHeader:SetPoint("TOPLEFT", 2, -2)
-    detail.locHeader:SetPoint("RIGHT", -2, 0)
+    detail.locHeader = lc:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     detail.locHeader:SetJustifyH("LEFT")
     detail.locHeader:SetWordWrap(true)
     detail.locHeader:SetNonSpaceWrap(true)
-    detail.locHeader:SetSpacing(2)
     detail.locHeader:SetTextColor(0.95, 0.95, 0.95)
 
-    detail.locCoords = detail.locCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    detail.locCoords:SetPoint("TOPLEFT", detail.locHeader, "BOTTOMLEFT", 0, -2)
-    detail.locCoords:SetPoint("RIGHT", -2, 0)
+    detail.locCoords = lc:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.locCoords:SetJustifyH("LEFT")
     detail.locCoords:SetWordWrap(true)
     detail.locCoords:SetNonSpaceWrap(true)
-    detail.locCoords:SetSpacing(2)
-    detail.locCoords:SetTextColor(0.7, 0.7, 0.7)
+    detail.locCoords:SetTextColor(0.7, 0.7, 0.74)
 
-    detail.locAction = detail.locCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    detail.locAction:SetPoint("TOPLEFT", detail.locCoords, "BOTTOMLEFT", 0, -2)
-    detail.locAction:SetPoint("RIGHT", -2, 0)
+    detail.locAction = lc:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     detail.locAction:SetJustifyH("LEFT")
     detail.locAction:SetWordWrap(true)
     detail.locAction:SetNonSpaceWrap(true)
-    detail.locAction:SetSpacing(2)
-    detail.locAction:SetTextColor(0.6, 0.8, 1)
 
-    -- Invisible spacer marking the horizontal bottom of the middle row.
-    -- RenderDetail repositions it below the deeper of the two cards so
-    -- the notes card gets a level top edge even when heights differ.
-    detail.midRow = CreateFrame("Frame", nil, canvas)
-    detail.midRow:SetHeight(1)
-    detail.midRow:SetPoint("TOPLEFT", canvas, "TOPLEFT", 0, 0)
-    detail.midRow:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", 0, 0)
+    -- The whole card is the pin button: click sets a map waypoint on the nearest vendor / trainer.
+    detail.locHit = CreateFrame("Button", nil, detail.locCard)
+    detail.locHit:SetAllPoints(detail.locCard)
+    detail.locHit:RegisterForClicks("LeftButtonUp")
+    detail.locHit:SetScript("OnClick", function()
+        if detail._pinTarget then RGXProf.BookWindow.PinTarget(detail._pinTarget) end
+    end)
+    detail.locHit:SetScript("OnEnter", function(s)
+        local t = detail._pinTarget
+        if not (t and GameTooltip) then return end
+        GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
+        GameTooltip:SetText(t.name or "Unknown", 1, 1, 1)
+        if t.x and t.y then GameTooltip:AddLine(string.format("%.1f, %.1f", t.x, t.y), 0.7, 0.7, 0.74) end
+        GameTooltip:AddLine(RGXProf.L.PIN_HINT, BRAND_TEXT[1], BRAND_TEXT[2], BRAND_TEXT[3])
+        GameTooltip:Show()
+    end)
+    detail.locHit:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    detail.locHit:Hide()
 
-    -- Notes card: full width below the middle row. No canvas-bottom anchor:
-    -- FitContent must be free to shrink the card to its text.
     detail.notesCard = BrandSection(UI:CreateSection(canvas, { title = "Notes", square = false }))
-    detail.notesCard:SetPoint("TOPLEFT", detail.midRow, "BOTTOMLEFT", 0, -6)
-    detail.notesCard:SetPoint("TOPRIGHT", detail.midRow, "BOTTOMRIGHT", 0, -6)
-
     detail.notes = detail.notesCard.content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    detail.notes:SetPoint("TOPLEFT", 2, -2)
-    detail.notes:SetPoint("RIGHT", -2, 0)
     detail.notes:SetJustifyH("LEFT")
     detail.notes:SetWordWrap(true)
     detail.notes:SetNonSpaceWrap(true)
-    detail.notes:SetSpacing(3)
     detail.notes:SetTextColor(0.9, 0.9, 0.9)
 
     -- Footer buttons.
@@ -1145,7 +1170,7 @@ RenderDetail = function(self)
     local step = path[page]
     if not step then return end
 
-    local skill, total = LiveSkill(professionID)
+    local skill = LiveSkill(professionID)
     local player = RGXProf.WowAPI and RGXProf.WowAPI.GetPlayer and RGXProf.WowAPI:GetPlayer() or nil
     local faction = player and player.faction or "Alliance"
 
@@ -1156,63 +1181,66 @@ RenderDetail = function(self)
     detail.icon:SetTexture(display.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
     detail.title:SetText(Text() .. (step.name or ""))
 
-    -- Meta block: three clean lines — difficulty word (colored), craft line (accent), train line (success/dim)
+    -- "Next up" card: the big number on the right is what to do now (crafts left, or points to gather),
+    -- the instruction line says it in words, and the ladder shows when the recipe stops giving skill.
     local fromSkill = math.max(step.minSkill, skill or step.minSkill)
     local crafts = 0
     if not skill or skill < step.maxSkill then
         crafts = RGXProf.DataManager:GetEstimatedCrafts(fromSkill, step) or 0
     end
-    local lines = {}
 
-    -- Line 1: difficulty word in the step's difficulty color
-    local diff = StepDifficulty(step, skill)
-    if diff and DIFF_WORDS[diff] then
-        table.insert(lines, DiffColorHex(diff) .. DIFF_WORDS[diff])
-    end
-
-    -- Line 2: craft instruction
+    local statNum, statLabel, instruct
     if skill and skill >= step.maxSkill then
-        table.insert(lines, C("success") .. "Done - move to the next step")
+        statNum, statLabel = "OK", RGXProf.L.STAT_DONE
+        instruct = C("success") .. RGXProf.L.INSTR_DONE
     elseif step.source == "gather" then
-        table.insert(lines, Instruct() .. "Gather until skill " .. Text() .. step.maxSkill)
+        statNum, statLabel = tostring(math.max(0, step.maxSkill - fromSkill)), RGXProf.L.STAT_POINTS
+        instruct = Instruct() .. "Gather until skill " .. Text() .. step.maxSkill
     elseif crafts > 0 then
-        table.insert(lines, Instruct() .. "Craft " .. Text() .. crafts .. Instruct() .. " more to reach " .. Text() .. step.maxSkill)
+        statNum, statLabel = tostring(crafts), RGXProf.L.STAT_CRAFTS
+        instruct = Instruct() .. "Craft " .. Text() .. crafts .. Instruct() .. " more to reach " .. Text() .. step.maxSkill
     else
-        table.insert(lines, Dim() .. string.format("Skill %d-%d", step.minSkill, step.maxSkill))
+        statNum, statLabel = "", ""
+        instruct = Dim() .. string.format("Skill %d-%d", step.minSkill, step.maxSkill)
+    end
+    detail.stat:SetText(statNum)
+    detail.stat:SetTextColor(BRAND_TEXT[1], BRAND_TEXT[2], BRAND_TEXT[3])
+    detail.statLabel:SetText(statLabel)
+    detail.instruct:SetText(instruct)
+
+    -- Skill-up ladder: orange below the first number, then yellow, green and grey at the numbers shown.
+    local c = step.colors
+    if c and c.y and c.g and c.r then
+        detail.ladder:SetText(string.format("%s%s|r  %s%d|r  %s%d|r  %s%d|r",
+            Dim(), RGXProf.L.LADDER_LABEL, "|cffffff00", c.y, "|cff40bf40", c.g, "|cff9d9d9d", c.r))
+    else
+        detail.ladder:SetText("")
     end
 
-    -- Line 3: training availability
+    -- Extra lines are only actionable facts: when you can train it, and Classic-style alternates.
+    local lines = {}
     if step.learnAt then
         if skill and skill >= step.learnAt then
-            table.insert(lines, C("success") .. "Available to train")
+            table.insert(lines, C("success") .. RGXProf.L.TRAIN_AVAILABLE)
         else
-            table.insert(lines, Dim() .. "Trainable at " .. step.learnAt)
+            table.insert(lines, Dim() .. string.format(RGXProf.L.TRAIN_AT, step.learnAt))
         end
     end
     if step.alternate then
         table.insert(lines, Dim() .. "Alternate")
     end
-    if step.source == "vendor" then
-        table.insert(lines, Dim() .. "Pattern comes from a vendor")
-    elseif step.source == "new" then
-        table.insert(lines, Dim() .. "New recipe in Forever")
-    elseif step.source == "quest" then
-        table.insert(lines, Dim() .. "Learned from a quest")
-    end
-    if step.zones then
-        if step.zones.alliance and step.zones.alliance ~= "" then
-            table.insert(lines, Dim() .. "Alliance: " .. Text() .. step.zones.alliance)
-        end
-        if step.zones.horde and step.zones.horde ~= "" then
-            table.insert(lines, Dim() .. "Horde: " .. Text() .. step.zones.horde)
-        end
-    end
     detail.meta:SetText(table.concat(lines, "\n"))
 
-    -- Clear the top-right difficulty label (now in meta line 1)
-    detail.difficulty:SetText("")
+    -- Progress through this step.
+    detail.stepBar:SetMinMaxValues(step.minSkill, math.max(step.maxSkill, step.minSkill + 1))
+    detail.stepBar:SetValue(math.min(math.max(skill or step.minSkill, step.minSkill), step.maxSkill))
+    if skill then
+        detail.barCaption:SetText(string.format(RGXProf.L.STEP_PROGRESS, math.max(skill, step.minSkill), step.maxSkill))
+    else
+        detail.barCaption:SetText(string.format("%d - %d", step.minSkill, step.maxSkill))
+    end
 
-    -- Materials: structured rows - icon left, name flexible, count right.
+    -- Materials: structured rows - icon left, name flexible, have/need right. Hover shows the item.
     local displayCrafts = crafts > 0 and crafts or (RGXProf.DataManager:GetEstimatedCrafts(step.minSkill, step) or 1)
     local reagents = step.spellID and RGXProf.DataManager:GetReagentListWithDetails(step.spellID, displayCrafts) or {}
     reagents = reagents or {}
@@ -1230,6 +1258,7 @@ RenderDetail = function(self)
     for i = 1, 8 do
         local row = detail.materials[i]
         local entry = entries[i]
+        row.itemID, row.need, row.have = nil, nil, nil
         if entry and entry.kind == "summary" then
             row.icon:Hide()
             row.name:SetText(summaryText)
@@ -1247,6 +1276,7 @@ RenderDetail = function(self)
             local have = tonumber(reagent.onHandCount) or 0
             local need = tonumber(reagent.requiredCount) or 0
             local haveHex = (have >= need) and C("success") or C("warning")
+            row.itemID, row.need, row.have = reagent.itemID, need, have
             row.name:SetText(Text() .. need .. Dim() .. "x " .. Text() .. (reagent.name or tostring(reagent.itemID)))
             row.count:SetText(haveHex .. string.format("%d/%d", have, need))
             row:Show()
@@ -1260,11 +1290,7 @@ RenderDetail = function(self)
         end
     end
 
-    -- Force material card to fit its content    end
-
-
-    -- Location card: show ONLY the NPC closest to the player when the
-    -- window is open, not the full vendor/trainer roster.
+    -- Where: the nearest vendor / trainer (click pins it on the map); gathering steps list their zones.
     local vendors = step.npcs and RGXProf.DataManager:GetVendors(step, faction) or {}
     local trainers = RGXProf.DataManager:GetTrainers(faction, step.minSkill, professionID) or {}
     local allLocs = {}
@@ -1281,7 +1307,7 @@ RenderDetail = function(self)
             if ok and zname then zone = zname end
         end
         if zone ~= "" then
-            nameLine = nameLine .. Dim() .. " - " .. Text() .. zone
+            nameLine = nameLine .. "\n" .. Dim() .. zone
         end
         detail.locHeader:SetText(nameLine)
         if target.x and target.y then
@@ -1289,15 +1315,23 @@ RenderDetail = function(self)
         else
             detail.locCoords:SetText("")
         end
-        detail.locAction:SetText(Dim() .. "Closest to you - Click to pin")
+        detail.locAction:SetText(BRAND_TEXT_HEX .. RGXProf.L.PIN_HINT)
+        detail.locHit:Show()
+    elseif step.zones and ((step.zones.alliance and step.zones.alliance ~= "") or (step.zones.horde and step.zones.horde ~= "")) then
+        local first = (faction == "Horde") and step.zones.horde or step.zones.alliance
+        local second = (faction == "Horde") and step.zones.alliance or step.zones.horde
+        detail.locHeader:SetText(Text() .. (first or ""))
+        detail.locCoords:SetText((second and second ~= "") and (Dim() .. second) or "")
+        detail.locAction:SetText("")
+        detail.locHit:Hide()
     else
         detail.locHeader:SetText(Dim() .. RGXProf.L.TRAINER_TAUGHT)
         detail.locCoords:SetText("")
         detail.locAction:SetText("")
+        detail.locHit:Hide()
     end
-    -- Notes: hide the card entirely when there is nothing to say, so the
-    -- layout never carries an empty card. No bottom anchor on the text:
-    -- FitContent must be free to shrink the card to its real height.
+
+    -- Notes: hide the card entirely when there is nothing to say.
     local notes = {}
     if IsKeep(step) then
         table.insert(notes, BRAND_TEXT_HEX .. RGXProf.L.KEEP_FOR_LATER)
@@ -1318,6 +1352,44 @@ RenderDetail = function(self)
     LayoutDetail(self)
 end
 
+-- Click on the Where card: put a waypoint on the map. Forever has no UiMapPoint helper (it only loads
+-- on Retail), so the point is a plain table with the same shape; TomTom is used when it is installed.
+function RGXProf.BookWindow.PinTarget(target)
+    if not (target and target.zoneID and target.x and target.y) then return false end
+    local mapID, x, y = target.zoneID, target.x / 100, target.y / 100
+    local name = target.name or "RGX Professions"
+    if C_Map and C_Map.SetUserWaypoint and CreateVector2D then
+        local can = true
+        if C_Map.CanSetUserWaypointOnMap then
+            local ok, result = pcall(C_Map.CanSetUserWaypointOnMap, mapID)
+            can = ok and result ~= false
+        end
+        if can then
+            local point = { uiMapID = mapID, position = CreateVector2D(x, y) }
+            if UiMapPoint and UiMapPoint.CreateFromCoordinates then
+                point = UiMapPoint.CreateFromCoordinates(mapID, x, y)
+            end
+            local ok = pcall(C_Map.SetUserWaypoint, point)
+            if ok then
+                if C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
+                    pcall(C_SuperTrack.SetSuperTrackedUserWaypoint, true)
+                end
+                RGXProf.Utils:SendMsg(string.format(RGXProf.L.PIN_SET, name))
+                return true
+            end
+        end
+    end
+    if TomTom and TomTom.AddWaypoint then
+        local ok = pcall(TomTom.AddWaypoint, TomTom, mapID, x, y, { title = name })
+        if ok then
+            RGXProf.Utils:SendMsg(string.format(RGXProf.L.PIN_SET, name))
+            return true
+        end
+    end
+    RGXProf.Utils:SendMsg(string.format(RGXProf.L.PIN_FALLBACK, name, target.x, target.y))
+    return false
+end
+
 -- Geometry only: every card width and height is computed from the canvas width and the text itself,
 -- never read back from frame positions (which are not resolved yet on the frame the text changes) and
 -- never both anchored and sized. That keeps the cards aligned and lets the pane reflow cheaply on
@@ -1331,7 +1403,7 @@ LayoutDetail = function(self)
     if canvasW < 50 then canvasW = (detail:GetWidth() or 0) - 16 end
     if canvasW < 50 then return end
 
-    local GAP = 6
+    local GAP = 8
     local full = math.max(120, canvasW)                -- padding is the scroll page inset
     local function insets(card) return card.contentTopInset or 42, card.contentBottomInset or 12 end
     local function textH(fs)
@@ -1345,17 +1417,45 @@ LayoutDetail = function(self)
         card:SetSize(w, h)
     end
 
-    -- Recipe card: icon + title on top, the meta lines underneath.
+    -- Recipe card: [icon][name .......... big number] / instruction / ladder / training / bar + caption.
     local rt, rb = insets(detail.recipeCard)
     local rInner = full - 32
+    local ICON = 44
+
+    detail.stat:ClearAllPoints()
+    detail.stat:SetPoint("TOPRIGHT", detail.recipeCard.content, "TOPRIGHT", 0, -HEADER_GAP)
+    detail.statLabel:ClearAllPoints()
+    detail.statLabel:SetPoint("TOPRIGHT", detail.stat, "BOTTOMRIGHT", 0, -1)
+    local statW = math.max(detail.stat:GetStringWidth() or 0, detail.statLabel:GetStringWidth() or 0)
+    if statW > 0 then statW = statW + 12 end
+
     detail.title:ClearAllPoints()
     detail.title:SetPoint("LEFT", detail.icon, "RIGHT", 10, 0)
-    detail.title:SetWidth(math.max(40, rInner - 36 - 10 - 2))
-    detail.meta:ClearAllPoints()
-    detail.meta:SetPoint("TOPLEFT", detail.icon, "BOTTOMLEFT", 0, -8)
-    detail.meta:SetWidth(math.max(40, rInner - 4))
-    local recipeContent = math.max(40, 4 + textH(detail.title)) + 8 + textH(detail.meta)
-    local recipeH = rt + recipeContent + rb + 6
+    detail.title:SetWidth(math.max(40, rInner - ICON - 10 - statW))
+    local headRow = math.max(ICON, textH(detail.title), (detail.stat:GetText() or "") ~= "" and (textH(detail.stat) + 1 + textH(detail.statLabel)) or 0)
+
+    local y = HEADER_GAP + headRow + 10
+    local function stack(fs, gap)
+        fs:ClearAllPoints()
+        fs:SetPoint("TOPLEFT", detail.recipeCard.content, "TOPLEFT", 0, -y)
+        fs:SetWidth(math.max(40, rInner))
+        local h = textH(fs)
+        if h > 0 then y = y + h + gap end
+    end
+    stack(detail.instruct, 4)
+    stack(detail.ladder, 4)
+    stack(detail.meta, 4)
+
+    detail.stepBar:ClearAllPoints()
+    detail.stepBar:SetPoint("TOPLEFT", detail.recipeCard.content, "TOPLEFT", 0, -(y + 4))
+    detail.stepBar:SetWidth(math.max(40, rInner))
+    y = y + 4 + 6
+    detail.barCaption:ClearAllPoints()
+    detail.barCaption:SetPoint("TOPLEFT", detail.recipeCard.content, "TOPLEFT", 0, -(y + 3))
+    detail.barCaption:SetWidth(math.max(40, rInner))
+    y = y + 3 + textH(detail.barCaption)
+
+    local recipeH = rt + y + rb + 4
     place(detail.recipeCard, 0, 0, full, recipeH)
 
     -- Middle row: Materials 46% | Where to get it 54%, both cards the same height so the row is level.
@@ -1363,41 +1463,39 @@ LayoutDetail = function(self)
     local wL = full - GAP - wM
 
     local mt, mb = insets(detail.matsCard)
-    local nameW = math.max(30, (wM - 32) - 4 - 18 - 36)
-    local matsContent, shown = 2, 0
+    local nameW = math.max(30, (wM - 32) - 22 - 44)
+    local matsContent, shown = HEADER_GAP, 0
     for i = 1, #detail.materials do
         local row = detail.materials[i]
         if row:IsShown() then
             row.name:ClearAllPoints()
-            row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 4, 0)
+            row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 6, -1)
             row.name:SetWidth(nameW)
-            local h = math.max(textH(row.name), 14)
+            local h = math.max(textH(row.name) + 2, 18)
             row:SetHeight(h)
-            matsContent = matsContent + h + (shown > 0 and 2 or 0)
+            matsContent = matsContent + h + (shown > 0 and 3 or 0)
             shown = shown + 1
         end
     end
-    matsContent = matsContent + 2
 
     local lt, lb = insets(detail.locCard)
-    local locW = math.max(30, (wL - 32) - 4)
-    local locContent = 2
+    local locW = math.max(30, wL - 32)
+    local locContent = HEADER_GAP
     detail.locHeader:ClearAllPoints()
-    detail.locHeader:SetPoint("TOPLEFT", detail.locCard.content, "TOPLEFT", 2, -2)
+    detail.locHeader:SetPoint("TOPLEFT", detail.locCard.content, "TOPLEFT", 0, -HEADER_GAP)
     detail.locHeader:SetWidth(locW)
     detail.locCoords:ClearAllPoints()
-    detail.locCoords:SetPoint("TOPLEFT", detail.locHeader, "BOTTOMLEFT", 0, -2)
+    detail.locCoords:SetPoint("TOPLEFT", detail.locHeader, "BOTTOMLEFT", 0, -3)
     detail.locCoords:SetWidth(locW)
     detail.locAction:ClearAllPoints()
-    detail.locAction:SetPoint("TOPLEFT", detail.locCoords, "BOTTOMLEFT", 0, -2)
+    detail.locAction:SetPoint("TOPLEFT", detail.locCoords, "BOTTOMLEFT", 0, -6)
     detail.locAction:SetWidth(locW)
     locContent = locContent + textH(detail.locHeader)
     local cH, aH = textH(detail.locCoords), textH(detail.locAction)
-    if cH > 0 then locContent = locContent + 2 + cH end
-    if aH > 0 then locContent = locContent + 2 + aH end
-    locContent = locContent + 2
+    if cH > 0 then locContent = locContent + 3 + cH end
+    if aH > 0 then locContent = locContent + 6 + aH end
 
-    local rowH = math.max(mt + matsContent + mb + 6, lt + locContent + lb + 6)
+    local rowH = math.max(mt + matsContent + mb + 4, lt + locContent + lb + 4)
     local rowY = recipeH + GAP
     place(detail.matsCard, 0, rowY, wM, rowH)
     place(detail.locCard, wM + GAP, rowY, wL, rowH)
@@ -1407,9 +1505,9 @@ LayoutDetail = function(self)
     if detail.notesCard:IsShown() then
         local nt, nb = insets(detail.notesCard)
         detail.notes:ClearAllPoints()
-        detail.notes:SetPoint("TOPLEFT", detail.notesCard.content, "TOPLEFT", 2, -2)
-        detail.notes:SetWidth(math.max(40, (full - 32) - 4))
-        local notesH = nt + 2 + textH(detail.notes) + 2 + nb + 4
+        detail.notes:SetPoint("TOPLEFT", detail.notesCard.content, "TOPLEFT", 0, -HEADER_GAP)
+        detail.notes:SetWidth(math.max(40, full - 32))
+        local notesH = nt + HEADER_GAP + textH(detail.notes) + nb + 4
         place(detail.notesCard, 0, bottom + GAP, full, notesH)
         bottom = bottom + GAP + notesH
     end
@@ -1426,84 +1524,101 @@ BuildLanding = function(self)
     landing._buttons = landing._buttons or {}
 
     local professions = GetGuideProfessions()
-    -- Park buttons beyond the current roster instead of hide/show cycling
-    -- the whole grid: re-hiding every button on each resize tick flickers.
     for i = #professions + 1, #landing._buttons do
         landing._buttons[i]:Hide()
     end
     self.frame.landingHint:SetText(Dim() .. "Choose a profession to open its leveling path.")
+    self.frame.landingHint:ClearAllPoints()
+    self.frame.landingHint:SetPoint("TOP", landing, "TOP", 0, -INSET)
 
-    -- Host size is 0 until first layout resolves (0 is truthy in Lua, so
-    -- a plain `or` fallback never catches it); fall back to the design
-    -- size instead of laying out a collapsed grid, like the framework's
-    -- own column layout does.
+    -- Host size is 0 until first layout resolves; fall back to the design size.
     local availW = landing:GetWidth() or 0
     if availW <= 0 then availW = 600 end
-    local availH = (landing:GetHeight() or 0) - 30 -- reserve the hint strip
-    if availH <= 0 then availH = 320 end
-    local columns = math.max(3, math.min(6, math.floor(availW / 130)))
-    local rowsNeeded = math.ceil(#professions / columns)
-    local cell = math.max(72, math.min(160, math.floor(math.min(availW / columns, availH / rowsNeeded))))
-    local gridW = columns * cell
-    local gridH = rowsNeeded * cell
-    local originX = math.max(0, (availW - gridW) / 2)
-    local originY = math.max(0, (availH - gridH) / 2) + 30
-    local btnSize = cell - 10
-    local iconSize = math.floor(btnSize * 0.36)
-    local nameFont = btnSize < 100 and "GameFontHighlightSmall" or "GameFontNormal"
-    -- Interior spacing scales with the button so the content keeps its
-    -- proportions at every grid size instead of overflowing small cells
-    -- or rattling around in large ones.
-    local pad = math.max(4, math.floor(btnSize * 0.07))
-    local gap1 = math.max(2, math.floor(btnSize * 0.035))
-    local gap2 = math.max(1, math.floor(btnSize * 0.02))
+    local availH = landing:GetHeight() or 0
+    if availH <= 0 then availH = 340 end
+
+    -- Stable tile geometry: tiles keep a readable size and the grid wraps, instead of every tile
+    -- stretching with the window. Columns come from the width, tile height from the rows that fit.
+    local GAP = 10
+    local TOP = INSET + 24 -- under the hint line
+    local count = math.max(1, #professions)
+    local columns = math.max(2, math.min(6, math.floor((availW + GAP) / (128 + GAP))))
+    columns = math.min(columns, count)
+    local rowsNeeded = math.ceil(count / columns)
+    local tileW = math.max(112, math.min(172, math.floor((availW - GAP * (columns - 1)) / columns)))
+    local tileH = math.max(86, math.min(120, math.floor((availH - TOP - GAP * (rowsNeeded - 1)) / rowsNeeded)))
+    local gridW = columns * tileW + (columns - 1) * GAP
+    local originX = math.max(0, math.floor((availW - gridW) / 2))
+    local iconSize = math.max(28, math.min(48, math.floor(tileH * 0.38)))
 
     for index, professionID in ipairs(professions) do
         local prof = RGXProf.Constants.Professions[professionID]
         local btn = landing._buttons[index]
         if not btn then
-            btn = NewButton(landing, nil, btnSize, btnSize)
+            btn = NewButton(landing, nil, tileW, tileH)
             btn.icon = btn:CreateTexture(nil, "ARTWORK")
-            btn.name = btn:CreateFontString(nil, "OVERLAY", nameFont)
+            btn.name = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             btn.skill = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            btn.bar = CreateFrame("StatusBar", nil, btn)
+            btn.bar:SetStatusBarTexture("Interface\\Buttons\\WHITE8x8")
+            btn.bar:SetMinMaxValues(0, 1)
+            local barBg = btn.bar:CreateTexture(nil, "BACKGROUND")
+            barBg:SetAllPoints()
+            SetTextureColor(barBg, 1, 1, 1, 0.08)
+            btn:HookScript("OnEnter", function(s)
+                if not (GameTooltip and s.professionName) then return end
+                GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
+                GameTooltip:SetText(s.professionName, 1, 1, 1)
+                GameTooltip:AddLine(s.tooltipLine or "", 0.7, 0.7, 0.74)
+                GameTooltip:AddLine(RGXProf.L.TILE_HINT, BRAND_TEXT[1], BRAND_TEXT[2], BRAND_TEXT[3])
+                GameTooltip:Show()
+            end)
             landing._buttons[index] = btn
         end
-        btn:SetSize(btnSize, btnSize)
+        btn:SetSize(tileW, tileH)
         btn.icon:ClearAllPoints()
-        btn.icon:SetPoint("TOP", 0, -pad)
+        btn.icon:SetPoint("TOP", 0, -10)
         btn.icon:SetSize(iconSize, iconSize)
         btn.name:ClearAllPoints()
-        btn.name:SetPoint("TOP", btn.icon, "BOTTOM", 0, -gap1)
+        btn.name:SetPoint("TOP", btn.icon, "BOTTOM", 0, -6)
+        btn.name:SetWidth(tileW - 16)
+        btn.name:SetJustifyH("CENTER")
+        btn.name:SetWordWrap(false)
         btn.skill:ClearAllPoints()
-        btn.skill:SetPoint("TOP", btn.name, "BOTTOM", 0, -gap2)
-        btn.name:SetFontObject(nameFont)
-        btn.name:SetWidth(btnSize - pad * 2)
-        btn.name:SetWordWrap(true)
-        btn.name:SetNonSpaceWrap(false)
+        btn.skill:SetPoint("TOP", btn.name, "BOTTOM", 0, -3)
+        btn.bar:ClearAllPoints()
+        btn.bar:SetPoint("BOTTOMLEFT", 10, 9)
+        btn.bar:SetPoint("BOTTOMRIGHT", -10, 9)
+        btn.bar:SetHeight(4)
 
         local row = math.floor((index - 1) / columns)
         local col = (index - 1) % columns
         btn:ClearAllPoints()
-        btn:SetPoint("TOPLEFT", originX + col * cell, -(originY + row * cell))
+        btn:SetPoint("TOPLEFT", landing, "TOPLEFT", originX + col * (tileW + GAP), -(TOP + row * (tileH + GAP)))
 
         btn.icon:SetTexture(prof.icon or 133741)
+        btn.professionName = prof.name
         local skill, total = LiveSkill(professionID)
         if skill then
+            local maxSkill = total or MaxSkill()
             btn.name:SetText(Text() .. prof.name)
             btn.icon:SetDesaturated(false)
-            btn.skill:SetFontObject("GameFontNormal")
-            if total and skill >= total then
-                btn.skill:SetText(string.format(RGXProf.L.SKILL_FRACTION, skill, total))
-                btn.skill:SetTextColor(0.9, 0.7, 0.2)
-            else
-                btn.skill:SetText(string.format(RGXProf.L.SKILL_FRACTION, skill, total or MaxSkill()))
-                btn.skill:SetTextColor(HEADER_TEXT[1], HEADER_TEXT[2], HEADER_TEXT[3])
-            end
+            btn.skill:SetFontObject("GameFontHighlightSmall")
+            btn.skill:SetText(string.format(RGXProf.L.SKILL_FRACTION, skill, maxSkill))
+            btn.skill:SetTextColor(0.9, 0.9, 0.9)
+            btn.bar:SetValue(maxSkill > 0 and math.min(1, skill / maxSkill) or 0)
+            btn.bar:SetStatusBarColor(BRAND_TEXT[1], BRAND_TEXT[2], BRAND_TEXT[3])
+            btn.bar:Show()
+            btn.tooltipLine = string.format(RGXProf.L.SKILL_FRACTION, skill, maxSkill)
         else
             btn.name:SetText(Dim() .. prof.name)
             btn.icon:SetDesaturated(true)
             btn.skill:SetFontObject("GameFontHighlightSmall")
             btn.skill:SetText(Label() .. RGXProf.L.NOT_LEARNED)
+            btn.skill:SetTextColor(0.6, 0.6, 0.64)
+            btn.bar:SetValue(0)
+            btn.bar:Hide()
+            btn.tooltipLine = RGXProf.L.NOT_LEARNED
         end
 
         btn:SetScript("OnClick", function()
@@ -1563,7 +1678,7 @@ function RGXProf.BookWindow:Show()
     if professionID then
         local prof = RGXProf.Constants.Professions[professionID]
         self.frame.headerIcon:SetTexture(prof.icon or "Interface\\AddOns\\RGX-Framework\\media\\square.tga")
-        self.frame.headerTitle:SetText(prof.name .. " - Leveling Path")
+        self.frame.headerTitle:SetText(BrandTitle(prof.name))
         UpdateProgressFrame(self.frame, professionID)
 
         self.frame.landing:Hide()
