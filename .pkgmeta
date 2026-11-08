@@ -1,0 +1,18 @@
+package-as: RGXProfessions
+
+enable-nolib-creation: no
+
+ignore:
+  - .github
+  - .gitignore
+  - README.md
+  - .pkgmeta
+  - .gitlab-ci.yml
+  - AGENTS.md
+  - docs
+  - tests
+  - tools
+
+manual-changelog:
+  filename: docs/CHANGES.md
+  markup-type: markdown
