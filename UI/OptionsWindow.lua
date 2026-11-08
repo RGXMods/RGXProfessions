@@ -45,11 +45,8 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
     accent:SetHeight(2)
     accent:SetPoint("TOPLEFT", 16, -44)
     accent:SetPoint("TOPRIGHT", -16, -44)
-    if Design then
-        accent:SetColorTexture(0.545, 0.082, 0.220) -- RGXProfessions crimson, not the shared theme colour
-    else
-        accent:SetColorTexture(0.545, 0.082, 0.220)
-    end
+    local brand = RGXProf.Brand.primary -- the mod's own colour, not the shared theme colour
+    accent:SetColorTexture(brand[1], brand[2], brand[3])
     local autoOpenCheckbox = CreateFrame("CheckButton", nil, configPanel, "InterfaceOptionsCheckButtonTemplate")
     autoOpenCheckbox:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -26)
     autoOpenCheckbox.Text:SetText("Auto-open the guide when a profession window opens")
@@ -78,8 +75,9 @@ end
 -- Settings window (the gear in the guide header): a small rounded RGX window with the same
 -- options as the Blizzard options page, plus the minimap icon on/off switch.
 --------------------------------------------------------------------------------
-local BRAND = { 0.545, 0.082, 0.220 }
-local BRAND_TEXT = { 0.929, 0.420, 0.522 }
+-- Brand pair from UI/Theme.lua; the window and toggles are drawn by the framework's RGX Material Round style.
+local BRAND = RGXProf.Brand.primary
+local BRAND_TEXT = RGXProf.Brand.accent
 
 -- Show or hide the minimap button now, creating it on demand, and remember the choice.
 function RGXProf.OptionsWindow:SetMinimapIcon(show)
@@ -100,8 +98,7 @@ local function CreateToggle(parent, label, desc, isOn, onChange)
     box:SetSize(18, 18)
     box:SetPoint("TOPLEFT", 0, -2)
     if D and D.ApplyPanel then
-        D:ApplyPanel(box, { color = "surface", radius = 5 })
-        box:SetPanelColor(nil, BRAND, 1)
+        D:ApplyPanel(box, { color = "surface", radius = 5 })   -- ring = the theme's primary
     end
     row.tick = box:CreateTexture(nil, "OVERLAY")
     row.tick:SetPoint("TOPLEFT", 4, -4)
@@ -130,14 +127,13 @@ local function CreateToggle(parent, label, desc, isOn, onChange)
     return row
 end
 
-function RGXProf.OptionsWindow:Build()
+local function BuildSettings(self)
     if self.window then return self.window end
     local D = _G.RGXDesign
     local L = RGXProf.L
     local f = D and D.CreateFrame and D:CreateFrame(UIParent, { name = "RGXProf_SettingsWindow", width = 380, height = 262, square = false })
         or CreateFrame("Frame", "RGXProf_SettingsWindow", UIParent)
     f:SetSize(380, 262)
-    if f.SetPanelColor then f:SetPanelColor(nil, BRAND) end
     f:SetPoint("CENTER")
     f:SetFrameStrata("DIALOG")
     f:SetToplevel(true)
@@ -188,6 +184,12 @@ function RGXProf.OptionsWindow:Build()
     f:SetScript("OnShow", function() for _, row in ipairs(f.rows) do row:Refresh() end end)
     self.window = f
     return f
+end
+
+-- Built inside RGXProfessions' theme (its primary/accent in the framework's RGX Material Round style).
+function RGXProf.OptionsWindow:Build()
+    if self.window then return self.window end
+    return RGXProf.Themed(function() return BuildSettings(self) end)
 end
 
 function RGXProf.OptionsWindow:Show()

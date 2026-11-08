@@ -1,9 +1,9 @@
 RGXProf = RGXProf or {}
 RGXProf.LayoutManager = {}
 
--- RGX theme: every window and card is a rounded framework panel with the RGX crimson ring, the same
--- surface the guide (BookWindow) uses. Falls back to the old backdrops only if RGXDesign is missing.
-local BRAND_BORDER = { 0.545, 0.082, 0.220 } -- RGX red ring; fills stay grey
+-- RGX theme: every window and card is a rounded framework panel in RGXProfessions' theme (RGX Material
+-- Round with the mod's primary/accent), the same surface the guide uses. Falls back to the old backdrops
+-- only if RGXDesign is missing. Layouts are built inside RGXProf.Themed (see BuildLayout).
 local function ThemeDesign()
     local D = _G.RGXDesign
     if D and type(D.ApplyPanel) == "function" then return D end
@@ -14,8 +14,7 @@ function RGXProf.LayoutManager:ApplyCard(frame, colorKey)
     local D = ThemeDesign()
     if not D then return false end
     if frame._rgxCard == true then return true end
-    D:ApplyPanel(frame, { color = colorKey or "panelAlt" })
-    if frame.SetPanelColor then frame:SetPanelColor(nil, BRAND_BORDER) end
+    D:ApplyPanel(frame, { color = colorKey or "panelAlt" })   -- ring = the theme's primary
     frame._rgxCard = true
     return true
 end
@@ -25,7 +24,6 @@ end
 local function CreateThemedWindow(name, layout)
     local D = ThemeDesign()
     local f = D:CreateFrame(UIParent, { name = name, width = layout.width, height = layout.height, square = false })
-    if f.SetPanelColor then f:SetPanelColor(nil, BRAND_BORDER) end
 
     local portrait = f:CreateTexture(name .. "Portrait", "ARTWORK")
     portrait:SetSize(40, 40)
@@ -43,7 +41,8 @@ local function CreateThemedWindow(name, layout)
     divider:SetHeight(1)
     divider:SetPoint("TOPLEFT", 10, -58)
     divider:SetPoint("TOPRIGHT", -10, -58)
-    divider:SetColorTexture(BRAND_BORDER[1], BRAND_BORDER[2], BRAND_BORDER[3], 0.6)
+    local ringR, ringG, ringB = D:Unpack("ring")
+    divider:SetColorTexture(ringR, ringG, ringB, 0.6)
 
     f.CloseButton = CreateFrame("Button", nil, f, "UIPanelCloseButton")
     f.CloseButton:SetPoint("TOPRIGHT", -4, -4)
@@ -59,13 +58,14 @@ end
 --- @param context Context
 --- @return table|BackdropTemplate|Frame
 function RGXProf.LayoutManager:BuildLayout(context)
+    return RGXProf.Themed(function()
+        local backFrame = self:CreateBackFrame(context.layoutRoot.name, context.layoutRoot)
+        context.ui.backFrame = backFrame
 
-    local backFrame = self:CreateBackFrame(context.layoutRoot.name, context.layoutRoot)
-    context.ui.backFrame = backFrame
+        self:ApplyLayout(backFrame, context.layoutRoot, context)
 
-    self:ApplyLayout(backFrame, context.layoutRoot, context)
-
-    return context.ui
+        return context.ui
+    end)
 end
 
 function RGXProf.LayoutManager:ApplyLayout(parent, layout, context)
@@ -449,8 +449,8 @@ function RGXProf.LayoutManager:CreateButton(parent, childInfo, context)
     local D = ThemeDesign()
     local tex = btn:CreateTexture(nil, "ARTWORK")
     if D then
-        D:ApplyPanel(btn, { color = "surface", radius = 8 })
-        if btn.SetPanelColor then btn:SetPanelColor(nil, BRAND_BORDER) end
+        D:ApplyPanel(btn, { color = "surface", radius = 8 })   -- ring = the theme's primary
+        btn._rgxRing = { D:Unpack("ring") }
         tex:SetPoint("TOPLEFT", 4, -4)
         tex:SetPoint("BOTTOMRIGHT", -4, 4)
         btn._rgxHover = true   -- painted after HookTooltip installs its scripts (see below)
@@ -462,8 +462,8 @@ function RGXProf.LayoutManager:CreateButton(parent, childInfo, context)
     RGXProf.LayoutManager:HookTooltip( btn, childInfo.tooltipIntent )
     RGXProf.LayoutManager:HookClick( btn, childInfo.onClickIntent )
     if btn._rgxHover then
-        btn:HookScript("OnEnter", function(self) if self.SetPanelColor then self:SetPanelColor({ 0.13, 0.13, 0.16 }, BRAND_BORDER) end end)
-        btn:HookScript("OnLeave", function(self) if self.SetPanelColor then self:SetPanelColor({ 0.086, 0.086, 0.110 }, BRAND_BORDER) end end)
+        btn:HookScript("OnEnter", function(self) if self.SetPanelColor then self:SetPanelColor({ D:Unpack("hover") }, self._rgxRing) end end)
+        btn:HookScript("OnLeave", function(self) if self.SetPanelColor then self:SetPanelColor({ D:Unpack("surface") }, self._rgxRing) end end)
     end
 
     return btn

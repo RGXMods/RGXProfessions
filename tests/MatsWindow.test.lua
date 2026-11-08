@@ -67,11 +67,19 @@ _G.RGXDesign = {
     self:ApplyPanel(f); return f
   end,
   Unpack = function() return 0.1, 0.1, 0.12 end,
+  -- the rank tabs are framework buttons (rounded in Material Round)
+  CreateButton = function(_, parent, text, w, h)
+    local b = frame("Button"); b.shown = true; b.w, b.h = w or 0, h or 0
+    b.label = frame("FontString"); b.label.text = text
+    b.SetPanelColor = function(self, fill, border) self.fill, self.border = fill, border end
+    return b
+  end,
 }
 RGXProf.L = {}
 RGXProf.WowAPI = { GetItemInfo = function() return nil end }
 local liveTiers = tiers
 RGXProf.DataManager.GetRemainingMaterialsTiers = function() return liveTiers end
+assert(loadfile("UI/Theme.lua"))()   -- loads before MatsWindow in the TOC
 assert(loadfile("UI/MatsWindow.lua"))()
 local MW = RGXProf.MatsWindow
 MW:Show({ icon = 1, name = "Tailoring", currentSkill = 100, path = { { maxSkill = 300 } } })
@@ -110,9 +118,11 @@ f.onOnMouseWheel(f, -1)
 check(math.abs(RGXProf_Settings.matsScale - 1.55) < 1e-9, "the plain mouse wheel does not scale")
 check(f.grip and f.grip.onOnDragStart and f.grip.onOnDragStop, "a corner grip resizes the overlay")
 local matsSrc = read("UI/MatsWindow.lua")
-check(matsSrc:find("f:SetPanelColor({ sr, sg, sb }, RING, BG_ALPHA)", 1, true), "the overlay background is the grey surface colour")
+check(matsSrc:find('design:CreateFrame(UIParent, { name = "RGXProf_MatsWindow"', 1, true) and matsSrc:find("bgAlpha = BG_ALPHA", 1, true), "the overlay is a framework frame in the addon's theme with an opaque grey fill")
+check(not matsSrc:find("SetPanelColor({ sr, sg, sb }", 1, true) and not matsSrc:find("RING", 1, true), "no hand-painted ring or fill: the framework style draws it")
 check(not matsSrc:find("self.bg:SetColorTexture(BRAND", 1, true), "row hover is a grey wash, not red")
-check(matsSrc:find("local RING = BRAND", 1, true) and matsSrc:find("local BG_ALPHA = 1.0", 1, true), "red ring, opaque grey fill")
+check(matsSrc:find("local BG_ALPHA = 1.0", 1, true), "opaque grey fill")
+check(matsSrc:find("RGXProf.NewButton(parent", 1, true), "rank tabs are framework buttons")
 MW:Hide()
 check(not f:IsShown(), "hides")
 print("MatsWindow.test OK")

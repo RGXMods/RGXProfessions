@@ -6,9 +6,9 @@
 ## X-Discord: discord.gg/N7kdKAHVVF
 ## Category: RealmGX
 ## Group: RealmGX
-## Version: v0.3.0
+## Version: v0.3.1
 ## RequiredDeps: RGX-Framework
-## X-RGX-Framework-MinVersion: 2.7.15-beta.4
+## X-RGX-Framework-MinVersion: 2.15.2
 ## SavedVariables: RGXProf_Settings, RGXProf_SimResults
 ## IconTexture: Interface\AddOns\RGXProfessions\Media\RGXIcon.tga
 ## LoadOnDemand: 0
@@ -79,7 +79,7 @@ UI/FrameRegistry.lua
 UI/TooltipHandlers.lua
 UI/ClickHandlers.lua
 UI/TooltipManager.lua
-UI/RoundedButton.lua
+UI/Theme.lua
 UI/LayoutManager.lua
 UI/MainWindow.lua
 UI/MiniWindow.lua

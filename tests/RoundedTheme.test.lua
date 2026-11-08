@@ -31,6 +31,7 @@ end
 function CreateFrame(_, name) return frame(name) end
 UIParent, UISpecialFrames = frame(), {}
 _G.RGXDesign = {
+  Unpack = function() return 0.5, 0.1, 0.2 end,
   ApplyPanel = function(_, f) panels = panels + 1; f._panelFill = {}; f.SetPanelColor = function() end end,
   CreateFrame = function(self, parent, opts)
     check(opts.square == false, "window shell is a rounded panel")
@@ -68,10 +69,10 @@ print("RoundedTheme.test OK")
 
 -- 3. Buttons are rounded and every texture path resolves.
 local bookSrc = read("UI/BookWindow.lua")
-check(bookSrc:find("RGXProf.CreateRoundedButton(parent", 1, true), "the guide builds its buttons through the rounded helper")
-check(select(2, bookSrc:gsub("Design:CreateButton", "")) == 1, "the square framework button remains only as the single fallback")
+check(bookSrc:find("local NewButton = RGXProf.NewButton", 1, true), "the guide builds its buttons through the framework-backed helper")
+check(not bookSrc:find("Design:CreateButton", 1, true), "no direct square framework button left in the guide")
 check(not bookSrc:find("media\\\\panel_rounded", 1, true), "no texture path points at the missing media\\panel_rounded.tga")
-for _, f in ipairs({ "UI/BookWindow.lua", "UI/LayoutManager.lua", "UI/RoundedButton.lua", "UI/MatsWindow.lua", "UI/MainWindow.lua" }) do
+for _, f in ipairs({ "UI/BookWindow.lua", "UI/LayoutManager.lua", "UI/Theme.lua", "UI/MatsWindow.lua", "UI/MainWindow.lua" }) do
   for path in read(f):gmatch('"Interface\\\\AddOns\\\\([%w_%-]+\\\\[^"]-%.tga)"') do
     local rel = path:gsub("\\\\", "/")
     local addon = rel:match("^([^/]+)/")
@@ -83,7 +84,9 @@ for _, f in ipairs({ "UI/BookWindow.lua", "UI/LayoutManager.lua", "UI/RoundedBut
     end
   end
 end
-local rb = read("UI/RoundedButton.lua")
-check(rb:find("D:ApplyPanel", 1, true) and rb:find("PANEL_TEX", 1, true), "rounded buttons are built on the framework's rounded panel and texture")
-check(read("RGXProfessions.toc"):find("UI/RoundedButton.lua", 1, true), "the helper is in the TOC")
+local th = read("UI/Theme.lua")
+check(th:find("_G.RGXDesign:CreateButton", 1, true) and th:find("PANEL_TEX", 1, true), "buttons come from the framework and the panel texture path from its Design")
+local toc = read("RGXProfessions.toc")
+check(toc:find("UI/Theme.lua", 1, true) and not toc:find("RoundedButton", 1, true), "Theme.lua is in the TOC and the local rounded-button copy is gone")
+check(toc:find("X-RGX-Framework-MinVersion: 2.15.2", 1, true), "the addon requires the framework that has RGX Material Round")
 print("RoundedTheme (buttons/textures) OK")
