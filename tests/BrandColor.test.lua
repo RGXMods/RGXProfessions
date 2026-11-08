@@ -21,15 +21,17 @@ local pre = src:match("(local BRAND_BORDER = .-local INSET = %d+[^\n]*\n)")
 assert(pre, "brand constants block")
 local sqpGreen = { 0.345, 0.745, 0.506 }
 local Design = { ApplyPanel = function(_, f) f.SetPanelColor = function(s, fill, border) s.fill, s.border = fill, border end end }
-local chunk = assert(loadstring("local Design = ...\n" .. pre .. src:sub(a, b + 4) .. "\nreturn BrandSection, HEADER_TEXT, PANEL_BORDER"))
-local BrandSection, HEADER_TEXT, PANEL_BORDER = chunk(Design)
-local label = { color = sqpGreen }
+local chunk = assert(loadstring("local Design = ...\n" .. pre .. src:sub(a, b + 4) .. "\nreturn BrandSection, BRAND_TEXT, PANEL_BORDER"))
+local BrandSection, BRAND_TEXT, PANEL_BORDER = chunk(Design)
+local label = { color = sqpGreen, ClearAllPoints = function(s) s.pt = nil end, SetPoint = function(s, ...) s.pt = { ... } end }
 function label:SetTextColor(r, g, bl) self.color = { r, g, bl } end
 local header = { label = label, SetBackdrop = function(s, v) s.backdrop = v end, backdrop = "square" }
 BrandSection({ header = header })
 check(header.backdrop == nil, "the square header backdrop is removed")
-check(header.fill and header.border == PANEL_BORDER and header.fill[1] == header.fill[2], "header is a rounded neutral grey band (RGX look, not red)")
-check(label.color[1] == HEADER_TEXT[1] and label.color[2] == HEADER_TEXT[2] and label.color[2] ~= sqpGreen[2], "header title uses RGXProfessions' own text colour, not the shared green")
+check(header.fill and header.border == PANEL_BORDER and header.fill[1] == header.fill[2], "header is a grey band with the panel ring (grey background, not red)")
+check(PANEL_BORDER[1] > 0.5 and PANEL_BORDER[2] < 0.1, "the ring is the RGX red")
+check(label.color[1] == BRAND_TEXT[1] and label.color[2] == BRAND_TEXT[2] and label.color[2] ~= sqpGreen[2], "card titles are RGXProfessions' red text, not the shared green")
+check(label.pt and label.pt[1] == "LEFT" and label.pt[2] == 6, "card titles line up with the content below them")
 check(BrandSection({}) ~= nil, "a section without a header is left alone")
 
 -- 3. Padding/alignment rules.
@@ -46,6 +48,6 @@ check(render:find('Instruct() .. "Craft "', 1, true) and render:find('Instruct()
 check(not render:find('Accent() .. "Craft "', 1, true) and not render:find('Accent() .. "Gather', 1, true), "instruction lines no longer use the crimson accent")
 check(src:find('local function Instruct() return "|cffffd100" end', 1, true), "instruction colour is WoW gold")
 -- 5. Panels use the neutral grey ring; crimson is not used as a panel border.
-check(not src:find("SetPanelColor(nil, BRAND_BORDER)", 1, true), "no panel is ringed in crimson")
-check(select(2, src:gsub("SetPanelColor%(nil, PANEL_BORDER%)", "")) == 3, "window, step list and detail panels use the neutral ring")
+check(src:find("local PANEL_BORDER = BRAND_BORDER", 1, true), "panels and cards share the RGX red ring")
+check(select(2, src:gsub("SetPanelColor%(nil, PANEL_BORDER%)", "")) == 3, "window, step list and detail panels use that ring (borders red, fills grey)")
 print("BrandColor.test OK")

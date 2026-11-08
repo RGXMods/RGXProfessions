@@ -4,7 +4,8 @@
 local f = assert(io.open("UI/BookWindow.lua", "r")); local source = f:read("*a"); f:close()
 local a = assert(source:find("LayoutDetail = function(self)", 1, true), "LayoutDetail not found")
 local b = assert(source:find("-- Landing page", a, true), "end marker not found")
-local chunk = assert(loadstring("local LayoutDetail\n" .. source:sub(a, b - 1) .. "\nreturn LayoutDetail"))
+local gap = assert(source:match("local HEADER_GAP = (%d+)"), "HEADER_GAP not found")
+local chunk = assert(loadstring("local HEADER_GAP = " .. gap .. "\nlocal LayoutDetail\n" .. source:sub(a, b - 1) .. "\nreturn LayoutDetail"))
 
 local function check(c, m) if not c then error("CHECK FAILED: " .. m, 2) end end
 
@@ -20,6 +21,7 @@ local function widget(text, lineH, charW)
   function w:GetHeight() return self.height end
   function w:GetWidth() return self.width end
   function w:IsShown() return self.shown ~= false end
+  function w:GetStringWidth() return math.min(self.width > 0 and self.width or 1e9, #self.text * charW) end
   function w:GetStringHeight()   -- word-wrapped height from the width that was set
     local perLine = math.max(1, math.floor(self.width / charW))
     local lines = 0
@@ -39,6 +41,8 @@ local function build(canvasW, textLen)
   local detail = {
     canvas = widget("", 12, 6), recipeCard = card(true), matsCard = card(true), locCard = card(true), notesCard = card(true),
     title = widget("Recipe name", 16, 8), meta = widget(long, 12, 6), icon = widget("", 12, 6),
+    stat = widget("134", 24, 14), statLabel = widget("crafts", 12, 6), instruct = widget("Craft 134 more to reach 90", 14, 7),
+    ladder = widget("Skill-ups 55 75 95", 12, 6), stepBar = widget("", 6, 6), barCaption = widget("Skill 62 of 90 in this step", 12, 6),
     locHeader = widget(long, 12, 6), locCoords = widget("44.2, 51.0", 12, 6), locAction = widget("Closest to you", 12, 6),
     notes = widget(long, 12, 6), materials = {},
   }
@@ -71,6 +75,14 @@ for _, width in ipairs({ 380, 470, 600, 900 }) do
   check(math.abs(mw / (mw + lw) - 0.46) < 0.02, width .. ": the columns split about 46/54")
   -- every wrapped text fits inside its card
   check(detail.meta.height == nil and detail.meta.width <= rw - 32, width .. ": meta text is narrower than the recipe card")
+  -- the recipe card: name + big number share the top row; instruction, ladder and bar stack below it
+  check(detail.title.width + 44 + 10 + detail.stat.width <= rw - 32 + 1, width .. ": name, icon and the big number fit on the top row")
+  check(detail.instruct.width <= rw - 32 and detail.stepBar.width <= rw - 32, width .. ": instruction and progress bar fit the card")
+  local function y(fs) return -fs.points[1][5] end
+  check(y(detail.instruct) > 8 + 44, width .. ": the instruction sits below the icon row")
+  check(y(detail.ladder) > y(detail.instruct) and y(detail.stepBar) > y(detail.ladder), width .. ": instruction, ladder and bar stack in order")
+  -- space under every card header: content starts below the framework's header, not flush against it
+  check(-detail.locHeader.points[1][5] >= 8, width .. ": Where card content has breathing room under its header")
 end
 
 -- A narrower window makes wrapped text taller, and the cards grow with it (no clipping).

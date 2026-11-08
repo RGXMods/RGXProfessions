@@ -3,7 +3,7 @@ RGXProf.LayoutManager = {}
 
 -- RGX theme: every window and card is a rounded framework panel with the RGX crimson ring, the same
 -- surface the guide (BookWindow) uses. Falls back to the old backdrops only if RGXDesign is missing.
-local BRAND_BORDER = { 0.200, 0.200, 0.247 } -- neutral RGX grey ring (crimson is reserved for small accents)
+local BRAND_BORDER = { 0.545, 0.082, 0.220 } -- RGX red ring; fills stay grey
 local function ThemeDesign()
     local D = _G.RGXDesign
     if D and type(D.ApplyPanel) == "function" then return D end
@@ -43,7 +43,7 @@ local function CreateThemedWindow(name, layout)
     divider:SetHeight(1)
     divider:SetPoint("TOPLEFT", 10, -58)
     divider:SetPoint("TOPRIGHT", -10, -58)
-    divider:SetColorTexture(1, 1, 1, 0.10)
+    divider:SetColorTexture(BRAND_BORDER[1], BRAND_BORDER[2], BRAND_BORDER[3], 0.6)
 
     f.CloseButton = CreateFrame("Button", nil, f, "UIPanelCloseButton")
     f.CloseButton:SetPoint("TOPRIGHT", -4, -4)

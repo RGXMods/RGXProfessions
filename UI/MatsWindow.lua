@@ -21,9 +21,9 @@ local ICON = 16
 local COL_W = 38            -- Have / Need column width
 local HEADER_H = 26
 local TAB_H = 20
-local BG_ALPHA = 0.96       -- near-opaque: the ring layer sits under the fill and must not tint it
+local BG_ALPHA = 1.0        -- opaque grey: the red ring layer sits under the fill and must not tint it
 local BRAND = { 0.545, 0.082, 0.220 } -- RGX crimson: accents only (selected tab)
-local RING = { 0.200, 0.200, 0.247 }   -- neutral grey ring, like the other RGX addons
+local RING = BRAND                   -- red RGX ring; the fill stays grey
 
 local function D() return _G.RGXDesign end
 local function L(key, fallback) return (RGXProf.L and RGXProf.L[key]) or fallback end
@@ -67,12 +67,12 @@ local function CreatePill(parent)
             local sr, sg, sb = Color("surface", { 0.09, 0.09, 0.11 })
             local br, bg, bb = Color("border", { 0.2, 0.2, 0.25 })
             if on then
-                self:SetPanelColor({ 0.30, 0.09, 0.14 }, BRAND, 1)
+                self:SetPanelColor({ 0.118, 0.118, 0.149 }, BRAND, 1)
             else
                 self:SetPanelColor({ sr, sg, sb }, { br, bg, bb }, 1)
             end
         end
-        self.text:SetTextColor(on and 1 or 0.78, on and 1 or 0.78, on and 1 or 0.80)
+        if on then self.text:SetTextColor(0.929, 0.420, 0.522) else self.text:SetTextColor(0.78, 0.78, 0.80) end
     end
     b:SetScript("OnEnter", function(self) if not self._on then self.text:SetTextColor(1, 1, 1) end end)
     b:SetScript("OnLeave", function(self) self:SetSelected(self._on) end)
@@ -163,7 +163,6 @@ function W:Build()
         if not (IsControlKeyDown and IsControlKeyDown()) then return end
         W:SetScale((s:GetScale() or 1) + delta * 0.05)
     end)
-    if type(UISpecialFrames) == "table" then table.insert(UISpecialFrames, "RGXProf_MatsWindow") end
     f:Hide()
 
     -- Slim title bar: small icon, profession name, skill range on the right, close button.
@@ -174,8 +173,25 @@ function W:Build()
     f.close:SetSize(22, 22)
     f.close:SetPoint("TOPRIGHT", -2, -2)
     f.close:SetScript("OnClick", function() f:Hide() end)
+
+    -- Lock: while locked, Escape no longer closes the overlay (it stays up while you work). The lock
+    -- is remembered; unlocked windows close with Escape like any other panel.
+    f.lock = CreateFrame("Button", nil, f)
+    f.lock:SetSize(16, 16)
+    f.lock:SetPoint("RIGHT", f.close, "LEFT", 0, 0)
+    f.lock:SetNormalTexture("Interface\\Buttons\\LockButton-Unlocked-Up")
+    f.lock:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight")
+    f.lock:SetScript("OnClick", function() W:SetLocked(not W:IsLocked()) end)
+    f.lock:SetScript("OnEnter", function(s)
+        GameTooltip:SetOwner(s, "ANCHOR_BOTTOM")
+        GameTooltip:SetText(W:IsLocked() and L("LOCK_ON", "Locked: Escape will not close this window")
+            or L("LOCK_OFF", "Unlocked: Escape closes this window. Click to lock it open."), 1, 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    f.lock:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
     f.sub = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.sub:SetPoint("RIGHT", f.close, "LEFT", -2, 0)
+    f.sub:SetPoint("RIGHT", f.lock, "LEFT", -2, 0)
     f.sub:SetJustifyH("RIGHT")
     f.sub:SetTextColor(DIM[1], DIM[2], DIM[3])
     f.title = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -187,7 +203,7 @@ function W:Build()
     divider:SetHeight(1)
     divider:SetPoint("TOPLEFT", PAD, -HEADER_H)
     divider:SetPoint("TOPRIGHT", -PAD, -HEADER_H)
-    divider:SetColorTexture(1, 1, 1, 0.10)
+    divider:SetColorTexture(BRAND[1], BRAND[2], BRAND[3], 0.6)
 
     -- Rank tabs.
     f.tabs = {}
@@ -323,6 +339,28 @@ function W:SetScale(scale)
     f:SetScale(scale)
     if RGXProf_Settings then RGXProf_Settings.matsScale = scale end
     return scale
+end
+
+--- Lock the overlay open: Escape stops closing it. Remembered between sessions.
+function W:SetLocked(locked)
+    locked = locked and true or false
+    if RGXProf_Settings then RGXProf_Settings.matsLocked = locked end
+    local f = self.frame
+    if not f then return locked end
+    local name = "RGXProf_MatsWindow"
+    local list = UISpecialFrames
+    if type(list) == "table" then
+        for i = #list, 1, -1 do if list[i] == name then table.remove(list, i) end end
+        if not locked then table.insert(list, name) end
+    end
+    if f.lock and f.lock.SetNormalTexture then
+        f.lock:SetNormalTexture(locked and "Interface\\Buttons\\LockButton-Locked-Up" or "Interface\\Buttons\\LockButton-Unlocked-Up")
+    end
+    return locked
+end
+
+function W:IsLocked()
+    return RGXProf_Settings ~= nil and RGXProf_Settings.matsLocked == true
 end
 
 function W:Place()
@@ -470,6 +508,7 @@ function W:Show(info)
     if self.info and self.info.path ~= info.path then self.selectedCap = nil end
     self.info = info
     self._nameRetries = 0
+    self:SetLocked(self:IsLocked())
     if not self.frame:IsShown() then self:Place() end
     self.frame:Show()
     self.frame:Raise()

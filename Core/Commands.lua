@@ -82,17 +82,17 @@ function RGXProf:HandleSlashCommand(msg)
         else
             print(RGXProf.L.CMD_BOOK_NOT_LOADED)
         end
+    elseif command == "settings" or command == "options" or command == "config" then
+        RGXProf.OptionsWindow:Show()
     elseif command == "book" then
         if RGXProf.BookWindow then RGXProf.BookWindow:Show() end
     elseif command == "icon" then
         local sub = (args or ""):lower()
         if sub == "on" then
-            RGXProf_Settings.minimapIconEnabled = true
-            if RGXProf.minimapButton then RGXProf.minimapButton:SetVisible(true) end
+            RGXProf.OptionsWindow:SetMinimapIcon(true)
             print(RGXProf.L.CMD_ICON_SHOWN)
         elseif sub == "off" then
-            RGXProf_Settings.minimapIconEnabled = false
-            if RGXProf.minimapButton then RGXProf.minimapButton:SetVisible(false) end
+            RGXProf.OptionsWindow:SetMinimapIcon(false)
             print(RGXProf.L.CMD_ICON_HIDDEN)
         else
             print(RGXProf.L.CMD_ICON_USAGE)
@@ -158,8 +158,7 @@ function RGXProf:PrintProfessionNotes(professionID, displayName)
     if notes.changes and #notes.changes > 0 then
         print("|cffffff00" .. RGXProf.L.NOTES_CHANGED .. "|r")
         for _, change in ipairs(notes.changes) do
-            local source = (change.source and change.source ~= "") and (" |cff9a9a9a[" .. change.source .. "]|r") or ""
-            print("  - " .. change.text .. source)
+            print("  - " .. change.text)
         end
     end
     if notes.tips and #notes.tips > 0 then

@@ -133,9 +133,50 @@ print(debugstack(2, 1, 0))
 	return m.name or RGXProf.L.UNNAMED_MAP
 end
 
+-- Spell icon on every client: Forever (1.60.1) and Retail only have C_Spell (the global GetSpellInfo is
+-- gone there), Classic Era still has the global.
+function RGXProf.WowAPI:GetSpellIcon(spellID)
+	if not spellID then return nil end
+	if C_Spell then
+		if C_Spell.GetSpellTexture then
+			local ok, tex = pcall(C_Spell.GetSpellTexture, spellID)
+			if ok and tex then return tex end
+		end
+		if C_Spell.GetSpellInfo then
+			local ok, info = pcall(C_Spell.GetSpellInfo, spellID)
+			if ok and type(info) == "table" and info.iconID then return info.iconID end
+		end
+	end
+	if GetSpellInfo then
+		local ok, _, _, tex = pcall(GetSpellInfo, spellID)
+		if ok and tex then return tex end
+	end
+	return nil
+end
+
+-- Item icon without waiting for the item cache (GetItemInfo returns nil until the server answers).
+function RGXProf.WowAPI:GetItemIconInstant(itemID)
+	if not itemID then return nil end
+	if C_Item and C_Item.GetItemIconByID then
+		local ok, tex = pcall(C_Item.GetItemIconByID, itemID)
+		if ok and tex then return tex end
+	end
+	if C_Item and C_Item.GetItemInfoInstant then
+		local ok, _, _, _, _, tex = pcall(C_Item.GetItemInfoInstant, itemID)
+		if ok and tex then return tex end
+	end
+	if GetItemIcon then
+		local ok, tex = pcall(GetItemIcon, itemID)
+		if ok and tex then return tex end
+	end
+	return nil
+end
+
 function RGXProf.WowAPI:GetReagentInfoByItemID(itemID)
-    -- GetItemInfo returns icon as the 10th value, not the 3rd.
+    -- GetItemInfo returns icon as the 10th value, not the 3rd. It is nil until the item is cached,
+    -- so fall back to the instant icon lookup; the name streams in on GET_ITEM_INFO_RECEIVED.
     local name, link, _, _, _, _, _, _, _, icon = self:GetItemInfo(itemID)
+    icon = icon or self:GetItemIconInstant(itemID)
     local onHand = self:GetItemCount(itemID, false, false)
 
     if not name then
@@ -163,10 +204,7 @@ function RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
 	-- Woolen Cape carried the Reinforced Linen Cape itemID). GetSpellInfo
 	-- returns (name, rank, icon); recipe spells carry the product's icon.
 	if step.spellID then
-		if GetSpellInfo then
-			local _, _, spellIcon = GetSpellInfo(step.spellID)
-			if spellIcon then icon = spellIcon end
-		end
+		icon = self:GetSpellIcon(step.spellID)
 		if step.name then
 			link = string.format("|cff71d5ff|Hspell:%d|h[%s]|h|r", step.spellID, step.name)
 		end
