@@ -2,7 +2,11 @@ RGXProf = RGXProf or {}
 RGXProf.Utils = RGXProf.Utils or {}
 
 function RGXProf.Utils:SendMsg(text)
-	print(RGXProf.Constants.Colors.Hex.BLUE.."RGXProf"..":|r "..tostring(text))
+	local settings = RGXProf.Settings or RGXProf_Settings or {}
+	if settings.chatOutput == false then return end
+	local prefix = settings.chatPrefix
+	if type(prefix) ~= "string" or prefix == "" then prefix = "RGX Professions" end
+	print(RGXProf.Constants.Colors.Hex.BLUE..prefix..":|r "..tostring(text))
 end
 
 function RGXProf.Utils:GetItemID(itemLink)

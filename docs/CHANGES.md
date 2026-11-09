@@ -1,3 +1,11 @@
+## v0.3.4 - 2026-11-09
+
+Requires **RGX-Framework 2.15.2 or later**.
+
+- Settings live in the game's options panel now: one page of framework cards with the minimap toggle, guide auto-open, recipe clicks, chat output and chat prefix. The gear in the header, `/prof settings` and the minimap menu all open that page instead of a separate window.
+- Chat messages use a configurable prefix (default "RGX Professions") and can be turned off entirely.
+- The Materials to Max lock button shows its state: accent-tinted locked icon, dimmed unlocked icon, and a titled tooltip ("Locked" / "Unlocked") that explains what clicking does.
+
 ## v0.3.3 - 2026-11-09
 
 Requires **RGX-Framework 2.15.2 or later**.
