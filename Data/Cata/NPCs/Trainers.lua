@@ -1,20 +1,11 @@
 RGXProf.Cata = RGXProf.Cata or {}
 
 
---1. scrapepath
---2. compare scrapedpath lua to mine and edit mine
---3. get any vendors and edit (blacksmithing, enchanting, engineering, leatherworking, tailoring)
---4. get any trainers and run it through chatgpt leave x, ys blank for now (blacksmithing, enchanting, engineering, leatherworking, tailoring)
-
---Cooking
 --Enchanting
 --Engineering
 --FirstAid
---Leatherowrking
+--Leatherworking
 --Tailoring
-
--- Save cooking and fishing and try to do the combo guide somehow also.  Add multiple icons into the notes
-
 
 -- Trainers.lua
 RGXProf.Cata.Trainers = {

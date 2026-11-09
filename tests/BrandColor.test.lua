@@ -1,6 +1,6 @@
 -- RGXProfessions is branded by its own primary/accent pair, defined once in UI/Theme.lua, and the
 -- framework's RGX Material Round style draws everything from it. It never reads the framework's SHARED
--- theme colour (SimpleQuestPlates sets that to green) and draws no panels or buttons of its own. Also
+-- theme colour (some RGX addons set that to green) and draws no panels or buttons of its own. Also
 -- checks the padding rules: list and detail content sit inside their panels, cards start at the canvas edge.
 local function check(c, m) if not c then error("CHECK FAILED: " .. m, 2) end end
 local function read(p) local f = assert(io.open(p)); local s = f:read("*a"); f:close(); return s end

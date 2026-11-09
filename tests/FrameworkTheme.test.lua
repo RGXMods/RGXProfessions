@@ -43,7 +43,7 @@ assert(loadfile("UI/Theme.lua"))()
 local B = RGXProf.Brand
 local function near(c, t) return math.abs(c[1] - t[1]) < 1e-6 and math.abs(c[2] - t[2]) < 1e-6 and math.abs(c[3] - t[3]) < 1e-6 end
 
--- another mod (think SimpleQuestPlates) owns the shared theme
+-- another addon owns the shared theme
 D:SetThemePreset("green")
 local sharedPrimary = { D:Unpack("primary") }
 local style, corner = D:GetStyle(), D.cornerStyle
