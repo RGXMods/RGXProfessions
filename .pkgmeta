@@ -1,5 +1,7 @@
 package-as: RGXProfessions
 
+license: LICENSE
+
 enable-nolib-creation: no
 
 ignore:
@@ -12,6 +14,8 @@ ignore:
   - docs
   - tests
   - tools
+  - Media/README.md
+  - wago_description.md
 
 manual-changelog:
   filename: docs/CHANGES.md
