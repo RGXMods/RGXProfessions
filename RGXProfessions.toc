@@ -37,15 +37,6 @@ Data\Forever\ProfessionNotes.lua
 Data\Classic\NPCs\Trainers.lua
 Data\Classic\NPCs\Vendors.lua
 Data\Classic\NPCs\Quests.lua
-Data\Classic\ProfessionPaths\Tailoring.lua
-Data\Classic\ProfessionPaths\Blacksmithing.lua
-Data\Classic\ProfessionPaths\FirstAid.lua
-Data\Classic\ProfessionPaths\Alchemy.lua
-Data\Classic\ProfessionPaths\Cooking.lua
-Data\Classic\ProfessionPaths\Enchanting.lua
-Data\Classic\ProfessionPaths\Engineering.lua
-Data\Classic\ProfessionPaths\Leatherworking.lua
-Data\Classic\Recipes.lua
 Data\Forever\Recipes.lua
 Data\Classic\ZoneNames.lua
 
