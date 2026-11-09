@@ -1,12 +1,12 @@
-# <img src="https://github.com/RGXMods/RGX-Framework/blob/main/media/logo.png?raw=true" width="25" height="25"> <span style="color:#8B1538">R</span><span style="color:#8B1538">G</span><span style="color:#8B1538">X</span> <span style="color:#3598db">|</span> <span style="color:#ED6B85">Profession Leveling Guide</span>
+# <img src="Media/RGXLogo.png" width="25" height="25"> <span style="color:#8B1538">R</span><span style="color:#8B1538">G</span><span style="color:#8B1538">X</span> <span style="color:#3598db">|</span> <span style="color:#ED6B85">Profession Leveling Guide</span>
 
-## <img src="https://github.com/RGXMods/SimpleQuestPlates/blob/main/media/kiwi.gif?raw=true" height="20"> <span style="color:#8B1538">R</span><span style="color:#8B1538">G</span><span style="color:#8B1538">X</span> <span style="color:#4ecdc4">Mods</span> <span style="color:#3598db">-</span> [<span style="color:#8B1538">R</span><span style="color:#7598b6">ealm</span><span style="color:#8B1538">G</span><span style="color:#8B1538">X</span>](https://realmgx.com) <span style="color:#ED6B85">Community Project</span>
+## <img src="Media/kiwi.gif" height="20"> <span style="color:#8B1538">R</span><span style="color:#8B1538">G</span><span style="color:#8B1538">X</span> <span style="color:#4ecdc4">Mods</span> <span style="color:#3598db">-</span> [<span style="color:#8B1538">R</span><span style="color:#7598b6">ealm</span><span style="color:#8B1538">G</span><span style="color:#8B1538">X</span>](https://realmgx.com) <span style="color:#ED6B85">Community Project</span>
 
 **<span style="color:#ED6B85">"The profession leveling bible."</span> <span style="color:#e67e23">- Now in</span> <span style="color:#06c">World of Warcraft</span><span style="color:#e67e23">!</span>**
 
 The profession leveling bible for **WoW Forever**. Open the book, pick a profession, and see exactly what to craft or gather next, how many of it, what it takes, and where to get it.
 
-<img src="Media/RGXIconSquare.png" width="96" height="96" align="right"> **The Kiwi Says:** *"Open the book, follow the page, watch the bars fill. Bwwiiiee."*
+<img src="Media/RGXLogo.png" width="96" height="96" align="right"> **The Kiwi Says:** *"Open the book, follow the page, watch the bars fill. Bwwiiiee."*
 
 ## What you get
 
@@ -47,7 +47,7 @@ RGXProfessions is localized for all twelve WoW client locales: enUS (base), deDE
 
 - WoW Forever (Interface 16001).
 - Requires RGX-Framework 2.15.2 or later. RGXProfessions draws nothing itself: its windows, cards, headers and buttons come from the framework's **RGX Material Round** interface style, in RGXProfessions' own colours, and no other addon's theme is touched.
-- The bundled data also contains Cataclysm and Mists paths for future flavor builds; the client picks its data set.
+- WoW Forever (Interface 16001). This build ships the WoW Forever data set only; Classic, Cataclysm and Mists are not packaged.
 
 ## Data
 
@@ -64,7 +64,7 @@ Part of the [RealmGX](https://realmgx.com) community project. Join us at discord
 ## Credits
 
 - **PLG (Profession Leveling Guide)** by LirameiRav, updated from the original Retail version by Keg, is the addon this one grew from.
-- Classic, Cataclysm and Mists guides from wow-professions.com.
+- Classic-era vendor, trainer and quest data from wow-professions.com.
 - WoW Forever 1-300 routes, reagents, notes and tips from [WoWSoD Pro](https://wowsod.pro/wow-forever/professions/leveling) (Wowhead Forever data, final pre-launch skill-up colours).
 - Rebranded and extended by DonnieDice for RealmGX.
 
@@ -73,8 +73,8 @@ Part of the [RealmGX](https://realmgx.com) community project. Join us at discord
 **Made with by the** RealmGX Community
 **Lead Developer:** [DonnieDice](https://github.com/donniedice)
 
-<img src="https://github.com/RGXMods/SimpleQuestPlates/blob/main/media/kiwi.gif?raw=true" width="15" height="15"> **The Kiwi Says:** *"Level up your professions the fast way. Bwwiiiee."*
+<img src="Media/kiwi.gif" width="15" height="15"> **The Kiwi Says:** *"Level up your professions the fast way. Bwwiiiee."*
 
 [Join our Discord Community](https://discord.gg/N7kdKAHVVF) | [Star us on GitHub](https://github.com/RGXMods/RGXProfessions) | [Support Development](https://www.buymeacoffee.com/donniedice)
 
-**<img src="https://github.com/RGXMods/SimpleQuestPlates/blob/main/media/kiwi.gif?raw=true" width="18" height="18"> <span style="color:#8B1538;">R</span><span style="color:#8B1538;">G</span><span style="color:#8B1538;">X</span> <span style="color:#4ecdc4;">Mods</span> <span style="color:#3598db;">-</span> <span style="color:#7598b6;">Powered by </span> <span style="color:#8B1538;">R</span><span style="color:#7598b6;">ealm</span><span style="color:#8B1538;">G</span><span style="color:#8B1538;">X</span> <span style="color:#7598b6;">Community</span>**
+**<img src="Media/kiwi.gif" width="18" height="18"> <span style="color:#8B1538;">R</span><span style="color:#8B1538;">G</span><span style="color:#8B1538;">X</span> <span style="color:#4ecdc4;">Mods</span> <span style="color:#3598db;">-</span> <span style="color:#7598b6;">Powered by </span> <span style="color:#8B1538;">R</span><span style="color:#7598b6;">ealm</span><span style="color:#8B1538;">G</span><span style="color:#8B1538;">X</span> <span style="color:#7598b6;">Community</span>**

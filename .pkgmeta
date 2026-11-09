@@ -15,6 +15,10 @@ ignore:
   - tests
   - tools
   - Media/README.md
+  - Media/RGXLogo.png
+  - Media/kiwi.gif
+  - Data/Cata
+  - Data/Mists
   - wago_description.md
 
 manual-changelog:
