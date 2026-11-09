@@ -55,7 +55,7 @@ Every user-visible string comes from the addon's own localization table, selecte
 ## Data And Credits
 
 - **PLG (Profession Leveling Guide)** by LirameiRav, updated from the original Retail version by Keg, is the addon this one grew from.
-- Classic, Cataclysm and Mists guides from [wow-professions.com](https://www.wow-professions.com).
+- Classic-era vendor, trainer and quest data from [wow-professions.com](https://www.wow-professions.com).
 - WoW Forever routes, reagents, notes and tips from [WoWSoD Pro](https://wowsod.pro/wow-forever/professions/leveling).
 - Rebranded and extended by DonnieDice for [RealmGX](https://realmgx.com).
 

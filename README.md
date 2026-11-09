@@ -47,7 +47,7 @@ RGXProfessions is localized for all twelve WoW client locales: enUS (base), deDE
 
 - WoW Forever (Interface 16001).
 - Requires RGX-Framework 2.15.2 or later. RGXProfessions draws nothing itself: its windows, cards, headers and buttons come from the framework's **RGX Material Round** interface style, in RGXProfessions' own colours, and no other addon's theme is touched.
-- The bundled data also contains Cataclysm and Mists paths for future flavor builds; the client picks its data set.
+- WoW Forever (Interface 16001). This build ships the WoW Forever data set only; Classic, Cataclysm and Mists are not packaged.
 
 ## Data
 
@@ -64,7 +64,7 @@ Part of the [RealmGX](https://realmgx.com) community project. Join us at discord
 ## Credits
 
 - **PLG (Profession Leveling Guide)** by LirameiRav, updated from the original Retail version by Keg, is the addon this one grew from.
-- Classic, Cataclysm and Mists guides from wow-professions.com.
+- Classic-era vendor, trainer and quest data from wow-professions.com.
 - WoW Forever 1-300 routes, reagents, notes and tips from [WoWSoD Pro](https://wowsod.pro/wow-forever/professions/leveling) (Wowhead Forever data, final pre-launch skill-up colours).
 - Rebranded and extended by DonnieDice for RealmGX.
 
