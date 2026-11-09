@@ -1,10 +1,8 @@
 name: Package and Release
 
-# Thin caller. The pipeline lives in RGXMods/.github so every RGX addon shares
-# one place to fix packaging, changelog extraction and release notes.
-#
-# CurseForge packages tagged commits itself ("Automatic Packaging" on the
-# project), so this workflow only builds the GitHub release and notifies.
+# This addon owns its release pipeline: it builds the GitHub release and posts
+# the release card. CurseForge packages tagged commits on its own, so there is
+# deliberately no CurseForge upload here (that would duplicate the file).
 
 on:
   push:
@@ -26,10 +24,155 @@ on:
 
 jobs:
   release:
-    permissions:
-      contents: write
-    uses: RGXMods/.github/.github/workflows/release.yml@main
-    secrets: inherit
-    with:
-      release_type: ${{ github.event.inputs.release_type || '' }}
-      discord: true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Configure git user
+        run: |
+          git config --global user.name "RGX Mods"
+          git config --global user.email "releases@rgxmods.com"
+
+      - name: Read addon metadata
+        id: meta
+        shell: bash
+        env:
+          ADDON_NAME: RGXProfessions
+        run: |
+          addon="${ADDON_NAME:-}"
+          if [[ -z "$addon" ]]; then
+            echo "::error::Repository variable ADDON_NAME is not set."
+            exit 1
+          fi
+          toc="${addon}.toc"
+          if [[ ! -f "$toc" ]]; then
+            echo "::error::$toc not found."
+            exit 1
+          fi
+
+          version="$(grep -oP '^## Version:\s*\K.*' "$toc" || true)"
+          if [[ -z "$version" ]]; then
+            echo "::error::$toc has no ## Version."
+            exit 1
+          fi
+
+          echo "addon=$addon" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" >> "$GITHUB_OUTPUT"
+          echo "Resolved $addon $version"
+
+      - name: Verify tag matches the TOC
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          version="${{ steps.meta.outputs.version }}"
+          if [[ "${tag#v}" != "${version#v}" && "${tag%%-*}" != "${version#v}" ]]; then
+            echo "::error::Tag '$tag' does not match TOC version '$version'."
+            exit 1
+          fi
+
+      - name: Extract changelog
+        id: changelog
+        shell: bash
+        run: |
+          version="${{ steps.meta.outputs.version }}"
+          short="${version#v}"
+          if [[ -f "docs/changelogs/${short}.md" ]]; then
+            body="$(cat "docs/changelogs/${short}.md")"
+          elif [[ -f "docs/CHANGES.md" ]]; then
+            body="$(awk '/^## / { if (started) exit; started=1 } started' docs/CHANGES.md)"
+          else
+            body="No changelog available."
+          fi
+
+          {
+            echo "body<<EOF"
+            echo "$body"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          summary="$(echo "$body" | grep -E '^[-*]|^\*\*' | head -20 | sed 's/^\*\*[^*]*\*\*[[:space:]]*//')"
+          if ((${#summary} > 980)); then
+            summary="${summary:0:977}..."
+          fi
+          {
+            echo "summary<<EOF"
+            echo "$summary"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Package and release
+        uses: BigWigsMods/packager@master
+        env:
+          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+          CF_API_KEY: ''
+
+      - name: Determine channel
+        id: channel
+        shell: bash
+        env:
+          REQUESTED: ${{ github.event.inputs.release_type }}
+        run: |
+          channel="${REQUESTED}"
+          if [[ -z "$channel" ]]; then
+            case "${GITHUB_REF}" in
+              *-alpha*) channel=alpha ;;
+              *-beta*)  channel=beta ;;
+              *)        channel=release ;;
+            esac
+          fi
+          echo "channel=$channel" >> "$GITHUB_OUTPUT"
+          echo "Channel: $channel"
+
+      - name: Release notes
+        run: |
+          echo "Version: ${{ steps.meta.outputs.version }}"
+          echo "Channel: ${{ steps.channel.outputs.channel }}"
+          echo "CurseForge packages tagged commits on its own; no upload here."
+
+      - name: Discord notification
+        if: ${{ success() }}
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          SUMMARY: ${{ steps.changelog.outputs.summary }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          TIMESTAMP: ${{ steps.meta.outputs.timestamp }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          [[ -z "$DISCORD_WEBHOOK" ]] && exit 0
+
+          channel="${{ steps.channel.outputs.channel }}"
+          case "$channel" in
+            beta)  colour=16744448; label="Beta Build" ;;
+            alpha) colour=9109504;  label="Alpha Build" ;;
+            *)     colour=35071;    label="Stable Release" ;;
+          esac
+
+          url="https://github.com/${REPO}/releases/tag/${{ github.ref_name }}"
+
+          jq -n \
+            --arg title "RGX | ${{ steps.meta.outputs.addon }} ${VERSION}" \
+            --arg url "$url" \
+            --arg description "A new ${label,,} is live." \
+            --arg summary "$SUMMARY" \
+            --arg footer "RGX Mods • ${label}" \
+            --arg timestamp "$TIMESTAMP" \
+            --argjson colour "$colour" \
+            '{username: "RGX Releases",
+              embeds: [{title: $title, url: $url, description: $description,
+                        color: $colour,
+                        fields: [{name: "What''s New", value: ($summary // "See the release page."), inline: false}],
+                        footer: {text: $footer}, timestamp: $timestamp}]}' > payload.json
+
+          curl -s -o /dev/null -w "%{http_code}\n" \
+            -H "Content-Type: application/json" -X POST -d @payload.json "$DISCORD_WEBHOOK"
