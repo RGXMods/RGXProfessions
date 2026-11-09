@@ -1,4 +1,4 @@
-# <img src="https://github.com/RGXMods/RGX-Framework/blob/main/media/logo.png?raw=true" width="25" height="25"> <span style="color:#8B1538">R</span><span style="color:#8B1538">G</span><span style="color:#8B1538">X</span> <span style="color:#3598db">|</span> <span style="color:#ED6B85">Profession Leveling Guide</span>
+# <img src="Media/RGXLogo.png" width="25" height="25"> <span style="color:#8B1538">R</span><span style="color:#8B1538">G</span><span style="color:#8B1538">X</span> <span style="color:#3598db">|</span> <span style="color:#ED6B85">Profession Leveling Guide</span>
 
 ## <img src="https://github.com/RGXMods/SimpleQuestPlates/blob/main/media/kiwi.gif?raw=true" height="20"> <span style="color:#8B1538">R</span><span style="color:#8B1538">G</span><span style="color:#8B1538">X</span> <span style="color:#4ecdc4">Mods</span> <span style="color:#3598db">-</span> [<span style="color:#8B1538">R</span><span style="color:#7598b6">ealm</span><span style="color:#8B1538">G</span><span style="color:#8B1538">X</span>](https://realmgx.com) <span style="color:#ED6B85">Community Project</span>
 
@@ -6,7 +6,7 @@
 
 The profession leveling bible for **WoW Forever**. Open the book, pick a profession, and see exactly what to craft or gather next, how many of it, what it takes, and where to get it.
 
-<img src="Media/RGXIconSquare.png" width="96" height="96" align="right"> **The Kiwi Says:** *"Open the book, follow the page, watch the bars fill. Bwwiiiee."*
+<img src="Media/RGXLogo.png" width="96" height="96" align="right"> **The Kiwi Says:** *"Open the book, follow the page, watch the bars fill. Bwwiiiee."*
 
 ## What you get
 

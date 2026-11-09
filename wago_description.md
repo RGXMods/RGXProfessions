@@ -1,4 +1,4 @@
-# <img src="https://github.com/RGXMods/RGX-Framework/blob/main/media/logo.png?raw=true" width="25" height="25"> <span style="color:#8B1538">R</span><span style="color:#8B1538">G</span><span style="color:#8B1538">X</span> <span style="color:#3598db">|</span> <span style="color:#ED6B85">Profession Leveling Guide</span>
+# <img src="https://media.forgecdn.net/avatars/2188/794/639297992679825015.png" width="25" height="25"> <span style="color:#8B1538">R</span><span style="color:#8B1538">G</span><span style="color:#8B1538">X</span> <span style="color:#3598db">|</span> <span style="color:#ED6B85">Profession Leveling Guide</span>
 
 ## <img src="https://github.com/RGXMods/SimpleQuestPlates/blob/main/media/kiwi.gif?raw=true" height="20"> <span style="color:#8B1538">R</span><span style="color:#8B1538">G</span><span style="color:#8B1538">X</span> <span style="color:#4ecdc4">Mods</span> <span style="color:#3598db">-</span> [<span style="color:#8B1538">R</span><span style="color:#7598b6">ealm</span><span style="color:#8B1538">G</span><span style="color:#8B1538">X</span>](https://realmgx.com) <span style="color:#ED6B85">Community Project</span>
 
