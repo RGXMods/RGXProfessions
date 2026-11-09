@@ -90,11 +90,15 @@ RGXProf.Events = {
 
             local configPanel = RGXProf.OptionsWindow:CreateOptionsPanel()
 
-            if InterfaceOptions_AddCategory then
-                InterfaceOptions_AddCategory(configPanel)
-            elseif Settings and Settings.RegisterCanvasLayoutCategory then
-                local category = Settings.RegisterCanvasLayoutCategory(configPanel, configPanel.name)
-                Settings.RegisterAddOnCategory(category)
+            -- The framework options panel registers itself in the game settings.
+            -- Keep the manual category only for a panel built without it.
+            if configPanel and configPanel.name and not configPanel.Open then
+                if InterfaceOptions_AddCategory then
+                    InterfaceOptions_AddCategory(configPanel)
+                elseif Settings and Settings.RegisterCanvasLayoutCategory then
+                    local category = Settings.RegisterCanvasLayoutCategory(configPanel, configPanel.name)
+                    Settings.RegisterAddOnCategory(category)
+                end
             end
 
             RGXProf:CreateMinimapButton()

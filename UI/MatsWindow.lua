@@ -172,8 +172,14 @@ local function BuildWindow(self)
     f.lock:SetScript("OnClick", function() W:SetLocked(not W:IsLocked()) end)
     f.lock:SetScript("OnEnter", function(s)
         GameTooltip:SetOwner(s, "ANCHOR_BOTTOM")
-        GameTooltip:SetText(W:IsLocked() and L("LOCK_ON", "Locked: Escape will not close this window")
-            or L("LOCK_OFF", "Unlocked: Escape closes this window. Click to lock it open."), 1, 1, 1, 1, true)
+        if W:IsLocked() then
+            local c = RGXProf.Brand.accent
+            GameTooltip:SetText(L("LOCKED_TITLE", "Locked"), c[1], c[2], c[3], 1, true)
+        else
+            GameTooltip:SetText(L("UNLOCKED_TITLE", "Unlocked"), 0.7, 0.7, 0.7, 1, true)
+        end
+        GameTooltip:AddLine(W:IsLocked() and L("LOCK_ON", "Escape will not close this window. Click to unlock.")
+            or L("LOCK_OFF", "Escape closes this window. Click to lock it open."), 1, 1, 1, true)
         GameTooltip:Show()
     end)
     f.lock:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -349,6 +355,16 @@ function W:SetLocked(locked)
     end
     if f.lock and f.lock.SetNormalTexture then
         f.lock:SetNormalTexture(locked and "Interface\\Buttons\\LockButton-Locked-Up" or "Interface\\Buttons\\LockButton-Unlocked-Up")
+        -- Icon shape alone is easy to miss at 16px: locked is accent-tinted and
+        -- brighter, unlocked is dimmed grey.
+        if locked then
+            local c = RGXProf.Brand.accent
+            f.lock:SetVertexColor(c[1], c[2], c[3], 1)
+            f.lock:SetAlpha(1)
+        else
+            f.lock:SetVertexColor(0.65, 0.65, 0.65, 1)
+            f.lock:SetAlpha(0.85)
+        end
     end
     return locked
 end
@@ -489,7 +505,7 @@ function W:Refresh()
     -- Item names stream in from the server; re-render a few times until they have all arrived.
     if missingNames and (self._nameRetries or 0) < 5 and C_Timer and C_Timer.After then
         self._nameRetries = (self._nameRetries or 0) + 1
-        C_Timer.After(0.5, function() W:Refresh() end)
+        if _G.RGXFramework then _G.RGXFramework:After(0.5, function() W:Refresh() end) end
     elseif not missingNames then
         self._nameRetries = 0
     end
