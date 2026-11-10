@@ -104,6 +104,12 @@ check(ev:find("PLAYER_LOGIN = function", 1, true) and ev:find("settings.loginMes
 -- 5. Step list colours by state; the location card says "Recipe location".
 check(book:find("nameHex = Dim()", 1, true) and book:find('nameHex = "|cffffffff"', 1, true), "finished steps recede and the current step is bright")
 check(read("Constants/Localization.lua"):find('WHERE_TO_GET = "Recipe location"', 1, true), "the card is called Recipe location")
+local loc = read("Constants/Localization.lua")
+local _, localised = loc:gsub('WHERE_TO_GET = "', "")
+check(localised == 12, "every locale defines the card title (" .. localised .. " of 12)")
+for _, old in ipairs({ "Wo zu bekommen", "Dónde conseguirlo", "Où l'obtenir", "Dove ottenerlo", "획득 방법", "Onde conseguir", "Где получить", "获取途径", "取得途徑" }) do
+  check(not loc:find('WHERE_TO_GET = "' .. old .. '"', 1, true), "'" .. old .. "' is renamed to the recipe-location wording in every locale")
+end
 
 -- 6. Addons-menu setting calls the framework and tells the player when a reload is needed.
 local ow = read("UI/OptionsWindow.lua")
