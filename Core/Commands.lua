@@ -90,10 +90,10 @@ function RGXProf:HandleSlashCommand(msg)
         local sub = (args or ""):lower()
         if sub == "on" then
             RGXProf.OptionsWindow:SetMinimapIcon(true)
-            print(RGXProf.L.CMD_ICON_SHOWN)
+            RGXProf.Utils:SendMsg(RGXProf.L.CMD_ICON_SHOWN)
         elseif sub == "off" then
             RGXProf.OptionsWindow:SetMinimapIcon(false)
-            print(RGXProf.L.CMD_ICON_HIDDEN)
+            RGXProf.Utils:SendMsg(RGXProf.L.CMD_ICON_HIDDEN)
         else
             print(RGXProf.L.CMD_ICON_USAGE)
         end

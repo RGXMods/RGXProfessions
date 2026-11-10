@@ -8,11 +8,24 @@
 
 RGXProf = RGXProf or {}
 
--- The addon's brand pair (user-defined, per mod): RGX red #8B1538 and its readable coral tint #ED6B85.
+-- The addon's brand pair (user-defined, per mod): RGX red #8B1538 for rings and bars, and a light grey
+-- (#BDC3C7, the Breeze "cloud" grey used across KDE Plasma) for titles and highlights, so the look is
+-- grey on grey with red only as an outline.
 RGXProf.Brand = {
     primary = { 0.545, 0.082, 0.220 },
-    accent  = { 0.929, 0.420, 0.522 },
+    accent  = { 0.741, 0.765, 0.780 },
 }
+
+local function Hex(c)
+    return string.format("|cff%02X%02X%02X", math.floor(c[1] * 255 + 0.5), math.floor(c[2] * 255 + 0.5), math.floor(c[3] * 255 + 0.5))
+end
+RGXProf.BrandHex = { primary = Hex(RGXProf.Brand.primary), accent = Hex(RGXProf.Brand.accent) }
+
+--- "RGX | Professions": RGX in the RGX red, a white pipe, the product name in white. In a WoW string a literal
+--- pipe is written "||" - a single "|" starts an escape, so "||r" would print a pipe and the letter r.
+function RGXProf.BrandTitle(name)
+    return RGXProf.BrandHex.primary .. "RGX|r |cffffffff||" .. "|r |cffffffff" .. (name or "Professions") .. "|r"
+end
 RGXProf.BRAND_STYLE = "materialround"
 
 --- Run a window/widget builder in RGXProfessions' theme: its own primary/accent in the framework's

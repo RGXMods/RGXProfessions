@@ -10,8 +10,8 @@ RGXProf.BookWindow = RGXProf.BookWindow or {}
 
 local Design = _G.RGXDesign
 
-local WINDOW_WIDTH = 720
-local WINDOW_HEIGHT = 470
+local WINDOW_WIDTH = 820   -- default: list column + a detail pane wide enough for the two-column cards
+local WINDOW_HEIGHT = 470  -- default and minimum auto height; the window grows to fit a taller page
 local LIST_WIDTH = 250
 local ROW_HEIGHT = 20
 local BANNER_HEIGHT = 22
@@ -23,8 +23,7 @@ local HEADER_HEIGHT = 60
 local BRAND_BORDER = RGXProf.Brand.primary
 local BRAND_RGB = BRAND_BORDER
 local BRAND_TEXT = RGXProf.Brand.accent
-local BRAND_TEXT_HEX = string.format("|cff%02X%02X%02X", math.floor(BRAND_TEXT[1] * 255 + 0.5),
-    math.floor(BRAND_TEXT[2] * 255 + 0.5), math.floor(BRAND_TEXT[3] * 255 + 0.5))
+local BRAND_TEXT_HEX = RGXProf.BrandHex.accent
 local HEADER_TEXT = { 0.922, 0.922, 0.941 }
 local INSET = 8                                  -- padding between a panel edge and its content
 local HEADER_GAP = 8                             -- breathing room under a card header title
@@ -105,6 +104,18 @@ local function AlignSection(section)
         label:SetPoint("LEFT", 6, 0)
     end
     return section
+end
+
+-- Right click is "back" everywhere in the book: profession page -> profession list.
+local function AttachBack(frame)
+    if frame and frame.HookScript then
+        frame:HookScript("OnMouseUp", function(_, button)
+            if button == "RightButton" and RGXProf.BookWindow and RGXProf.BookWindow.GoBack then
+                RGXProf.BookWindow:GoBack()
+            end
+        end)
+    end
+    return frame
 end
 
 local function IsKeep(step)
@@ -233,12 +244,8 @@ local function DiffColorHex(diffKey)
     return Text()
 end
 
--- Title in the RGX family style: "RGX" in the RGX red, a white pipe, then the product name with its
--- first letter in RGXProfessions' own coral (the two reds are deliberately different).
-local function BrandTitle(name)
-    name = name or "Professions"
-    return "|cff8B1538RGX|r |cffffffff||r |cffED6B85" .. name:sub(1, 1) .. "|r|cffffffff" .. name:sub(2) .. "|r"
-end
+-- Title in the RGX family style: "RGX | Professions" (see UI/Theme.lua for the escaping).
+local BrandTitle = RGXProf.BrandTitle
 local HEADER_TITLE = BrandTitle("Professions")
 
 -- Real in-game tooltip for a guide step: the crafted item when the step
@@ -378,6 +385,7 @@ local function BuildFrame(self)
     f:SetPoint("CENTER")
     f:SetMovable(true)
     f:EnableMouse(true)
+    AttachBack(f)
     f:RegisterForDrag("LeftButton")
     f:SetClampedToScreen(true)
     f:SetFrameStrata("HIGH")
@@ -693,6 +701,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
     detail.titleHover:SetPoint("TOPLEFT", detail.icon, "TOPLEFT", 0, 0)
     detail.titleHover:SetPoint("BOTTOMRIGHT", detail.title, "BOTTOMRIGHT", 0, 0)
     detail.titleHover:EnableMouse(true)
+    AttachBack(detail.titleHover)
     detail.titleHover:SetScript("OnEnter", function(s) ShowStepTooltip(s, detail._step) end)
     detail.titleHover:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
@@ -740,6 +749,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
             row:SetPoint("TOPRIGHT", detail.materials[i - 1], "BOTTOMRIGHT", 0, -3)
         end
         row:EnableMouse(true)
+        AttachBack(row)
         row.icon = row:CreateTexture(nil, "ARTWORK")
         row.icon:SetSize(16, 16)
         row.icon:SetPoint("TOPLEFT", 0, 0)
@@ -791,6 +801,7 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
     detail.locHit = CreateFrame("Button", nil, detail.locCard)
     detail.locHit:SetAllPoints(detail.locCard)
     detail.locHit:RegisterForClicks("LeftButtonUp")
+    AttachBack(detail.locHit)
     detail.locHit:SetScript("OnClick", function()
         if detail._pinTarget then RGXProf.BookWindow.PinTarget(detail._pinTarget) end
     end)
@@ -828,6 +839,8 @@ local UI = assert(_G.RGXUI, "RGXProf: RGXUI unavailable")
 
     f.matsBtn = NewButton(f, RGXProf.L.BTN_MATS_TO_MAX, footerW, 26)
     f.matsBtn:SetPoint("TOPRIGHT", f.stepPanel, "BOTTOMRIGHT", 0, -INSET)
+    AttachBack(f.backBtn)
+    AttachBack(f.matsBtn)
     -- Small font so longer translations ("Matériaux jusqu'au maximum") still fit the half width.
     for _, b in ipairs({ f.backBtn, f.matsBtn }) do
         if b.label and b.label.SetFontObject then b.label:SetFontObject("GameFontNormalSmall") end
@@ -901,6 +914,7 @@ local function GetRow(self, index)
     local content = self.frame.stepContent
     row = CreateFrame("Button", nil, content)
     row:SetHeight(ROW_HEIGHT)
+    AttachBack(row)
 
     -- Highlight layer. Row 1 sits on the panel's rounded top corners:
     -- nine-slice the same rounded panel texture (rounded top corners,
@@ -989,8 +1003,19 @@ local function RenderStepList(self)
         local rangeHex = (diff and DiffColorHex(diff)) or Label()
         row.range:SetText(string.format("%s%d - %d", rangeHex, step.minSkill, step.maxSkill))
 
+        -- Names carry the step's state: finished steps recede, the step you are on is bright, the rest
+        -- are normal. The range keeps the skill-up difficulty colour.
         local name = step.name or (RGXProf.L.RECIPE_PREFIX .. (step.spellID or i))
-        row.name:SetText(Text() .. name .. (step.alternate and (Dim() .. RGXProf.L.ALT_SUFFIX) or ""))
+        local nameHex
+        if skill and skill >= step.maxSkill then
+            nameHex = Dim()
+        elseif i == currentIdx then
+            nameHex = "|cffffffff"
+        else
+            nameHex = "|cffd8d8de"
+        end
+        row.name:SetText(nameHex .. name .. (step.alternate and (Dim() .. RGXProf.L.ALT_SUFFIX) or ""))
+        row._finished = skill and skill >= step.maxSkill or false
 
         if row._selected then
             RowHighlightSetColor(row, ar, ag, ab, HighlightAlpha())
@@ -1018,6 +1043,7 @@ local function RenderStepList(self)
     end
 
     f.stepContent:SetHeight(math.max(1, #path * ROW_HEIGHT))
+    self._listH = #path * ROW_HEIGHT + INSET * 2 + 6
 
     -- Scroll so the selected row stays visible.
     local viewH = f.stepScroll:GetHeight() or 1
@@ -1487,6 +1513,7 @@ LayoutDetail = function(self)
         bottom = bottom + GAP + notesH
     end
 
+    detail._contentH = bottom + 10
     canvas:SetHeight(math.max(bottom + 10, detail:GetHeight() or 0))
 end
 
@@ -1639,8 +1666,96 @@ function RGXProf.BookWindow:OpenProfession(professionID)
     self:Show()
 end
 
+-- Chrome around the guide content: header + progress strip above, footer buttons below, and the paddings.
+local CHROME_HEIGHT = HEADER_HEIGHT + 14 + (INSET + 4) + (12 + 26 + INSET)
+
+--- Window height for a guide page: the taller of the step list and the detail content plus the chrome,
+--- clamped to [minH, maxH]. Pure, so it is unit-tested.
+function RGXProf.BookWindow.FitHeight(contentH, chromeH, minH, maxH)
+    local h = math.ceil((tonumber(contentH) or 0) + (tonumber(chromeH) or 0))
+    if h < minH then h = minH end
+    if h > maxH then h = maxH end
+    return h
+end
+
+--- Grow the window to fit the page being shown, keeping its top edge where it is. It only grows while a
+--- profession is open (so stepping through pages does not make it jump up and down) and goes back to the
+--- default height on the profession list. A window the player has resized by hand is left alone.
+function RGXProf.BookWindow:FitWindow()
+    local f = self.frame
+    if not (f and f.guide and f.guide:IsShown() and f.detail) then return end
+    if f._sizing or RGXProf_Settings.bookSize then return end
+    local content = math.max((f.detail._contentH or 0) + 16, self._listH or 0)
+    local screen = (UIParent and UIParent.GetHeight and UIParent:GetHeight()) or 1000
+    local want = RGXProf.BookWindow.FitHeight(content, CHROME_HEIGHT, WINDOW_HEIGHT, math.min(MAX_HEIGHT, math.floor(screen * 0.9)))
+    local cur = f:GetHeight() or 0
+    if want <= cur + 1 then return end
+    local left, top = f:GetLeft(), f:GetTop()
+    f:SetHeight(want)
+    if left and top then
+        f:ClearAllPoints()
+        f:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+        RGXProf_Settings.bookPosition = { "TOPLEFT", "UIParent", "BOTTOMLEFT", left, top }
+    end
+end
+
+local function ResetAutoHeight(self)
+    local f = self.frame
+    if f and not RGXProf_Settings.bookSize and (f:GetHeight() or 0) ~= WINDOW_HEIGHT then
+        local left, top = f:GetLeft(), f:GetTop()
+        f:SetHeight(WINDOW_HEIGHT)
+        if left and top then
+            f:ClearAllPoints()
+            f:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+            RGXProf_Settings.bookPosition = { "TOPLEFT", "UIParent", "BOTTOMLEFT", left, top }
+        end
+    end
+end
+
+--- Right click: back from a profession page to the profession list.
+function RGXProf.BookWindow:GoBack()
+    if not (self.frame and self.frame:IsShown()) then return false end
+    if not self:GetCurrentProfession() then return false end
+    RGXProf_Settings.bookProfessionID = nil
+    self:Show()
+    return true
+end
+
+--- The profession whose window is open right now (nil when none, or the guide has no path for it). Quiet:
+--- unlike DataManager:GetProfession it never prints.
+function RGXProf.BookWindow:GetOpenProfessionID()
+    local manager = RGXProf.AdapterManager
+    local adapter = manager and manager.GetCurrent and manager:GetCurrent()
+    if not (adapter and adapter.getProfessionInfo) then return nil end
+    local ok, name = pcall(adapter.getProfessionInfo, adapter)
+    local id = ok and name and RGXProf.Constants.ProfessionNameToID[name]
+    if id and RGXProf.currentExpansion and RGXProf.currentExpansion.paths[id] then return id end
+    return nil
+end
+
+--- "Open to the current profession window" (on by default): when the book opens, or a profession window
+--- opens while it is up, show that profession's guide.
+function RGXProf.BookWindow:FollowProfessionWindow(force)
+    if RGXProf_Settings.followProfessionWindow == false then return false end
+    local id = self:GetOpenProfessionID()
+    if not id then return false end
+    if not force and self:GetCurrentProfession() == id then return true end
+    RGXProf_Settings.bookProfessionID = id
+    RGXProf_Settings.bookPage = FindCurrentIndex(RGXProf.currentExpansion.paths[id], (LiveSkill(id)))
+    return true
+end
+
+function RGXProf.BookWindow:OnProfessionWindowOpened()
+    if self.frame and self.frame:IsShown() and self:FollowProfessionWindow() then
+        self:Show()
+    end
+end
+
 function RGXProf.BookWindow:Show()
     self:EnsureFrame()
+    if not self.frame:IsShown() then
+        self:FollowProfessionWindow()
+    end
     if RGXProf_Settings.bookPosition then
         local pos = RGXProf_Settings.bookPosition
         pcall(function()
@@ -1662,7 +1777,9 @@ function RGXProf.BookWindow:Show()
         self.frame.matsBtn:Show()
         RenderStepList(self)
         RenderDetail(self)
+        self:FitWindow()
     else
+        ResetAutoHeight(self)
         self.frame.headerIcon:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\square.tga")
         self.frame.headerTitle:SetText(HEADER_TITLE)
         self.frame.progressLabel:SetText("")
@@ -1705,6 +1822,7 @@ function RGXProf.BookWindow:Refresh()
     end
     RenderStepList(self)
     RenderDetail(self)
+    self:FitWindow()
 end
 
 -- Re-render only the detail page (counts and to-max totals) after a bag change.

@@ -28,12 +28,15 @@ function RGXProf:CreateMinimapButton()
     RGXProf.minimapButton = MM:Create({
         name = "RGXProfessions_MinimapButton",
         icon = "Interface\\AddOns\\RGXProfessions\\Media\\RGXIcon.tga",
+        -- Blizzard Addons menu entry: a setting (Settings > RGX | Professions), on by default
+        compartment = RGXProf_Settings.addonMenu ~= false,
+        compartmentText = RGXProf.BrandTitle("Professions"),
         defaultAngle = 220,
         storage = RGXProf_Settings,
         angleKey = "minimapAngle",
         enabledKey = "minimapIconEnabled",
         tooltip = {
-            title = "|cff8B1538RGX|r Professions",
+            title = RGXProf.BrandTitle("Professions"),
             getLines = function()
                 local L = RGXProf.L
                 return {
@@ -54,7 +57,7 @@ function RGXProf:CreateMinimapButton()
         end,
         onCtrlRight = function()
             RGXProf.OptionsWindow:SetMinimapIcon(false)
-            print(RGXProf.L.CMD_ICON_HIDDEN)
+            RGXProf.Utils:SendMsg(RGXProf.L.CMD_ICON_HIDDEN)
         end,
     })
 

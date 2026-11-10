@@ -334,10 +334,10 @@ if c3 then
         "saved-in-range: size unchanged (got " .. c3.w .. "x" .. c3.h .. ")")
 end
 
--- 4. No saved size: the fixed defaults (720x470) pass the bounds check.
+-- 4. No saved size: the fixed defaults (820x470, the layout of the reference screenshot) pass the bounds check.
 local c4 = runCase(nil, "default-size")
 if c4 then
-    check(c4.w == 720 and c4.h == 470,
+    check(c4.w == 820 and c4.h == 470,
         "default-size: in-range default passes through unchanged")
 end
 
