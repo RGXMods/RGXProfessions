@@ -1,4 +1,4 @@
--- In-game notes must match the wowsod.pro guide: crafting steps there have no per-step notes, so
+-- In-game notes must match the guide data: crafting steps there have no per-step notes, so
 -- the addon must show none (the old keep = 0 flag made every step say "keep the crafted items"), and
 -- a gathering bracket shows its guide note exactly once.
 local function check(c, m) if not c then error("CHECK FAILED: " .. m, 2) end end

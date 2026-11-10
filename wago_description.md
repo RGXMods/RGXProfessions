@@ -10,7 +10,7 @@
 
 **RGX | Profession Leveling Guide** is the profession leveling guide for **WoW Forever**. Open the book, pick a profession, and see exactly what to craft or gather next, how many of it, what it takes, and where to get it.
 
-In game the addon shows up as *RGX | Professions*, built on the [RGX-Framework](https://github.com/RGXMods/RGX-Framework) RGX Material Round interface style in this addon's own colours. It is a rebrand and extension of PLG by LirameiRav, with current WoW Forever routes, reagents, notes, and tips.
+In game the addon shows up as *RGX | Professions*, built on the [RGX-Framework](https://github.com/RGXMods/RGX-Framework) RGX Material Round interface style in this addon's own colours. It is built in-house, with current WoW Forever routes, reagents, notes, and tips.
 
 **The Kiwi Says:** *"Open the book, follow the page, watch the bars fill. Bwwiiiee."*
 
@@ -54,10 +54,7 @@ Every user-visible string comes from the addon's own localization table, selecte
 
 ## Data And Credits
 
-- **PLG (Profession Leveling Guide)** by LirameiRav, updated from the original Retail version by Keg, is the addon this one grew from.
-- Classic-era vendor, trainer and quest data from [wow-professions.com](https://www.wow-professions.com).
-- WoW Forever routes, reagents, notes and tips from [WoWSoD Pro](https://wowsod.pro/wow-forever/professions/leveling).
-- Rebranded and extended by DonnieDice for [RealmGX](https://realmgx.com).
+- Built in-house by DonnieDice for [RealmGX](https://realmgx.com).
 
 ## Support the Project
 

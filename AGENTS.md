@@ -1,9 +1,8 @@
 # RGXProfessions
 
 RGX Professions is the WoW Forever (Classic beta, Interface 16001) profession
-leveling bible. It is a fork of PLG (Profession Leveling Guide) by LirameiRav
-(guides from wow-professions.com), rebranded into the RGX addon family with
-RGX-Framework integration and a new book-style UI.
+leveling bible. It is built in-house for the RGX addon family, with
+RGX-Framework integration and a book-style UI.
 
 ## Layout And Runtime
 
@@ -15,8 +14,8 @@ RGX-Framework integration and a new book-style UI.
   ADDON_LOADED wiring.
 - `UI/BookWindow.lua` is the book UI: profession button landing page plus
   next/previous page navigation through every step in a profession path.
-- `Data/` is the ported PLG data (Classic, Cata, Mists paths, recipes, NPCs);
-  keep it data-only. The expansion is auto-selected from the client build.
+- `Data/` holds the per-expansion guide data (Classic, Cata, Mists, Forever
+  paths, recipes, NPCs); keep it data-only. The expansion is auto-selected from the client build.
 - `Adapters/` integrate third-party trade windows (Skillet, TSM); preserve
   the adapter interface when touching `Core/DataManager.lua`.
 
@@ -28,8 +27,8 @@ RGX-Framework integration and a new book-style UI.
 - Guard client API differences the way `RegisterEventSafe` does: check
   `C_EventUtils.IsEventValid` and fall back safely. WoW Forever exposes a
   retail-like API surface, but not every event or script exists.
-- Preserve the PLG attribution in the TOC and README; the wow-professions.com
-  guides and PLG code are the upstream source.
+- The addon is built in-house. Do not add third-party addon or website
+  credits to the TOC, README or descriptions.
 - Keep `RGXProfessions.toc` and the addon version constant synchronized when
   changing versions.
 

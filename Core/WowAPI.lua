@@ -205,6 +205,10 @@ function RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
 	-- returns (name, rank, icon); recipe spells carry the product's icon.
 	if step.spellID then
 		icon = self:GetSpellIcon(step.spellID)
+		local productItem = RGXProf.Constants.ProductItemIcons and RGXProf.Constants.ProductItemIcons[step.spellID]
+		if productItem then
+			icon = self:GetItemIconInstant(productItem) or icon
+		end
 		if step.name then
 			link = string.format("|cff71d5ff|Hspell:%d|h[%s]|h|r", step.spellID, step.name)
 		end

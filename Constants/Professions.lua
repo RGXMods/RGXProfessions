@@ -3,14 +3,14 @@ RGXProf.Constants = RGXProf.Constants or {}
 
 RGXProf.Constants.Professions = {
     [164] = { name = "Blacksmithing", icon = 136241 },
-    [165] = { name = "Leatherworking", icon = 133611 },
+    [165] = { name = "Leatherworking", icon = 136247 },
     [171] = { name = "Alchemy", icon = 136240 },
     [185] = { name = "Cooking", icon = 133971 },
     [333] = { name = "Enchanting", icon = 136244 },
     [202] = { name = "Engineering", icon = 136243 },
     [129] = { name = "First Aid", icon = 135966 },
     [356] = { name = "Fishing", icon = 136245 },
-    [182] = { name = "Herbalism", icon = 136065 },
+    [182] = { name = "Herbalism", icon = 136246 },
     [773] = { name = "Inscription", icon = 237171 },
     [755] = { name = "Jewelcrafting", icon = 134071 },
     [186] = { name = "Mining", icon = 136248 },

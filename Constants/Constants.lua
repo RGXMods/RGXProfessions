@@ -11,6 +11,12 @@ RGXProf.Constants.Textures = {
     default = "Interface\\Icons\\INV_Misc_QuestionMark",
     preview =  "Interface\\Minimap\\UI-Minimap-ZoomInButton"
 }
+-- Recipes whose spell texture is wrong on a client: the icon comes from the
+-- product item instead (spellID -> item ID of the crafted product).
+-- Spell 7751 (Brilliant Smallfish) resolves to a rune texture on WoW Forever.
+RGXProf.Constants.ProductItemIcons = {
+    [7751] = 6290,
+}
 RGXProf.Constants.MAIN = 1
 RGXProf.Constants.ALTERNATE = 2
 

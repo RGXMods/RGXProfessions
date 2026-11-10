@@ -51,8 +51,7 @@ RGXProfessions is localized for all twelve WoW client locales: enUS (base), deDE
 
 ## Data
 
-All twelve professions carry the current Forever data. The eight crafting professions have full 1-300 routes with expected craft counts, skill-up colours and per-craft reagents; Fishing, Herbalism, Mining and Skinning have gathering brackets with Alliance and Horde zones. Re-run `tools/gen-forever-guides.py --fetch` to refresh it.
-
+All twelve professions carry the current Forever data. The eight crafting professions have full 1-300 routes with expected craft counts, skill-up colours and per-craft reagents; Fishing, Herbalism, Mining and Skinning have gathering brackets with Alliance and Horde zones.
 ## Support
 
 Part of the [RealmGX](https://realmgx.com) community project. Join us at discord.gg/N7kdKAHVVF.
@@ -63,10 +62,7 @@ Part of the [RealmGX](https://realmgx.com) community project. Join us at discord
 
 ## Credits
 
-- **PLG (Profession Leveling Guide)** by LirameiRav, updated from the original Retail version by Keg, is the addon this one grew from.
-- Classic-era vendor, trainer and quest data from wow-professions.com.
-- WoW Forever 1-300 routes, reagents, notes and tips from [WoWSoD Pro](https://wowsod.pro/wow-forever/professions/leveling) (Wowhead Forever data, final pre-launch skill-up colours).
-- Rebranded and extended by DonnieDice for RealmGX.
+- Built in-house by DonnieDice for RealmGX.
 
 ---
 

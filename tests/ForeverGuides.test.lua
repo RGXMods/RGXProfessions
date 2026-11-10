@@ -1,5 +1,5 @@
 -- Run: lua5.1 tests/ForeverGuides.test.lua   (from the repository root)
--- Invariants of the generated Forever guide data and the remaining-materials maths.
+-- Invariants of the Forever guide data and the remaining-materials maths.
 local function check(cond, msg) if not cond then error("CHECK FAILED: " .. msg, 2) end end
 
 RGXProf = {}
