@@ -1,3 +1,9 @@
+## v0.4.1 - 2026-11-09
+
+Requires **RGX-Framework 2.16.0 or later**.
+
+- "Recipe location" (the card that was "Where to get it") is translated in all twelve client languages.
+
 ## v0.4.0 - 2026-11-09
 
 Requires **RGX-Framework 2.16.0 or later**.
