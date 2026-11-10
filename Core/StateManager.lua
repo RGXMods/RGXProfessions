@@ -92,12 +92,8 @@ function RGXProf.StateManager:RequestRefresh(forceShow)
 
     if not self.RefreshPending then
         self.RefreshPending = true
-        local RGX = _G.RGXFramework
-        if RGX and type(RGX.After) == "function" then
-            RGX:After(0.2, function() self:PerformRefresh() end, "RGXProf_RequestRefresh")
-        else
-            C_Timer.After(0.2, function() self:PerformRefresh() end)
-        end
+        -- RGX-Framework is a required dependency: its budgeted, labelled timer is the only timer used.
+        _G.RGXFramework:After(0.2, function() self:PerformRefresh() end, "RGXProf_RequestRefresh")
     end
 end
 

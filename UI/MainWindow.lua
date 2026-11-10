@@ -75,12 +75,7 @@ function RGXProf.MainWindow:Render(state)
             frame:Show()
         end
     end
-    local RGX = _G.RGXFramework
-    if RGX and type(RGX.After) == "function" then
-        RGX:After(0.1, positionAndShow, "RGXProf_PositionWindow")
-    else
-        C_Timer.After(0.1, positionAndShow)
-    end
+    _G.RGXFramework:After(0.1, positionAndShow, "RGXProf_PositionWindow")
 
     ----------------------------------------------------------
     -- Render all the frames with their data

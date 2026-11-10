@@ -503,9 +503,9 @@ function W:Refresh()
     end
 
     -- Item names stream in from the server; re-render a few times until they have all arrived.
-    if missingNames and (self._nameRetries or 0) < 5 and C_Timer and C_Timer.After then
+    if missingNames and (self._nameRetries or 0) < 5 and _G.RGXFramework then
         self._nameRetries = (self._nameRetries or 0) + 1
-        if _G.RGXFramework then _G.RGXFramework:After(0.5, function() W:Refresh() end) end
+        _G.RGXFramework:After(0.5, function() W:Refresh() end)
     elseif not missingNames then
         self._nameRetries = 0
     end

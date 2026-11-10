@@ -131,4 +131,8 @@ RGXProf.minimapButton = {}
 RGXProf.OptionsWindow:SetAddonMenu(false)
 check(RGXProf_Settings.addonMenu == false, "an older framework without SetCompartmentVisible is tolerated")
 check(read("Core/Core.lua"):find("compartment = RGXProf_Settings.addonMenu ~= false", 1, true), "the button is created with the saved Addons-menu choice")
+-- 7. Shipped code uses only the framework's timers (RGX-Framework is a required dependency).
+for _, f in ipairs({ "Core/StateManager.lua", "UI/MainWindow.lua", "UI/MatsWindow.lua", "UI/BookWindow.lua", "Core/Events.lua", "Core/Core.lua" }) do
+  check(not read(f):find("C_Timer", 1, true), f .. " uses a raw C_Timer instead of RGX:After")
+end
 print("Navigation.test OK")
