@@ -4,16 +4,27 @@ local function check(c, m) if not c then error("CHECK FAILED: " .. m, 2) end end
 local function read(p) local f = assert(io.open(p)); local s = f:read("*a"); f:close(); return s end
 local book = read("UI/BookWindow.lua")
 
--- 1. Title: RGX (red) | (white pipe) P (coral) rofessions (white)
-local a = assert(book:find("local function BrandTitle", 1, true))
-local b = assert(book:find("local HEADER_TITLE", a, true))
-local BrandTitle = assert(loadstring(book:sub(a, b - 1) .. "\nreturn BrandTitle"))()
+-- 1. Title: RGX (red) | (white pipe) Professions (white). A literal pipe in a WoW string is "||": a single
+-- "|" starts an escape, so "||r" renders a pipe followed by the letter r (the bug this guards against).
+RGXProf = {}
+assert(loadfile("UI/Theme.lua"))()
+local BrandTitle = RGXProf.BrandTitle
+local function render(str)   -- what the client shows: colour codes and |r removed, "||" -> "|"
+  local out = str:gsub("||", "\0"):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):gsub("%z", "|")
+  return out
+end
 local t = BrandTitle("Professions")
-check(t:find("|cff8B1538RGX|r", 1, true), "RGX is in the RGX red")
-check(t:find("|cffffffff||r", 1, true), "the pipe is white (escaped)")
-check(t:find("|cffED6B85P|r", 1, true), "the P is RGXProfessions' own coral")
-check(t:find("|cffffffffrofessions|r", 1, true), "the rest is white")
-check(BrandTitle("Alchemy"):find("|cffED6B85A|r|cfffffffflchemy|r", 1, true), "profession pages use the same title style")
+check(t == "|cff8B1538RGX|r |cffffffff|||r |cffffffffProfessions|r", "title string: " .. t)
+check(render(t) == "RGX | Professions", "the title renders as 'RGX | Professions' (got '" .. render(t) .. "')")
+check(render(BrandTitle("Alchemy")) == "RGX | Alchemy", "profession pages use the same title")
+for _, f in ipairs({ "UI/BookWindow.lua", "UI/OptionsWindow.lua", "Core/Core.lua" }) do
+  local src = read(f)
+  check(not src:find("||r", 1, true), f .. " contains '||r' (a pipe followed by the letter r)")
+end
+local toc = read("RGXProfessions.toc")
+local tocTitle = toc:match("## Title: ([^\r\n]+)")
+check(render(tocTitle) == "RGX | Professions", "the TOC title renders as 'RGX | Professions' (got '" .. render(tocTitle) .. "')")
+check(RGXProf.Brand.accent[1] > 0.7 and math.abs(RGXProf.Brand.accent[1] - RGXProf.Brand.accent[3]) < 0.1, "the accent is a light grey, not pink")
 
 -- 2. Icons: Forever has no global GetSpellInfo, only C_Spell
 RGXProf = { WowAPI = {} }
@@ -70,7 +81,7 @@ end
 -- 6. Settings window + minimap switch persist and take effect
 local ow = read("UI/OptionsWindow.lua")
 local o1 = assert(ow:find("-- Show or hide the minimap button now", 1, true))
-local o2 = assert(ow:find("local function CreateToggle", o1, true))
+local o2 = assert(ow:find("-- Show or hide the Blizzard Addons menu entry", o1, true))
 RGXProf = { OptionsWindow = {}, L = {} }
 RGXProf_Settings = {}
 function RGXProf.OptionsWindow:SetSetting(k, v) RGXProf_Settings[k] = v end
@@ -84,18 +95,20 @@ check(RGXProf_Settings.minimapIconEnabled == true and created == 1 and RGXProf.m
 RGXProf.OptionsWindow:SetMinimapIcon(false)
 check(RGXProf.minimapButton.shown == false, "turning it off hides the existing button")
 check(book:find('f.gear = CreateFrame("Button"', 1, true) and book:find("RGXProf.OptionsWindow:Toggle()", 1, true), "the guide header has a gear that opens the settings window")
-for _, key in ipairs({ "OPT_MINIMAP", "OPT_AUTOOPEN", "OPT_SELECT" }) do check(ow:find("L." .. key, 1, true), "settings window offers " .. key) end
+for _, key in ipairs({ "OPT_MINIMAP", "OPT_ADDON_MENU", "OPT_FOLLOW", "OPT_AUTOOPEN", "OPT_SELECT", "OPT_CHAT", "OPT_LOGIN" }) do check(ow:find("\"" .. key .. "\"", 1, true), "the settings page offers " .. key) end
 check(cmd:find('command == "settings"', 1, true), "/prof settings opens it")
 
 -- 7. Materials popup lock: Escape closes it only while unlocked
 local mats = read("UI/MatsWindow.lua")
 local m1 = assert(mats:find("function W:SetLocked", 1, true))
 local m2 = assert(mats:find("function W:Place()", m1, true))
-RGXProf = { MatsWindow = {} }
+RGXProf = { MatsWindow = {}, Brand = { accent = { 0.741, 0.765, 0.780 } } }
 local W = RGXProf.MatsWindow
 RGXProf_Settings = {}
 UISpecialFrames = { "OtherFrame" }
-W.frame = { lock = { SetNormalTexture = function(_, tex) W._lockTex = tex end } }
+local tint
+W.frame = { lock = { SetNormalTexture = function(_, tex) W._lockTex = tex end,
+  SetVertexColor = function(_, r) tint = r end, SetAlpha = function() end } }
 assert(loadstring("local W = RGXProf.MatsWindow\n" .. mats:sub(m1, m2 - 1)))()
 W:SetLocked(false)
 local function has(n) for _, v in ipairs(UISpecialFrames) do if v == n then return true end end return false end
@@ -103,6 +116,7 @@ check(has("RGXProf_MatsWindow") and not W:IsLocked(), "unlocked: Escape closes t
 W:SetLocked(true)
 check(not has("RGXProf_MatsWindow") and W:IsLocked() and RGXProf_Settings.matsLocked == true, "locked: Escape no longer closes it, and the lock is remembered")
 check(W._lockTex:find("Locked-Up", 1, true) and not W._lockTex:find("Unlocked", 1, true), "the lock icon shows the locked state")
+check(tint == 0.741, "the locked icon is tinted with the light-grey accent")
 W:SetLocked(true)
 W:SetLocked(false)
 local _, registered = table.concat(UISpecialFrames, ","):gsub("RGXProf_MatsWindow", "")

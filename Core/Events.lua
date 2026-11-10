@@ -60,6 +60,12 @@ RGXProf.Events = {
         if RGXProf.MatsWindow and RGXProf.MatsWindow.Refresh then RGXProf.MatsWindow:Refresh() end
         RGXProf.StateManager:RequestRefresh()
     end,
+    PLAYER_LOGIN = function(self)
+        local settings = RGXProf_Settings or {}
+        if settings.loginMessage ~= false then
+            RGXProf.Utils:SendMsg(RGXProf.L.LOGIN_MESSAGE)
+        end
+    end,
     ADDON_LOADED = function(self, event, addonName)
         if RGXProf.AdapterFactories[addonName] then RGXProf.AdapterManager:RegisterAsLoaded(addonName) end
 
@@ -74,6 +80,17 @@ RGXProf.Events = {
             end
             if RGXProf_Settings.minimapIconEnabled == nil then
                 RGXProf_Settings.minimapIconEnabled = true
+            end
+            -- New in 0.4.0, all on by default: open the book to the profession window that is open, list the
+            -- addon in the Blizzard Addons menu, and print a loaded line at login.
+            if RGXProf_Settings.followProfessionWindow == nil then
+                RGXProf_Settings.followProfessionWindow = true
+            end
+            if RGXProf_Settings.addonMenu == nil then
+                RGXProf_Settings.addonMenu = true
+            end
+            if RGXProf_Settings.loginMessage == nil then
+                RGXProf_Settings.loginMessage = true
             end
             RGXProf_Settings.minimapAngle = RGXProf_Settings.minimapAngle or 220
 
@@ -129,6 +146,11 @@ function RGXProf:TRADE_SHOW(event, forceShow)
     -- A real profession window takes over from manual guide mode
     if RGXProf.StateManager and RGXProf.StateManager.ClearManualProfession then
         RGXProf.StateManager:ClearManualProfession()
+    end
+
+    -- With the book open, switch it to the profession that just opened (setting: follow the window).
+    if RGXProf.BookWindow and RGXProf.BookWindow.OnProfessionWindowOpened then
+        RGXProf.BookWindow:OnProfessionWindowOpened()
     end
 
     if not forceShow and not self.Settings.autoOpen then return end

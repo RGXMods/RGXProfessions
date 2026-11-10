@@ -4,8 +4,17 @@ RGXProf.Utils = RGXProf.Utils or {}
 function RGXProf.Utils:SendMsg(text)
 	local settings = RGXProf.Settings or RGXProf_Settings or {}
 	if settings.chatOutput == false then return end
+	-- the prefix is added here: drop a "[RGXProf]" tag the message string may still carry
+	text = tostring(text):gsub("^|c%x%x%x%x%x%x%x%x%[RGXProf%]|r%s*", ""):gsub("^%[RGXProf%]%s*", "")
 	local prefix = settings.chatPrefix
-	if type(prefix) ~= "string" or prefix == "" then prefix = "RGX Professions" end
+	if type(prefix) ~= "string" or prefix == "" or prefix == "RGX Professions" then
+		-- the default prefix is the branded title; a prefix the player typed is used as written
+		if RGXProf.BrandTitle then
+			print(RGXProf.BrandTitle("Professions") .. ": " .. tostring(text))
+			return
+		end
+		prefix = "RGX Professions"
+	end
 	print(RGXProf.Constants.Colors.Hex.BLUE..prefix..":|r "..tostring(text))
 end
 

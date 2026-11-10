@@ -47,7 +47,7 @@ check(src:find('local function Instruct() return "|cffffd100" end', 1, true), "i
 -- 5. Everything is built through the framework style, in the addon's theme.
 check(src:find("RGXProf.Themed(function() BuildFrame(self) end)", 1, true), "the guide is built inside RGXProf.Themed")
 check(read("UI/MatsWindow.lua"):find("RGXProf.Themed(function() BuildWindow(self) end)", 1, true), "the Materials overlay is built inside RGXProf.Themed")
-check(read("UI/OptionsWindow.lua"):find("RGXProf.Themed(function() return BuildSettings(self) end)", 1, true), "the settings window is built inside RGXProf.Themed")
+check(read("UI/OptionsWindow.lua"):find("theme = { primary = RGXProf.Brand.primary, accent = RGXProf.Brand.accent }", 1, true), "the settings page is themed with the addon brand pair")
 check(read("UI/LayoutManager.lua"):find("return RGXProf.Themed(function()", 1, true), "the old layout windows are built inside RGXProf.Themed")
 check(not src:find("SetPanelColor", 1, true), "no hand-painted panel colours in the guide")
 print("BrandColor.test OK")

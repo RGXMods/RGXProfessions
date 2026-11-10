@@ -1,3 +1,16 @@
+## v0.4.0 - 2026-11-09
+
+Requires **RGX-Framework 2.16.0 or later**.
+
+- The title reads "RGX | Professions" everywhere (guide, settings, chat prefix, Addons menu); the pipe no longer prints a stray "r".
+- Grey on grey: titles and highlights use a light grey instead of pink, and the red stays as the outline.
+- Right click goes back: from a profession page to the profession list.
+- The guide opens to the profession whose window is open (setting "Open to the profession window", on by default), and switches when a profession window opens while the guide is up.
+- The window opens at 820x470 and grows to fit a taller page, keeping its top edge in place; a window you resize yourself is left alone.
+- Step list: finished steps are dimmed, the step you are on is bright, and each range keeps its skill-up colour.
+- "Where to get it" is now "Recipe location".
+- Settings page: new "Minimap and Addons menu" card (minimap icon and a switch for the Addons menu entry), a "Guide" card, and a chat option to turn the loaded message at login off. Chat messages use the branded prefix unless you set your own.
+
 ## v0.3.4 - 2026-11-09
 
 Requires **RGX-Framework 2.15.2 or later**.

@@ -90,7 +90,8 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
 
     local panel = UI:CreateOptionsPanel({
         addonName = "RGXProfessions",
-        title = "RGX | Professions",
+        title = RGXProf.BrandTitle("Professions"),
+        sidebarTitle = RGXProf.BrandTitle("Professions"),
         subtitle = L("SETTINGS_TITLE", "RGX Professions Settings"),
         icon = "Interface\\AddOns\\RGX-Framework\\media\\square.tga",
         theme = { primary = RGXProf.Brand.primary, accent = RGXProf.Brand.accent },
@@ -102,21 +103,33 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
             {
                 text = L("SETTINGS", "Settings"),
                 content = function(frame)
-                    local behaviour = Card(frame, L("SETTINGS_TITLE", "RGX Professions Settings"))
-                    Text(behaviour, L("OPT_MINIMAP_DESC", "The RGX Professions button on your minimap."))
-                    Toggle(behaviour, L("OPT_MINIMAP", "Show the minimap icon"), "minimapIconEnabled",
+                    local minimap = Card(frame, L("OPT_MINIMAP_HEADER", "Minimap and Addons menu"))
+                    Text(minimap, L("OPT_MINIMAP_DESC", "The RGX Professions button on your minimap."))
+                    Toggle(minimap, L("OPT_MINIMAP", "Show the minimap icon"), "minimapIconEnabled",
                         settings.minimapIconEnabled ~= false,
                         function(v) self_:SetMinimapIcon(v) end)
-                    Toggle(behaviour, L("OPT_AUTOOPEN", "Open the guide with a profession window"), "autoOpen",
+                    Text(minimap, L("OPT_ADDON_MENU_DESC", "Adds RGX | Professions to the Addons menu on the minimap."))
+                    Toggle(minimap, L("OPT_ADDON_MENU", "List in the Addons menu"), "addonMenu",
+                        settings.addonMenu ~= false,
+                        function(v) self_:SetAddonMenu(v) end)
+                    minimap:AutoHeight()
+
+                    local guide = Card(frame, L("OPT_GUIDE_HEADER", "Guide"))
+                    Text(guide, L("OPT_FOLLOW_DESC", "When a profession window is open, the guide opens to that profession."))
+                    Toggle(guide, L("OPT_FOLLOW", "Open to the profession window"), "followProfessionWindow",
+                        settings.followProfessionWindow ~= false)
+                    Toggle(guide, L("OPT_AUTOOPEN", "Open the guide with a profession window"), "autoOpen",
                         settings.autoOpen == true)
-                    Toggle(behaviour, L("OPT_SELECT", "Click guide recipes to select them"), "selectRecipesInProfessionWindow",
+                    Toggle(guide, L("OPT_SELECT", "Click guide recipes to select them"), "selectRecipesInProfessionWindow",
                         settings.selectRecipesInProfessionWindow ~= false)
-                    behaviour:AutoHeight()
+                    guide:AutoHeight()
 
                     local chat = Card(frame, L("OPT_CHAT_HEADER", "Chat"))
                     Text(chat, L("OPT_CHAT_DESC", "Guide messages print to your chat frame with this prefix."))
                     Toggle(chat, L("OPT_CHAT", "Print guide messages to chat"), "chatOutput",
                         settings.chatOutput ~= false)
+                    Toggle(chat, L("OPT_LOGIN", "Print a loaded message at login"), "loginMessage",
+                        settings.loginMessage ~= false)
                     UI:CreateTextInput(chat.content, {
                         label = L("OPT_CHAT_PREFIX", "Chat prefix"),
                         storage = settingsRef,
@@ -133,6 +146,19 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
 
     self.panel = panel
     return panel
+end
+
+-- Show or hide the Blizzard Addons menu entry. Needs framework 2.16 (SetCompartmentVisible); on a client
+-- that cannot remove an entry the choice applies after the next reload, and the player is told.
+function RGXProf.OptionsWindow:SetAddonMenu(show)
+    show = show and true or false
+    self:SetSetting("addonMenu", show)
+    local button = RGXProf.minimapButton
+    if button and button.SetCompartmentVisible then
+        if button:SetCompartmentVisible(show) == false then
+            RGXProf.Utils:SendMsg(RGXProf.L.OPT_ADDON_MENU_RELOAD)
+        end
+    end
 end
 
 -- The gear in the guide header, /prof settings and the minimap menu all land
