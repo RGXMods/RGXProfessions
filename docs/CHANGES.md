@@ -1,4 +1,6 @@
-## Unreleased
+## v0.4.3 - 2026-11-11
+
+Requires **RGX-Framework 2.16.0 or later**.
 
 - Recipe icons use the crafted item for all 92 item-producing spells in the Forever guides, including Light Armor Kit and the Forever-only recipes. Enchants retain their spell icons.
 - Item-only steps no longer mistake an item class ID for an icon when the icon is unavailable.
