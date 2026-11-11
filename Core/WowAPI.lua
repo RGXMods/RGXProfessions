@@ -202,7 +202,8 @@ function RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
 	-- Spell first: the step name describes the recipe and its spellID is the
 	-- reliable identifier (path data itemIDs were mis-mapped upstream, e.g.
 	-- Woolen Cape carried the Reinforced Linen Cape itemID). GetSpellInfo
-	-- returns (name, rank, icon); recipe spells carry the product's icon.
+	-- returns (name, rank, icon). Known products override that spell texture,
+	-- which can be incorrect even when the spell ID and recipe name are right.
 	if step.spellID then
 		icon = self:GetSpellIcon(step.spellID)
 		local productItem = RGXProf.Constants.ProductItemIcons and RGXProf.Constants.ProductItemIcons[step.spellID]
@@ -216,37 +217,9 @@ function RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
 
 	-- Item fallback, for steps that only carry an itemID.
 	if (not icon or not link) and step.itemID then
-		-- GetItemInfoInstant returns immediately (no cache wait).
-		-- Classic shape: itemID, itemType, itemSubType, equipLoc, icon, ...
-		if C_Item and C_Item.GetItemInfoInstant then
-			local ok, r1, r2, r3, r4, r5, r6 = pcall(C_Item.GetItemInfoInstant, step.itemID)
-			if ok then
-				if not link then
-					for _, v in ipairs({ r1, r2, r3, r4 }) do
-						if type(v) == "string" and v:find("item:") then
-							link = v
-							break
-						end
-					end
-				end
-				if not icon then
-					for _, v in ipairs({ r5, r4, r6 }) do
-						if type(v) == "number" then
-							icon = v
-							break
-						end
-					end
-				end
-			end
-		end
-
-		if not icon then
-			if C_Item and C_Item.GetItemIconByID then
-				icon = C_Item.GetItemIconByID(step.itemID)
-			elseif GetItemIcon then
-				icon = GetItemIcon(step.itemID)
-			end
-		end
+		-- Use the same exact-signature lookup as products and reagents. The
+		-- sixth GetItemInfoInstant return is a class ID, never an icon.
+		icon = icon or self:GetItemIconInstant(step.itemID)
 	end
 
 	return {
