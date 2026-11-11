@@ -257,7 +257,6 @@ local function BuildSlotLayouts(name, titleText)
             {
                 kind = "Button",
                 name = base .. "_Button", debug = true,
-                texture = RGXProf.Constants.Textures.default,
                 width = RGXProf.Layouts.Defaults.icon.width,
                 height = RGXProf.Layouts.Defaults.icon.height,
                 tooltipIntent = "RecipeTooltip",
