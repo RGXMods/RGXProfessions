@@ -22,9 +22,10 @@ end
 RGXProf.BrandHex = { primary = Hex(RGXProf.Brand.primary), accent = Hex(RGXProf.Brand.accent) }
 
 --- "RGX | Professions": RGX in the RGX red, a white pipe, the product name in white. In a WoW string a literal
---- pipe is written "||" - a single "|" starts an escape, so "||r" would print a pipe and the letter r.
+--- pipe is written "||" - a single "|" starts an escape. The pipe pair is followed by a space and the name, never
+--- by a colour reset, so no "|r" sits against the pipes (that sequence showed "|r" in the header titles).
 function RGXProf.BrandTitle(name)
-    return RGXProf.BrandHex.primary .. "RGX|r |cffffffff||" .. "|r |cffffffff" .. (name or "Professions") .. "|r"
+    return RGXProf.BrandHex.primary .. "RGX|r |cffffffff|| " .. (name or "Professions") .. "|r"
 end
 RGXProf.BRAND_STYLE = "materialround"
 

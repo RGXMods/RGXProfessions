@@ -14,7 +14,8 @@ local function render(str)   -- what the client shows: colour codes and |r remov
   return out
 end
 local t = BrandTitle("Professions")
-check(t == "|cff8B1538RGX|r |cffffffff|||r |cffffffffProfessions|r", "title string: " .. t)
+check(t == "|cff8B1538RGX|r |cffffffff|| Professions|r", "title string: " .. t)
+check(not t:find("|||", 1, true), "no pipe pair is followed by an escape: " .. t)
 check(render(t) == "RGX | Professions", "the title renders as 'RGX | Professions' (got '" .. render(t) .. "')")
 check(render(BrandTitle("Alchemy")) == "RGX | Alchemy", "profession pages use the same title")
 for _, f in ipairs({ "UI/BookWindow.lua", "UI/OptionsWindow.lua", "Core/Core.lua" }) do
