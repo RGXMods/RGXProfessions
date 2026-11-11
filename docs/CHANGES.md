@@ -1,3 +1,12 @@
+## v0.4.2 - 2026-11-10
+
+Requires **RGX-Framework 2.16.0 or later**.
+
+- Leatherworking and Herbalism show their own profession icons.
+- The Brilliant Smallfish recipe shows the fish instead of a rune.
+- Recipe slots no longer show a question-mark placeholder.
+- Removed third-party credits and source references; the addon is built in-house.
+
 ## v0.4.1 - 2026-11-09
 
 Requires **RGX-Framework 2.16.0 or later**.
