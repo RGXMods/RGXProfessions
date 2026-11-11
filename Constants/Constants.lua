@@ -11,11 +11,107 @@ RGXProf.Constants.Textures = {
     default = "Interface\\Icons\\INV_Misc_QuestionMark",
     preview =  "Interface\\Minimap\\UI-Minimap-ZoomInButton"
 }
--- Recipes whose spell texture is wrong on a client: the icon comes from the
--- product item instead (spellID -> item ID of the crafted product).
--- Spell 7751 (Brilliant Smallfish) resolves to a rune texture on WoW Forever.
+-- Verified outputs of the recipes used by the Forever routes
+-- (spellID -> crafted item ID). Prefer the product for every item-producing
+-- recipe, not a growing list of individual wrong-spell-texture exceptions.
+-- Product associations: Forever 1.60.1.70888 SpellEffect, rows with Effect=24
+-- and EffectItemType > 0, retrieved 2026-11-11 from
+-- https://wago.tools/db2/SpellEffect/csv?build=1.60.1.70888 .
+-- All 92 item-producing spells in the shipped routes are covered. Enchants
+-- have no product; unknown future spells retain the ordinary spell fallback.
 RGXProf.Constants.ProductItemIcons = {
-    [7751] = 6290,
+    [2152] = 2304, -- Light Armor Kit
+    [2402] = 2584, -- Woolen Cape
+    [2660] = 2862, -- Rough Sharpening Stone
+    [2668] = 2865, -- Rough Bronze Leggings
+    [2672] = 2868, -- Patterned Bronze Bracers
+    [2963] = 2996, -- Bolt of Linen Cloth
+    [3171] = 3383, -- Elixir of Wisdom
+    [3173] = 3385, -- Lesser Mana Potion
+    [3275] = 1251, -- Linen Bandage
+    [3276] = 2581, -- Heavy Linen Bandage
+    [3277] = 3530, -- Wool Bandage
+    [3278] = 3531, -- Heavy Wool Bandage
+    [3320] = 3470, -- Rough Grinding Stone
+    [3337] = 3486, -- Heavy Grinding Stone
+    [3452] = 3827, -- Mana Potion
+    [3501] = 3835, -- Green Iron Bracers
+    [3756] = 4239, -- Embossed Leather Gloves
+    [3763] = 4246, -- Fine Leather Belt
+    [3768] = 4251, -- Hillman's Shoulders
+    [3780] = 4265, -- Heavy Armor Kit
+    [3818] = 4236, -- Cured Heavy Hide
+    [3839] = 4305, -- Bolt of Silk Cloth
+    [3865] = 4339, -- Bolt of Mageweave
+    [3869] = 4332, -- Bright Yellow Shirt
+    [3871] = 4334, -- Formal White Shirt
+    [3918] = 4357, -- Rough Blasting Powder
+    [3923] = 4360, -- Rough Copper Bomb
+    [3929] = 4364, -- Coarse Blasting Powder
+    [3945] = 4377, -- Heavy Blasting Powder
+    [3953] = 4382, -- Bronze Framework
+    [3967] = 4394, -- Big Iron Bomb
+    [3973] = 4404, -- Silver Contact
+    [7151] = 5964, -- Barbaric Shoulders
+    [7156] = 5966, -- Guardian Gloves
+    [7183] = 5997, -- Elixir of Minor Defense
+    [7223] = 6040, -- Golden Scale Bracers
+    [7421] = 6218, -- Runed Copper Rod
+    [7751] = 6290, -- Brilliant Smallfish
+    [7753] = 4592, -- Longjaw Mud Snapper
+    [7928] = 6450, -- Silk Bandage
+    [7929] = 6451, -- Heavy Silk Bandage
+    [8760] = 7048, -- Azure Silk Hood
+    [8776] = 7026, -- Linen Belt
+    [8786] = 7053, -- Azure Silk Cloak
+    [8791] = 7058, -- Crimson Silk Vest
+    [9918] = 7964, -- Solid Sharpening Stone
+    [9928] = 7919, -- Heavy Mithril Gauntlet
+    [9959] = 7930, -- Heavy Mithril Breastplate
+    [9968] = 7933, -- Heavy Mithril Boots
+    [10487] = 8173, -- Thick Armor Kit
+    [10529] = 8210, -- Wild Leather Shoulders
+    [10546] = 8214, -- Wild Leather Helmet
+    [10572] = 8212, -- Wild Leather Leggings
+    [10840] = 8544, -- Mageweave Bandage
+    [10841] = 8545, -- Heavy Mageweave Bandage
+    [11450] = 8951, -- Elixir of Defense (Greater Defense in Classic)
+    [11460] = 9154, -- Draught of Detect Undead
+    [11478] = 9233, -- Draught of Detect Demon
+    [12048] = 9998, -- Black Mageweave Vest
+    [12065] = 10050, -- Mageweave Bag
+    [12585] = 10505, -- Solid Blasting Powder
+    [12591] = 10560, -- Unstable Trigger
+    [12596] = 10512, -- Hi-Impact Mithril Slugs
+    [12621] = 10513, -- Mithril Gyro-Shot
+    [14293] = 11287, -- Lesser Magic Wand
+    [15853] = 12209, -- Lean Wolf Steak
+    [16640] = 12643, -- Dense Weightstone
+    [16657] = 12426, -- Imperial Plate Boots
+    [18238] = 6887, -- Spotted Yellowtail
+    [18244] = 13932, -- Poached Sunscale Salmon
+    [18401] = 14048, -- Bolt of Runecloth
+    [18402] = 13856, -- Runecloth Belt
+    [18417] = 13863, -- Runecloth Gloves
+    [18423] = 13864, -- Runecloth Boots
+    [18629] = 14529, -- Runecloth Bandage
+    [19058] = 15564, -- Rugged Armor Kit
+    [19795] = 16000, -- Thorium Tube
+    [20916] = 8364, -- Mithril Headed Trout
+    [22902] = 18486, -- Mooncloth Robe
+    [24366] = 20002, -- Greater Dreamless Sleep Potion
+    [25127] = 20747, -- Lesser Mana Oil
+    [1252301] = 250552, -- Sentinel's Gloves
+    [1252335] = 250586, -- Blessed Plate Pauldrons
+    [1252339] = 250590, -- Blessed Plate Bracers
+    [1252341] = 250592, -- Blessed Plate Belt
+    [1255019] = 252559, -- Blue Suede Bracers
+    [1255026] = 252554, -- Blue Suede Shoulders
+    [1255039] = 252548, -- Skulker's Leather Gauntlets
+    [1255041] = 252546, -- Blue Suede Gloves
+    [1257491] = 254131, -- Earthenweave Cuffs
+    [1257494] = 254137, -- Earthenweave Crown
+    [1319163] = 21717, -- Large Purple Rocket Cluster
 }
 RGXProf.Constants.MAIN = 1
 RGXProf.Constants.ALTERNATE = 2
