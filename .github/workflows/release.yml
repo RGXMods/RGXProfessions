@@ -157,7 +157,7 @@ jobs:
           case "$channel" in
             beta)  colour=16744448; label="Beta Build" ;;
             alpha) colour=9109504;  label="Alpha Build" ;;
-            *)     colour=35071;    label="Stable Release" ;;
+            *)     colour=385018;   label="Stable Release" ;;
           esac
 
           url="https://github.com/${REPO}/releases/tag/${{ github.ref_name }}"
@@ -169,8 +169,9 @@ jobs:
             --arg summary "$SUMMARY" \
             --arg footer "RGX Mods • ${label}" \
             --arg timestamp "$TIMESTAMP" \
+            --arg logo "https://raw.githubusercontent.com/RGXMods/RGX-Framework/main/media/logo.png" \
             --argjson colour "$colour" \
-            '{username: "RGX Releases",
+            '{username: "RGX Releases", avatar_url: $logo,
               embeds: [{title: $title, url: $url, description: $description,
                         color: $colour,
                         fields: [{name: "What''s New", value: ($summary // "See the release page."), inline: false}],
