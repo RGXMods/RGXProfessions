@@ -96,7 +96,9 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
         icon = "Interface\\AddOns\\RGX-Framework\\media\\square.tga",
         theme = { primary = RGXProf.Brand.primary, accent = RGXProf.Brand.accent },
         version = "v" .. tostring(GetMeta("Version") or ""):gsub("^v+", ""),
-        author = "RealmGX",
+        author = "DonnieDice",
+        brand = "|cff8b4b5cRGX|r |cffffd700Mods|r",
+        style = RGXProf.BRAND_STYLE,
         width = 820,
         height = 640,
         tabs = {

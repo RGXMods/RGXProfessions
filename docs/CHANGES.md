@@ -1,3 +1,10 @@
+## v0.4.4 - 2026-11-11
+
+Requires **RGX-Framework 2.17.7 or later**.
+
+- The window header titles no longer show a stray `|r` before "Professions" or the profession name.
+- The options panel is built in the RGX Material Round style, with "RGX Mods" and "by DonnieDice" in its header like the other RGX addons.
+
 ## v0.4.3 - 2026-11-11
 
 Requires **RGX-Framework 2.16.0 or later**.
