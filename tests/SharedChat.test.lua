@@ -42,3 +42,9 @@ check(RGXProf.ActiveStyle() == "materialround", "theme switched off: back to the
 _G.RGXFrameworkDB = { style = "bogus" }
 check(RGXProf.ActiveStyle() == "materialround", "an unknown saved style is ignored")
 io.write("ActiveStyle OK\n")
+
+-- The options page reads RGXProf.L as a table: it must not call it.
+local src = assert(io.open("UI/OptionsWindow.lua")):read("*a")
+assert(src:find("local function L(key, default) return strings[key] or default end", 1, true), "options read strings through a table lookup helper")
+assert(not src:find("local L = RGXProf.L", 1, true), "RGXProf.L is a table and is not called directly")
+io.write("OptionsStrings OK\n")

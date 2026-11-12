@@ -41,7 +41,9 @@ end
 function RGXProf.OptionsWindow:CreateOptionsPanel()
 
     local UI = _G.RGXUI
-    local L = RGXProf.L
+    -- RGXProf.L is a table of strings, not a function: read a key, with the English text as the fallback.
+    local strings = RGXProf.L or {}
+    local function L(key, default) return strings[key] or default end
     if not (UI and UI.CreateOptionsPanel) then
         return nil
     end

@@ -2,6 +2,7 @@
 
 Requires **RGX-Framework 2.17.0 or later**.
 
+- Fixed the options page failing to build at login ("attempt to call a nil value" in OptionsWindow.lua): it called the strings table as a function.
 - The interface style follows the choice made on the RGX-Framework settings page (Theme tab) while "Apply the framework theme to addons" is on; the addon's colours stay its own in every style. Otherwise it keeps RGX Material Round.
 - Chat messages use the framework's shared chat voice ("icon - [Professions] message"), following the chat output, login message and chat prefix settings.
 - The options page opens with the framework's shared General card (minimap button, Addons menu, chat output, login message, chat prefix), the same as the other RGX addons.
