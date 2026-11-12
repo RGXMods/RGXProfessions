@@ -48,3 +48,13 @@ local src = assert(io.open("UI/OptionsWindow.lua")):read("*a")
 assert(src:find("local function L(key, default) return strings[key] or default end", 1, true), "options read strings through a table lookup helper")
 assert(not src:find("local L = RGXProf.L", 1, true), "RGXProf.L is a table and is not called directly")
 io.write("OptionsStrings OK\n")
+
+-- Options: a header switch per card, tick boxes inside, and the book follows the window.
+local ow = assert(io.open("UI/OptionsWindow.lua")):read("*a")
+assert(not ow:find("UI:CreateSwitch", 1, true), "no switches inside cards")
+assert(select(2, ow:gsub("Tick%(", "")) >= 7 and ow:find('"chatOutput"', 1, true) and ow:find('"minimapIconEnabled"', 1, true) and ow:find('"followProfessionWindow"', 1, true), "three cards, header switches, tick boxes")
+local ev = assert(io.open("Core/Events.lua")):read("*a")
+assert(ev:find("bookAutoOpen", 1, true) and ev:find("bookAutoClose", 1, true), "the book can open and close with the profession window")
+local sm = assert(io.open("Core/StateManager.lua")):read("*a")
+assert(sm:find("bookOpen", 1, true) and sm:find("RefreshLegacy", 1, true), "the book refreshes on its own, without the trade-window guide built")
+io.write("Options standard OK\n")

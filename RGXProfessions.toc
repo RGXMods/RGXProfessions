@@ -6,7 +6,7 @@
 ## X-Discord: discord.gg/N7kdKAHVVF
 ## Category: RealmGX
 ## Group: RealmGX
-## Version: v0.4.5
+## Version: v0.4.6
 ## RequiredDeps: RGX-Framework
 ## X-RGX-Framework-MinVersion: 2.17.7
 ## SavedVariables: RGXProf_Settings, RGXProf_SimResults
