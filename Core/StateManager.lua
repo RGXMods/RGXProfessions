@@ -77,29 +77,44 @@ end
 -- Public API Entry: Request Refresh (debounced)
 -------------------------------------------------------
 function RGXProf.StateManager:RequestRefresh(forceShow)
-    if not RGXProf.MainWindow or not RGXProf.MainWindow.initializedUI then return end
+    local mainWindow = RGXProf.MainWindow
+    local legacyReady = mainWindow and mainWindow.initializedUI
 
+    -- The trade-window guide only refreshes while a profession window (or a manual guide) is up.
     local adapter = RGXProf.AdapterManager:GetCurrent()
-    if not self.manualProfessionObject and (not adapter or not adapter:isShown()) then
-        self.CurrentState = nil
-        return
-    end
+    local windowOpen = self.manualProfessionObject or (adapter and adapter:isShown())
+    if not windowOpen then self.CurrentState = nil end
 
-    local backFrame = RGXProf.MainWindow.UIElements and RGXProf.MainWindow.UIElements.backFrame
-    if not forceShow and RGXProf.Settings and not RGXProf.Settings.autoOpen and (not backFrame or not backFrame:IsShown()) then
-        return
-    end
+    local backFrame = legacyReady and mainWindow.UIElements and mainWindow.UIElements.backFrame
+    local legacyWanted = legacyReady and windowOpen
+        and (forceShow or not RGXProf.Settings or RGXProf.Settings.autoOpen or (backFrame and backFrame:IsShown()))
+
+    -- The book tracks the live skill on its own: it refreshes whenever it is open, with or without a
+    -- profession window and whether or not the trade-window guide has ever been built.
+    local book = RGXProf.BookWindow
+    local bookOpen = book and book.frame and book.frame:IsShown()
+
+    if not legacyWanted and not bookOpen then return end
 
     if not self.RefreshPending then
         self.RefreshPending = true
+        self.RefreshLegacy = legacyWanted and true or false
         -- RGX-Framework is a required dependency: its budgeted, labelled timer is the only timer used.
         _G.RGXFramework:After(0.2, function() self:PerformRefresh() end, "RGXProf_RequestRefresh")
+    elseif legacyWanted then
+        self.RefreshLegacy = true
     end
 end
 
 function RGXProf.StateManager:PerformRefresh()
     self.RefreshPending = false
-    self:RefreshState()
+    -- RefreshState renders the trade-window guide; run it only when that guide is wanted and built.
+    local legacy = self.RefreshLegacy
+    self.RefreshLegacy = nil
+    if legacy == nil then legacy = true end   -- called directly (manual guide): the guide is wanted
+    if legacy and RGXProf.MainWindow and RGXProf.MainWindow.initializedUI then
+        self:RefreshState()
+    end
     -- Live book: the professions book re-renders (and auto-advances the
     -- page) on every debounced refresh while it is open. Hooked here,
     -- not RefreshState, so it still runs when no trade window is open.

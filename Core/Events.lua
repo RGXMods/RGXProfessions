@@ -63,7 +63,7 @@ RGXProf.Events = {
     PLAYER_LOGIN = function(self)
         local settings = RGXProf_Settings or {}
         if settings.loginMessage ~= false then
-            RGXProf.Utils:SendMsg(RGXProf.L.LOGIN_MESSAGE)
+            RGXProf.Utils:SendLogin(RGXProf.L.LOGIN_MESSAGE)
         end
     end,
     ADDON_LOADED = function(self, event, addonName)
@@ -153,6 +153,12 @@ function RGXProf:TRADE_SHOW(event, forceShow)
         RGXProf.BookWindow:OnProfessionWindowOpened()
     end
 
+    -- Optionally open the book itself, on the profession whose window just opened.
+    local book = RGXProf.BookWindow
+    if RGXProf_Settings.bookAutoOpen == true and book and not (book.frame and book.frame:IsShown()) then
+        book:Show()
+    end
+
     if not forceShow and not self.Settings.autoOpen then return end
 
     if not self.MainWindow.initializedUI then
@@ -163,6 +169,10 @@ function RGXProf:TRADE_SHOW(event, forceShow)
 end
 
 function RGXProf:TRADE_CLOSE()
+    -- Optionally close the book together with the profession window.
+    if RGXProf_Settings and RGXProf_Settings.bookAutoClose == true and RGXProf.BookWindow and RGXProf.BookWindow.Hide then
+        RGXProf.BookWindow:Hide()
+    end
     -- Keep a manually opened guide visible when no profession window is involved
     if RGXProf.StateManager and RGXProf.StateManager.manualProfessionObject then return end
 

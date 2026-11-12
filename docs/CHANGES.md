@@ -1,3 +1,20 @@
+## v0.4.6 - 2026-11-12
+
+Requires **RGX-Framework 2.18.0 or later**.
+
+- The options page follows the RGX standard: three cards (Chat, Minimap, Guide), each with a switch in its header that turns the whole card on or off, and tick boxes for the options inside.
+- New options: open the book when a profession window opens, and close it when the profession window closes. The guide already opens to the profession whose window is open.
+- The book now tracks your live skill on its own. Before, it only refreshed after the trade-window guide had been built, so with that guide off a skill-up did not update an open book.
+
+## v0.4.5 - 2026-11-11
+
+Requires **RGX-Framework 2.17.0 or later**.
+
+- Fixed the options page failing to build at login ("attempt to call a nil value" in OptionsWindow.lua): it called the strings table as a function.
+- The interface style follows the choice made on the RGX-Framework settings page (Theme tab) while "Apply the framework theme to addons" is on; the addon's colours stay its own in every style. Otherwise it keeps RGX Material Round.
+- Chat messages use the framework's shared chat voice ("icon - [Professions] message"), following the chat output, login message and chat prefix settings.
+- The options page opens with the framework's shared General card (minimap button, Addons menu, chat output, login message, chat prefix), the same as the other RGX addons.
+
 ## v0.4.4 - 2026-11-11
 
 Requires **RGX-Framework 2.17.7 or later**.
