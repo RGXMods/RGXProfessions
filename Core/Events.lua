@@ -63,7 +63,7 @@ RGXProf.Events = {
     PLAYER_LOGIN = function(self)
         local settings = RGXProf_Settings or {}
         if settings.loginMessage ~= false then
-            RGXProf.Utils:SendMsg(RGXProf.L.LOGIN_MESSAGE)
+            RGXProf.Utils:SendLogin(RGXProf.L.LOGIN_MESSAGE)
         end
     end,
     ADDON_LOADED = function(self, event, addonName)

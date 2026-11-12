@@ -1,7 +1,34 @@
 RGXProf = RGXProf or {}
 RGXProf.Utils = RGXProf.Utils or {}
 
+-- One chat voice for every RGX addon: the framework's shared chat ("<icon> - [Professions] message"), driven by
+-- the standard options. Without it (an older framework) the addon's own line below is used.
+local function SharedChat()
+	if RGXProf._chat == nil then
+		local RGX = _G.RGXFramework
+		RGXProf._chat = RGX and type(RGX.CreateChat) == "function" and RGX:CreateChat({
+			storage = function() return RGXProf_Settings end,
+			name = "RGX Professions",
+			label = "Professions",
+			icon = "Interface\\AddOns\\RGX-Framework\\media\\round.tga",
+			tagColor = "8B1538",   -- the addon's primary brand colour
+			tag = "[RGXProf]",
+		}) or false
+	end
+	return RGXProf._chat or nil
+end
+
+-- The "loaded" line at login: also obeys the framework-wide login switch.
+function RGXProf.Utils:SendLogin(text)
+	local chat = SharedChat()
+	if chat then return chat:Login(text) end
+	local settings = RGXProf.Settings or RGXProf_Settings or {}
+	if settings.loginMessage ~= false then self:SendMsg(text) end
+end
+
 function RGXProf.Utils:SendMsg(text)
+	local chat = SharedChat()
+	if chat then return chat:Print(text) end
 	local settings = RGXProf.Settings or RGXProf_Settings or {}
 	if settings.chatOutput == false then return end
 	-- the prefix is added here: drop a "[RGXProf]" tag the message string may still carry

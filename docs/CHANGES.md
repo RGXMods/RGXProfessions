@@ -1,3 +1,10 @@
+## v0.4.5 - 2026-11-11
+
+Requires **RGX-Framework 2.17.0 or later**.
+
+- Chat messages use the framework's shared chat voice ("icon - [Professions] message"), following the chat output, login message and chat prefix settings.
+- The options page opens with the framework's shared General card (minimap button, Addons menu, chat output, login message, chat prefix), the same as the other RGX addons.
+
 ## v0.4.4 - 2026-11-11
 
 Requires **RGX-Framework 2.17.7 or later**.

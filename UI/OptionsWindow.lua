@@ -105,16 +105,35 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
             {
                 text = L("SETTINGS", "Settings"),
                 content = function(frame)
-                    local minimap = Card(frame, L("OPT_MINIMAP_HEADER", "Minimap and Addons menu"))
-                    Text(minimap, L("OPT_MINIMAP_DESC", "The RGX Professions button on your minimap."))
-                    Toggle(minimap, L("OPT_MINIMAP", "Show the minimap icon"), "minimapIconEnabled",
-                        settings.minimapIconEnabled ~= false,
-                        function(v) self_:SetMinimapIcon(v) end)
-                    Text(minimap, L("OPT_ADDON_MENU_DESC", "Adds RGX | Professions to the Addons menu on the minimap."))
-                    Toggle(minimap, L("OPT_ADDON_MENU", "List in the Addons menu"), "addonMenu",
-                        settings.addonMenu ~= false,
-                        function(v) self_:SetAddonMenu(v) end)
-                    minimap:AutoHeight()
+                    -- The shared General card: minimap button, Addons menu, chat output, login message, chat prefix.
+                    if UI.CreateStandardCard then
+                        RGXProf_Settings = RGXProf_Settings or {}
+                        local general = UI:CreateStandardCard(frame, {
+                            storage = RGXProf_Settings,
+                            minimap = function() return RGXProf.minimapButton end,
+                            defaultPrefix = "RGX Professions",
+                            labels = {
+                                description = L("OPT_MINIMAP_DESC", "The RGX Professions button on your minimap."),
+                                addonMenu = L("OPT_ADDON_MENU", "List in the Addons menu"),
+                                chat = L("OPT_CHAT", "Print guide messages to chat"),
+                                login = L("OPT_LOGIN", "Print a loaded message at login"),
+                                prefix = L("OPT_CHAT_PREFIX", "Chat prefix"),
+                            },
+                        })
+                        frame._rgxFlow:Add(general)
+                    else
+                        local minimap = Card(frame, L("OPT_MINIMAP_HEADER", "Minimap and Addons menu"))
+                        Text(minimap, L("OPT_MINIMAP_DESC", "The RGX Professions button on your minimap."))
+                        Toggle(minimap, L("OPT_MINIMAP", "Show the minimap icon"), "minimapIconEnabled",
+                            settings.minimapIconEnabled ~= false,
+                            function(v) self_:SetMinimapIcon(v) end)
+                        Text(minimap, L("OPT_ADDON_MENU_DESC", "Adds RGX | Professions to the Addons menu on the minimap."))
+                        Toggle(minimap, L("OPT_ADDON_MENU", "List in the Addons menu"), "addonMenu",
+                            settings.addonMenu ~= false,
+                            function(v) self_:SetAddonMenu(v) end)
+                        minimap:AutoHeight()
+
+                    end
 
                     local guide = Card(frame, L("OPT_GUIDE_HEADER", "Guide"))
                     Text(guide, L("OPT_FOLLOW_DESC", "When a profession window is open, the guide opens to that profession."))
@@ -126,21 +145,23 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
                         settings.selectRecipesInProfessionWindow ~= false)
                     guide:AutoHeight()
 
-                    local chat = Card(frame, L("OPT_CHAT_HEADER", "Chat"))
-                    Text(chat, L("OPT_CHAT_DESC", "Guide messages print to your chat frame with this prefix."))
-                    Toggle(chat, L("OPT_CHAT", "Print guide messages to chat"), "chatOutput",
-                        settings.chatOutput ~= false)
-                    Toggle(chat, L("OPT_LOGIN", "Print a loaded message at login"), "loginMessage",
-                        settings.loginMessage ~= false)
-                    UI:CreateTextInput(chat.content, {
-                        label = L("OPT_CHAT_PREFIX", "Chat prefix"),
-                        storage = settingsRef,
-                        key = "chatPrefix",
-                        default = "RGX Professions",
-                        placeholder = "RGX Professions",
-                        width = 260,
-                    })
-                    chat:AutoHeight()
+                    if not UI.CreateStandardCard then
+                        local chat = Card(frame, L("OPT_CHAT_HEADER", "Chat"))
+                        Text(chat, L("OPT_CHAT_DESC", "Guide messages print to your chat frame with this prefix."))
+                        Toggle(chat, L("OPT_CHAT", "Print guide messages to chat"), "chatOutput",
+                            settings.chatOutput ~= false)
+                        Toggle(chat, L("OPT_LOGIN", "Print a loaded message at login"), "loginMessage",
+                            settings.loginMessage ~= false)
+                        UI:CreateTextInput(chat.content, {
+                            label = L("OPT_CHAT_PREFIX", "Chat prefix"),
+                            storage = settingsRef,
+                            key = "chatPrefix",
+                            default = "RGX Professions",
+                            placeholder = "RGX Professions",
+                            width = 260,
+                        })
+                        chat:AutoHeight()
+                    end
                 end,
             },
         },
