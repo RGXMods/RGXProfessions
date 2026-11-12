@@ -27,7 +27,21 @@ RGXProf.BrandHex = { primary = Hex(RGXProf.Brand.primary), accent = Hex(RGXProf.
 function RGXProf.BrandTitle(name)
     return RGXProf.BrandHex.primary .. "RGX|r |cffffffff|| " .. (name or "Professions") .. "|r"
 end
-RGXProf.BRAND_STYLE = "materialround"
+RGXProf.BRAND_STYLE = "materialround"   -- the addon's own look, used unless the operator chose another style
+
+--- The interface style to build in: the one chosen on the RGX-Framework settings page (Theme tab) while
+--- "Apply the framework theme to addons" is on, otherwise RGX Material Round. The brand colours stay the
+--- addon's own in every style.
+function RGXProf.ActiveStyle()
+    local D = _G.RGXDesign
+    local db = rawget(_G, "RGXFrameworkDB")
+    if type(db) == "table" and db.themeOverride ~= false and type(db.style) == "string"
+        and D and D.ResolveStyle then
+        local id = D:ResolveStyle(db.style)
+        if id then return id end
+    end
+    return RGXProf.BRAND_STYLE
+end
 
 --- Run a window/widget builder in RGXProfessions' theme: its own primary/accent in the framework's
 --- RGX Material Round style, restored afterwards so no other addon is affected. Returns the builder's
@@ -37,9 +51,10 @@ function RGXProf.Themed(fn)
     if not (D and D.WithTheme and D.WithStyle and D.ResolveStyle and D:ResolveStyle(RGXProf.BRAND_STYLE)) then
         return fn()
     end
+    local style = RGXProf.ActiveStyle()
     local r1, r2
     D:WithTheme(RGXProf.Brand, function()
-        D:WithStyle(RGXProf.BRAND_STYLE, function() r1, r2 = fn() end)
+        D:WithStyle(style, function() r1, r2 = fn() end)
     end)
     return r1, r2
 end

@@ -29,3 +29,16 @@ RGXProf.Utils:SendMsg("x")
 check(#printed == 2, "chat output off prints nothing")
 print = nil
 io.write("SharedChat OK\n")
+
+-- Style choice: the framework's saved style is honoured while the theme switch is on.
+RGXProf.Brand = RGXProf.Brand or {}
+_G.RGXDesign = { ResolveStyle = function(_, n) return ({ forever = "forever", materialround = "materialround" })[n] end }
+_G.RGXFrameworkDB = {}
+check(RGXProf.ActiveStyle() == "materialround", "no saved style: the addon's own Material Round")
+_G.RGXFrameworkDB = { style = "forever" }
+check(RGXProf.ActiveStyle() == "forever", "a saved framework style is used")
+_G.RGXFrameworkDB = { style = "forever", themeOverride = false }
+check(RGXProf.ActiveStyle() == "materialround", "theme switched off: back to the addon's own style")
+_G.RGXFrameworkDB = { style = "bogus" }
+check(RGXProf.ActiveStyle() == "materialround", "an unknown saved style is ignored")
+io.write("ActiveStyle OK\n")

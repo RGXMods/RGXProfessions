@@ -98,7 +98,7 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
         version = "v" .. tostring(GetMeta("Version") or ""):gsub("^v+", ""),
         author = "DonnieDice",
         brand = "|cff8b4b5cRGX|r |cffffd700Mods|r",
-        style = RGXProf.BRAND_STYLE,
+        style = RGXProf.ActiveStyle(),
         width = 820,
         height = 640,
         tabs = {
