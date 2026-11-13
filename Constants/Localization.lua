@@ -119,7 +119,6 @@ local base = {
     OPT_CHAT_HEADER = "Chat",
     OPT_CHAT = "Print guide messages to chat",
     OPT_CHAT_DESC = "Guide messages print to your chat frame with this prefix.",
-    OPT_CHAT_PREFIX = "Chat prefix",
     MATS_WINDOW_TITLE = "Materials to Max",
     MATS_COL_ITEM = "Material",
     MATS_COL_HAVE = "Have",

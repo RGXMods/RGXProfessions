@@ -96,7 +96,7 @@ check(RGXProf_Settings.minimapIconEnabled == true and created == 1 and RGXProf.m
 RGXProf.OptionsWindow:SetMinimapIcon(false)
 check(RGXProf.minimapButton.shown == false, "turning it off hides the existing button")
 check(book:find('f.gear = CreateFrame("Button"', 1, true) and book:find("RGXProf.OptionsWindow:Toggle()", 1, true), "the guide header has a gear that opens the settings window")
-for _, key in ipairs({ "OPT_MINIMAP_HEADER", "OPT_ADDON_MENU", "OPT_GUIDE_HEADER", "OPT_BOOK_OPEN", "OPT_BOOK_CLOSE", "OPT_AUTOOPEN", "OPT_SELECT", "OPT_CHAT_HEADER", "OPT_LOGIN", "OPT_CHAT_PREFIX" }) do check(ow:find("\"" .. key .. "\"", 1, true), "the settings page offers " .. key) end
+for _, key in ipairs({ "OPT_MINIMAP_HEADER", "OPT_ADDON_MENU", "OPT_GUIDE_HEADER", "OPT_BOOK_OPEN", "OPT_BOOK_CLOSE", "OPT_AUTOOPEN", "OPT_SELECT", "OPT_CHAT_HEADER", "OPT_LOGIN" }) do check(ow:find("\"" .. key .. "\"", 1, true), "the settings page offers " .. key) end
 check(cmd:find('command == "settings"', 1, true), "/prof settings opens it")
 
 -- 7. Materials popup lock: Escape closes it only while unlocked

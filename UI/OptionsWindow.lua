@@ -124,16 +124,9 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
 
                     Grid(frame, {
                         function(host)
-                            -- Chat: the switch is chat output; the options are the loaded message and the prefix.
+                            -- Chat: the switch is chat output; the option is the loaded message; the chat prefix is branded and not configurable.
                             local chat = Card(host, L("OPT_CHAT_HEADER", "Chat"), "chatOutput", settings.chatOutput ~= false)
                             Tick(chat, L("OPT_LOGIN", "Print a loaded message at login"), "loginMessage", settings.loginMessage ~= false)
-                            chat.flow:Add(UI:CreateTextInput(chat.content, {
-                                label = L("OPT_CHAT_PREFIX", "Chat prefix"),
-                                storage = settingsRef,
-                                key = "chatPrefix",
-                                default = "RGX Professions",
-                                placeholder = "RGX Professions",
-                            }), { fill = true })
 
                             -- Minimap: the switch is the minimap button; the tick is the Addons menu entry.
                             local minimap = Card(host, L("OPT_MINIMAP_HEADER", "Minimap"), "minimapIconEnabled",
