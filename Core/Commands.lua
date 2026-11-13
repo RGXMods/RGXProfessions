@@ -35,7 +35,7 @@ local menuFrame
 local function ShowProfessionMenu()
     local professions = GetGuideProfessions()
     if #professions == 0 then
-        print(RGXProf.L.CMD_NO_GUIDES)
+        RGXProf.Utils:SendMsg(RGXProf.L.CMD_NO_GUIDES)
         return
     end
 
@@ -63,7 +63,7 @@ local function ShowProfessionMenu()
     if menuFrame and EasyMenu then
         EasyMenu(menu, menuFrame, "cursor", 0, 0, "MENU")
     else
-        print(RGXProf.L.CMD_CHOOSE_PROF)
+        RGXProf.Utils:SendMsg(RGXProf.L.CMD_CHOOSE_PROF)
         for _, professionID in ipairs(professions) do
             print("  - " .. RGXProf.Constants.Professions[professionID].name)
         end
@@ -80,7 +80,7 @@ function RGXProf:HandleSlashCommand(msg)
         if RGXProf.BookWindow then
             RGXProf.BookWindow:Toggle()
         else
-            print(RGXProf.L.CMD_BOOK_NOT_LOADED)
+            RGXProf.Utils:SendMsg(RGXProf.L.CMD_BOOK_NOT_LOADED)
         end
     elseif command == "settings" or command == "options" or command == "config" then
         RGXProf.OptionsWindow:Show()
@@ -95,7 +95,7 @@ function RGXProf:HandleSlashCommand(msg)
             RGXProf.OptionsWindow:SetMinimapIcon(false)
             RGXProf.Utils:SendMsg(RGXProf.L.CMD_ICON_HIDDEN)
         else
-            print(RGXProf.L.CMD_ICON_USAGE)
+            RGXProf.Utils:SendMsg(RGXProf.L.CMD_ICON_USAGE)
         end
     elseif command == "show" then
         local adapter = RGXProf.AdapterManager:GetCurrent()
@@ -105,7 +105,7 @@ function RGXProf:HandleSlashCommand(msg)
             if name then
                 RGXProf.StateManager:ShowGuideForProfession(name)
             else
-                print(RGXProf.L.CMD_UNKNOWN_PROF .. args)
+                RGXProf.Utils:SendMsg(RGXProf.L.CMD_UNKNOWN_PROF .. args)
             end
         else
             RGXProf.BookWindow:Show()
@@ -113,14 +113,14 @@ function RGXProf:HandleSlashCommand(msg)
     elseif command == "tips" then
         local name, id = ResolveProfessionName(args)
         if not name then
-            print(RGXProf.L.CMD_TIPS_USAGE)
+            RGXProf.Utils:SendMsg(RGXProf.L.CMD_TIPS_USAGE)
             return
         end
         RGXProf:PrintProfessionNotes(id, name)
     elseif command == "preview" then
         if args == "" then
             if not RGXProf.CurrentState or not RGXProf.CurrentState.profession then
-                print(RGXProf.L.CMD_NO_ACTIVE_PROF)
+                RGXProf.Utils:SendMsg(RGXProf.L.CMD_NO_ACTIVE_PROF)
                 return
             end
 
@@ -130,13 +130,13 @@ function RGXProf:HandleSlashCommand(msg)
         else
             local prof, skill = args:match("^(%S+)%s+(%d+)$")
             if not prof or not skill then
-                print(RGXProf.L.CMD_PREVIEW_USAGE)
+                RGXProf.Utils:SendMsg(RGXProf.L.CMD_PREVIEW_USAGE)
                 return
             end
             RGXProf.MiniWindow:Show(prof, tonumber(skill))
         end
     else
-        print(RGXProf.L.HELP_HEADER)
+        RGXProf.Utils:SendMsg(RGXProf.L.HELP_HEADER)
         print(RGXProf.L.HELP_BOOK)
         print(RGXProf.L.HELP_SHOW)
         print(RGXProf.L.HELP_SHOW_PROF)
@@ -150,10 +150,10 @@ end
 function RGXProf:PrintProfessionNotes(professionID, displayName)
     local notes = RGXProf.ForeverNotes and RGXProf.ForeverNotes[professionID]
     if not notes then
-        print(RGXProf.L.CMD_NO_NOTES)
+        RGXProf.Utils:SendMsg(RGXProf.L.CMD_NO_NOTES)
         return
     end
-    print("|cffffff00[RGXProf]|r |cffffffff" .. tostring(displayName) .. "|r - " .. (notes.tagline or ""))
+    RGXProf.Utils:SendMsg("|cffffffff" .. tostring(displayName) .. "|r - " .. (notes.tagline or ""))
     if notes.summary and notes.summary ~= "" then print("  " .. notes.summary) end
     if notes.changes and #notes.changes > 0 then
         print("|cffffff00" .. RGXProf.L.NOTES_CHANGED .. "|r")

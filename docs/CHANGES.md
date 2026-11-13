@@ -4,6 +4,7 @@ Requires **RGX-Framework 2.18.0 or later**.
 
 - The options page is laid out as two columns of cards (Chat and Minimap, then Guide), sized to their rows, with no lone tab row above them. Rows fill each card and the page lays itself out again once the client has sized it.
 - The chat prefix is no longer an option: it is the branded RGX prefix and the settings page no longer offers a box for it.
+- Every chat line the addon prints (slash commands, errors, notes) now goes through the shared RGX chat, so it carries the one standard prefix and obeys the Chat switch. The "[RGXProf]" tag that was written into the message strings is gone.
 - The minimum framework version is now 2.18.0, which the card header switches need.
 
 ## v0.4.6 - 2026-11-12

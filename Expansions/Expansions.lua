@@ -170,20 +170,20 @@ end
 function RGXProf.Expansions:IsSupported()
     local version = self:GetVersion()
     if not version then
-        print(RGXProf.L.UNABLE_DETECT_VERSION)
+        RGXProf.Utils:SendMsg(RGXProf.L.UNABLE_DETECT_VERSION)
         return false
     end
 
     if self.All[version] then return true end
 
-    print(RGXProf.L.UNSUPPORTED_WOW_VERSION)
+    RGXProf.Utils:SendMsg(RGXProf.L.UNSUPPORTED_WOW_VERSION)
     return false
 end
 
 function RGXProf.Expansions:SetExpansionData(majorVersion)
     local expansionConstructor = self.All[majorVersion]
     if not expansionConstructor then
-        print(RGXProf.L.UNKNOWN_EXPANSION, majorVersion)
+        RGXProf.Utils:SendMsg(RGXProf.L.UNKNOWN_EXPANSION .. " " .. tostring(majorVersion))
         return
     end
     
