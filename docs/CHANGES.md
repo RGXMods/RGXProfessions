@@ -1,3 +1,10 @@
+## v0.4.7 - 2026-11-12
+
+Requires **RGX-Framework 2.18.0 or later**.
+
+- The options page is laid out as two columns of cards (Chat and Minimap, then Guide), sized to their rows, with no lone tab row above them. Rows fill each card and the page lays itself out again once the client has sized it.
+- The minimum framework version is now 2.18.0, which the card header switches need.
+
 ## v0.4.6 - 2026-11-12
 
 Requires **RGX-Framework 2.18.0 or later**.

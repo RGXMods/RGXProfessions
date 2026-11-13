@@ -60,13 +60,37 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
     })
 
     -- RGX standard: a card's header switch turns the whole card on or off; the options inside are tick boxes.
-    local function Card(frame, title, switchKey, switchDefault, onSwitch)
-        local card = UI:CreateCard(frame, {
+    local function Card(host, title, switchKey, switchDefault, onSwitch)
+        local card = UI:CreateCard(host, {
             title = title,
             switch = switchKey and { storage = settingsRef, key = switchKey, default = switchDefault, onChange = onSwitch } or nil,
         })
-        frame._rgxFlow:Add(card)
         return card
+    end
+
+    -- Two columns of cards on one scroll canvas; each card is sized to its rows and the page is laid out
+    -- again once the client has sized it.
+    local function Grid(frame, builders)
+        local canvas = frame._rgxCanvas or frame
+        local hosts = { UI:CreateColumns(canvas, #builders) }
+        local flows = {}
+        for i, host in ipairs(hosts) do flows[i] = UI:CreateFlowLayout(host) end
+        for i, build in ipairs(builders) do
+            for _, card in ipairs(build(hosts[i])) do
+                card:AutoHeight()
+                flows[i]:Add(card)
+            end
+        end
+        local function reflow()
+            if canvas:GetWidth() <= 0 then return end
+            local used = 0
+            for _, flow in ipairs(flows) do used = math.max(used, flow:Apply()) end
+            canvas:SetHeight(math.max(1, used))
+        end
+        reflow()
+        canvas:HookScript("OnShow", reflow)
+        canvas:HookScript("OnSizeChanged", reflow)
+        if RGX and RGX.After then for _, delay in ipairs({ 0, 0.2, 0.6 }) do RGX:After(delay, reflow) end end
     end
 
     local function Tick(card, label, key, defaultValue, onChange)
@@ -91,41 +115,45 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
         style = RGXProf.ActiveStyle(),
         width = 820,
         height = 640,
+        hideTabRow = true,
         tabs = {
             {
                 text = L("SETTINGS", "Settings"),
                 content = function(frame)
                     RGXProf_Settings = RGXProf_Settings or {}
 
-                    -- Chat: the switch is chat output; the options are the loaded message and the prefix.
-                    local chat = Card(frame, L("OPT_CHAT_HEADER", "Chat"), "chatOutput", settings.chatOutput ~= false)
-                    Tick(chat, L("OPT_LOGIN", "Print a loaded message at login"), "loginMessage", settings.loginMessage ~= false)
-                    chat.flow:Add(UI:CreateTextInput(chat.content, {
-                        label = L("OPT_CHAT_PREFIX", "Chat prefix"),
-                        storage = settingsRef,
-                        key = "chatPrefix",
-                        default = "RGX Professions",
-                        placeholder = "RGX Professions",
-                        width = 200,
-                    }), { fill = true })
-                    chat:AutoHeight()
+                    Grid(frame, {
+                        function(host)
+                            -- Chat: the switch is chat output; the options are the loaded message and the prefix.
+                            local chat = Card(host, L("OPT_CHAT_HEADER", "Chat"), "chatOutput", settings.chatOutput ~= false)
+                            Tick(chat, L("OPT_LOGIN", "Print a loaded message at login"), "loginMessage", settings.loginMessage ~= false)
+                            chat.flow:Add(UI:CreateTextInput(chat.content, {
+                                label = L("OPT_CHAT_PREFIX", "Chat prefix"),
+                                storage = settingsRef,
+                                key = "chatPrefix",
+                                default = "RGX Professions",
+                                placeholder = "RGX Professions",
+                            }), { fill = true })
 
-                    -- Minimap: the switch is the minimap button; the tick is the Addons menu entry.
-                    local minimap = Card(frame, L("OPT_MINIMAP_HEADER", "Minimap"), "minimapIconEnabled",
-                        settings.minimapIconEnabled ~= false, function(v) self_:SetMinimapIcon(v) end)
-                    Tick(minimap, L("OPT_ADDON_MENU", "List in the Addons menu"), "addonMenu",
-                        settings.addonMenu ~= false, function(v) self_:SetAddonMenu(v) end)
-                    minimap:AutoHeight()
-
-                    -- Guide: the switch makes the guide follow the profession window; the ticks say how.
-                    local guide = Card(frame, L("OPT_GUIDE_HEADER", "Guide"), "followProfessionWindow",
-                        settings.followProfessionWindow ~= false)
-                    Tick(guide, L("OPT_BOOK_OPEN", "Open the book when a profession window opens"), "bookAutoOpen", settings.bookAutoOpen == true)
-                    Tick(guide, L("OPT_BOOK_CLOSE", "Close the book when the profession window closes"), "bookAutoClose", settings.bookAutoClose == true)
-                    Tick(guide, L("OPT_AUTOOPEN", "Open the guide with a profession window"), "autoOpen", settings.autoOpen == true)
-                    Tick(guide, L("OPT_SELECT", "Click guide recipes to select them"), "selectRecipesInProfessionWindow",
-                        settings.selectRecipesInProfessionWindow ~= false)
-                    guide:AutoHeight()
+                            -- Minimap: the switch is the minimap button; the tick is the Addons menu entry.
+                            local minimap = Card(host, L("OPT_MINIMAP_HEADER", "Minimap"), "minimapIconEnabled",
+                                settings.minimapIconEnabled ~= false, function(v) self_:SetMinimapIcon(v) end)
+                            Tick(minimap, L("OPT_ADDON_MENU", "List in the Addons menu"), "addonMenu",
+                                settings.addonMenu ~= false, function(v) self_:SetAddonMenu(v) end)
+                            return { chat, minimap }
+                        end,
+                        function(host)
+                            -- Guide: the switch makes the guide follow the profession window; the ticks say how.
+                            local guide = Card(host, L("OPT_GUIDE_HEADER", "Guide"), "followProfessionWindow",
+                                settings.followProfessionWindow ~= false)
+                            Tick(guide, L("OPT_BOOK_OPEN", "Open the book when a profession window opens"), "bookAutoOpen", settings.bookAutoOpen == true)
+                            Tick(guide, L("OPT_BOOK_CLOSE", "Close the book when the profession window closes"), "bookAutoClose", settings.bookAutoClose == true)
+                            Tick(guide, L("OPT_AUTOOPEN", "Open the guide with a profession window"), "autoOpen", settings.autoOpen == true)
+                            Tick(guide, L("OPT_SELECT", "Click guide recipes to select them"), "selectRecipesInProfessionWindow",
+                                settings.selectRecipesInProfessionWindow ~= false)
+                            return { guide }
+                        end,
+                    })
                 end,
             },
         },
