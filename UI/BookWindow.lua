@@ -1096,14 +1096,18 @@ local function WorldPos(mapID, x, y)
     return nil
 end
 
+-- NPC data stores map coordinates as percentages (22.8, 43.6); the client reports the player's position
+-- as fractions (0.228, 0.436). Compare both as fractions.
 local function NpcDistance(npc, playerMapID, playerX, playerY)
-    if npc.zoneID == playerMapID and npc.x and npc.y and playerX and playerY then
-        local dx, dy = npc.x - playerX, npc.y - playerY
+    if not (npc.x and npc.y) then return nil end
+    local nx, ny = npc.x / 100, npc.y / 100
+    if npc.zoneID == playerMapID and playerX and playerY then
+        local dx, dy = nx - playerX, ny - playerY
         return dx * dx + dy * dy
     end
-    if playerMapID and playerX and playerY and npc.zoneID and npc.x and npc.y then
+    if playerMapID and playerX and playerY and npc.zoneID then
         local pCont, pwx, pwy = WorldPos(playerMapID, playerX, playerY)
-        local nCont, nwx, nwy = WorldPos(npc.zoneID, npc.x, npc.y)
+        local nCont, nwx, nwy = WorldPos(npc.zoneID, nx, ny)
         if pCont and nCont and pCont == nCont
             and type(pwx) == "number" and type(pwy) == "number"
             and type(nwx) == "number" and type(nwy) == "number" then
@@ -1299,6 +1303,11 @@ RenderDetail = function(self)
     -- Where: the nearest vendor / trainer (click pins it on the map); gathering steps list their zones.
     local vendors = step.npcs and RGXProf.DataManager:GetVendors(step, faction) or {}
     local trainers = RGXProf.DataManager:GetTrainers(faction, step.minSkill, professionID) or {}
+    if #trainers == 0 and #vendors == 0 then
+        -- No trainer listed for this exact skill band: any trainer of the profession still teaches its
+        -- recipes once the rank is learned, so point at the nearest one rather than a generic note.
+        trainers = RGXProf.DataManager:GetProfessionTrainers(faction, professionID) or {}
+    end
     local allLocs = {}
     for _, v in ipairs(vendors) do table.insert(allLocs, v) end
     for _, t in ipairs(trainers) do table.insert(allLocs, t) end
@@ -1828,6 +1837,15 @@ function RGXProf.BookWindow:Refresh()
     RenderStepList(self)
     RenderDetail(self)
     self:FitWindow()
+end
+
+-- Re-render the detail page after the player changes zone, so the Where card names the trainer or vendor
+-- nearest to where the player is now.
+function RGXProf.BookWindow:RefreshLocation()
+    local f = self.frame
+    if not f or not f:IsShown() then return end
+    if not self:GetCurrentProfession() then return end
+    RenderDetail(self)
 end
 
 -- Re-render only the detail page (counts and to-max totals) after a bag change.

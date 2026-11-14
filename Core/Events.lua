@@ -56,6 +56,15 @@ RGXProf.Events = {
         if RGXProf.MatsWindow and RGXProf.MatsWindow.Refresh then RGXProf.MatsWindow:Refresh() end
         RGXProf.StateManager:RequestRefresh()
     end,
+    -- The Where card names the nearest trainer or vendor, so it follows the player between zones.
+    ZONE_CHANGED_NEW_AREA = function(self)
+        local book = RGXProf.BookWindow
+        if book and book.RefreshLocation then book:RefreshLocation() end
+    end,
+    ZONE_CHANGED = function(self)
+        local book = RGXProf.BookWindow
+        if book and book.RefreshLocation then book:RefreshLocation() end
+    end,
     GET_ITEM_INFO_RECEIVED = function(self, ...)
         if RGXProf.MatsWindow and RGXProf.MatsWindow.Refresh then RGXProf.MatsWindow:Refresh() end
         RGXProf.StateManager:RequestRefresh()
