@@ -144,15 +144,108 @@ RGXProf.Classic.Trainers = {
 
     { name = "Buzzek Bracketswing", faction = "Neutral", zoneID = 1446, x = 52.2, y = 27.6, minSkill = 0, maxSkill = 300, professionID = 202  }, -- Tanaris
 
-}
+    -- Alchemy
+    { name = "Ainethil", faction = "Alliance", zoneID = 1457, x = 55, y = 23.4, minSkill = 0, maxSkill = 300, professionID = 171 }, -- Darnassus
+    { name = "Alchemist Mallory", faction = "Alliance", zoneID = 1429, x = 39.8, y = 48.4, minSkill = 0, maxSkill = 150, professionID = 171 }, -- Elwynn Forest
+    { name = "Alchemist Narett", faction = "Alliance", zoneID = 1445, x = 64, y = 47.6, minSkill = 0, maxSkill = 225, professionID = 171 }, -- Dustwallow Marsh
+    { name = "Cyndra Kindwhisper", faction = "Alliance", zoneID = 1438, x = 57.6, y = 60.6, minSkill = 0, maxSkill = 150, professionID = 171 }, -- Teldrassil
+    { name = "Ghak Healtouch", faction = "Alliance", zoneID = 1432, x = 37, y = 49.2, minSkill = 0, maxSkill = 150, professionID = 171 }, -- Loch Modan
+    { name = "Kylanna", faction = "Alliance", zoneID = 1440, x = 50.8, y = 67, minSkill = 0, maxSkill = 225, professionID = 171 }, -- Ashenvale
+    { name = "Kylanna Windwhisper", faction = "Alliance", zoneID = 1444, x = 32.4, y = 43.8, minSkill = 0, maxSkill = 300, professionID = 171 }, -- Feralas
+    { name = "Lilyssia Nightbreeze", faction = "Alliance", zoneID = 1453, x = 46.4, y = 79.4, minSkill = 0, maxSkill = 225, professionID = 171 }, -- Stormwind City
+    { name = "Milla Fairancora", faction = "Alliance", zoneID = 1457, x = 55.2, y = 22.4, minSkill = 0, maxSkill = 150, professionID = 171 }, -- Darnassus
+    { name = "Sylvanna Forestmoon", faction = "Alliance", zoneID = 1457, x = 55.6, y = 23.4, minSkill = 0, maxSkill = 225, professionID = 171 }, -- Darnassus
+    { name = "Tally Berryfizz", faction = "Alliance", zoneID = 1455, x = 66.4, y = 55.2, minSkill = 0, maxSkill = 225, professionID = 171 }, -- Ironforge
+    { name = "Tel'Athir", faction = "Alliance", zoneID = 1453, x = 46.4, y = 79, minSkill = 0, maxSkill = 150, professionID = 171 }, -- Stormwind City
+    { name = "Vosur Brakthel", faction = "Alliance", zoneID = 1455, x = 66.4, y = 55.2, minSkill = 0, maxSkill = 150, professionID = 171 }, -- Ironforge
+    { name = "Bena Winterhoof", faction = "Horde", zoneID = 1456, x = 46.8, y = 33.4, minSkill = 0, maxSkill = 225, professionID = 171 }, -- Thunder Bluff
+    { name = "Carolai Anise", faction = "Horde", zoneID = 1420, x = 59.4, y = 52.2, minSkill = 0, maxSkill = 150, professionID = 171 }, -- Tirisfal Glades
+    { name = "Doctor Herbert Halsey", faction = "Horde", zoneID = 1458, x = 47.4, y = 73, minSkill = 0, maxSkill = 300, professionID = 171 }, -- Undercity
+    { name = "Doctor Marsh", faction = "Horde", zoneID = 1458, x = 51.2, y = 75, minSkill = 0, maxSkill = 225, professionID = 171 }, -- Undercity
+    { name = "Doctor Martin Felben", faction = "Horde", zoneID = 1458, x = 45.8, y = 73.2, minSkill = 0, maxSkill = 150, professionID = 171 }, -- Undercity
+    { name = "Kray", faction = "Horde", zoneID = 1456, x = 46.8, y = 34.2, minSkill = 0, maxSkill = 150, professionID = 171 }, -- Thunder Bluff
+    { name = "Miao'zan", faction = "Horde", zoneID = 1411, x = 55.4, y = 74, minSkill = 0, maxSkill = 150, professionID = 171 }, -- Durotar
+    { name = "Rogvar", faction = "Horde", zoneID = 1435, x = 48.2, y = 55.4, minSkill = 0, maxSkill = 300, professionID = 171 }, -- Swamp of Sorrows
+    { name = "Serge Hinott", faction = "Horde", zoneID = 1424, x = 61.4, y = 19.2, minSkill = 0, maxSkill = 225, professionID = 171 }, -- Hillsbrad Foothills
+    { name = "Whuut", faction = "Horde", zoneID = 1454, x = 55.8, y = 33.2, minSkill = 0, maxSkill = 150, professionID = 171 }, -- Orgrimmar
+    { name = "Yelmak", faction = "Horde", zoneID = 1454, x = 56.4, y = 33.2, minSkill = 0, maxSkill = 225, professionID = 171 }, -- Orgrimmar
+    { name = "Jaxin Chong", faction = "Neutral", zoneID = 1434, x = 28, y = 78, minSkill = 0, maxSkill = 225, professionID = 171 }, -- Stranglethorn Vale
 
--- This legacy table was imported with player factions reversed. Normalize the
--- trainer records at load time; the Classic vendor and quest tables are already
--- labeled correctly and must not be swapped.
-for _, trainer in pairs(RGXProf.Classic.Trainers) do
-    if trainer.faction == "Alliance" then
-        trainer.faction = "Alliance"
-    elseif trainer.faction == "Horde" then
-        trainer.faction = "Horde"
-    end
-end
+    -- Herbalism
+    { name = "Alma Jainrose", faction = "Alliance", zoneID = 1433, x = 21.4, y = 45.6, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Redridge Mountains
+    { name = "Brant Jasperbloom", faction = "Alliance", zoneID = 1445, x = 64, y = 47.6, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Dustwallow Marsh
+    { name = "Cylania Rootstalker", faction = "Alliance", zoneID = 1440, x = 50.4, y = 67, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Ashenvale
+    { name = "Firodren Mooncaller", faction = "Alliance", zoneID = 1457, x = 48, y = 68.4, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Darnassus
+    { name = "Herbalist Pomeroy", faction = "Alliance", zoneID = 1429, x = 39.8, y = 48.4, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Elwynn Forest
+    { name = "Kali Healtouch", faction = "Alliance", zoneID = 1432, x = 36.4, y = 48.4, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Loch Modan
+    { name = "Malorne Bladeleaf", faction = "Alliance", zoneID = 1438, x = 57.4, y = 60.6, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Teldrassil
+    { name = "Reyna Stonebranch", faction = "Alliance", zoneID = 1455, x = 55.4, y = 58.8, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Ironforge
+    { name = "Shylamiir", faction = "Alliance", zoneID = 1453, x = 15, y = 49.4, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Stormwind City
+    { name = "Tannysa", faction = "Alliance", zoneID = 1453, x = 44.4, y = 77.8, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Stormwind City
+    { name = "Telurinon Moonshadow", faction = "Alliance", zoneID = 1437, x = 8, y = 55.8, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Wetlands
+    { name = "Angrun", faction = "Horde", zoneID = 1434, x = 32.2, y = 27.4, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Stranglethorn Vale
+    { name = "Aranae Venomblood", faction = "Horde", zoneID = 1424, x = 61.6, y = 19.4, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Hillsbrad Foothills
+    { name = "Faruza", faction = "Horde", zoneID = 1420, x = 59.8, y = 52, minSkill = 0, maxSkill = 75, professionID = 182 }, -- Tirisfal Glades
+    { name = "Jandi", faction = "Horde", zoneID = 1454, x = 55.4, y = 39.4, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Orgrimmar
+    { name = "Komin Winterhoof", faction = "Horde", zoneID = 1456, x = 49.8, y = 39.8, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Thunder Bluff
+    { name = "Martha Alliestar", faction = "Horde", zoneID = 1458, x = 54.2, y = 49.4, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Undercity
+    { name = "Mishiki", faction = "Horde", zoneID = 1411, x = 55.4, y = 75, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Durotar
+    { name = "Ruw", faction = "Horde", zoneID = 1444, x = 76, y = 43.4, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Feralas
+    { name = "Flora Silverwind", faction = "Neutral", zoneID = 1434, x = 27.6, y = 77.8, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Stranglethorn Vale
+    { name = "Malvor", faction = "Neutral", zoneID = 1450, x = 45.4, y = 47, minSkill = 0, maxSkill = 300, professionID = 182 }, -- Moonglade
+
+    -- Mining
+    { name = "Brock Stoneseeker", faction = "Alliance", zoneID = 1432, x = 37, y = 47.8, minSkill = 0, maxSkill = 300, professionID = 186 }, -- Loch Modan
+    { name = "Dank Drizzlecut", faction = "Alliance", zoneID = 1426, x = 69.2, y = 55.4, minSkill = 0, maxSkill = 300, professionID = 186 }, -- Dun Morogh
+    { name = "Gelman Stonehand", faction = "Alliance", zoneID = 1453, x = 51, y = 17.2, minSkill = 0, maxSkill = 300, professionID = 186 }, -- Stormwind City
+    { name = "Geofram Bouldertoe", faction = "Alliance", zoneID = 1455, x = 50.2, y = 26, minSkill = 0, maxSkill = 300, professionID = 186 }, -- Ironforge
+    { name = "Kurdram Stonehammer", faction = "Alliance", zoneID = 1439, x = 38.2, y = 41, minSkill = 0, maxSkill = 300, professionID = 186 }, -- Darkshore
+    { name = "Matt Johnson", faction = "Alliance", zoneID = 1431, x = 74, y = 49.4, minSkill = 0, maxSkill = 300, professionID = 186 }, -- Duskwood
+    { name = "Yarr Hammerstone", faction = "Alliance", zoneID = 1426, x = 50, y = 50.4, minSkill = 0, maxSkill = 300, professionID = 186 }, -- Dun Morogh
+    { name = "Brek Stonehoof", faction = "Horde", zoneID = 1456, x = 34.4, y = 57.4, minSkill = 0, maxSkill = 300, professionID = 186 }, -- Thunder Bluff
+    { name = "Brom Killian", faction = "Horde", zoneID = 1458, x = 55.8, y = 36, minSkill = 0, maxSkill = 300, professionID = 186 }, -- Undercity
+    { name = "Johan Focht", faction = "Horde", zoneID = 1421, x = 43.4, y = 40.4, minSkill = 0, maxSkill = 300, professionID = 186 }, -- Silverpine Forest
+    { name = "Krunn", faction = "Horde", zoneID = 1411, x = 51.8, y = 40.8, minSkill = 0, maxSkill = 300, professionID = 186 }, -- Durotar
+    { name = "Makaru", faction = "Horde", zoneID = 1454, x = 73, y = 26.4, minSkill = 0, maxSkill = 300, professionID = 186 }, -- Orgrimmar
+    { name = "Pikkle", faction = "Neutral", zoneID = 1446, x = 51, y = 28, minSkill = 0, maxSkill = 300, professionID = 186 }, -- Tanaris
+
+    -- Skinning
+    { name = "Balthus Stoneflayer", faction = "Alliance", zoneID = 1455, x = 39.4, y = 32.4, minSkill = 0, maxSkill = 300, professionID = 393 }, -- Ironforge
+    { name = "Eladriel", faction = "Alliance", zoneID = 1457, x = 64.2, y = 21.8, minSkill = 0, maxSkill = 300, professionID = 393 }, -- Darnassus
+    { name = "Helene Peltskinner", faction = "Alliance", zoneID = 1429, x = 46.2, y = 62.2, minSkill = 0, maxSkill = 300, professionID = 393 }, -- Elwynn Forest
+    { name = "Jayla", faction = "Alliance", zoneID = 1440, x = 50, y = 67.2, minSkill = 0, maxSkill = 300, professionID = 393 }, -- Ashenvale
+    { name = "Maris Granger", faction = "Alliance", zoneID = 1453, x = 67.8, y = 49, minSkill = 0, maxSkill = 300, professionID = 393 }, -- Stormwind City
+    { name = "Radnaal Maneweaver", faction = "Alliance", zoneID = 1438, x = 42, y = 50, minSkill = 0, maxSkill = 300, professionID = 393 }, -- Teldrassil
+    { name = "Wilma Ranthal", faction = "Alliance", zoneID = 1433, x = 88.8, y = 71, minSkill = 0, maxSkill = 300, professionID = 393 }, -- Redridge Mountains
+    { name = "Dranh", faction = "Horde", zoneID = 1413, x = 45, y = 59, minSkill = 0, maxSkill = 300, professionID = 393 }, -- The Barrens
+    { name = "Killian Hagey", faction = "Horde", zoneID = 1458, x = 70.4, y = 59.2, minSkill = 0, maxSkill = 300, professionID = 393 }, -- Undercity
+    { name = "Kulleg Stonehorn", faction = "Horde", zoneID = 1444, x = 74.4, y = 43, minSkill = 0, maxSkill = 300, professionID = 393 }, -- Feralas
+    { name = "Malux", faction = "Horde", zoneID = 1443, x = 23.2, y = 69.8, minSkill = 0, maxSkill = 300, professionID = 393 }, -- Desolace
+    { name = "Mooranta", faction = "Horde", zoneID = 1456, x = 44.4, y = 42.4, minSkill = 0, maxSkill = 300, professionID = 393 }, -- Thunder Bluff
+    { name = "Rand Rhobart", faction = "Horde", zoneID = 1420, x = 65.4, y = 60, minSkill = 0, maxSkill = 300, professionID = 393 }, -- Tirisfal Glades
+    { name = "Thuwd", faction = "Horde", zoneID = 1454, x = 63.2, y = 45.2, minSkill = 0, maxSkill = 300, professionID = 393 }, -- Orgrimmar
+    { name = "Yonn Deepcut", faction = "Horde", zoneID = 1412, x = 45.4, y = 57.8, minSkill = 0, maxSkill = 300, professionID = 393 }, -- Mulgore
+
+    -- Fishing
+    { name = "Androl Oakhand", faction = "Alliance", zoneID = 1438, x = 55.8, y = 93.4, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Teldrassil
+    { name = "Arnold Leland", faction = "Alliance", zoneID = 1453, x = 45.8, y = 58.2, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Stormwind City
+    { name = "Astaia", faction = "Alliance", zoneID = 1457, x = 47.4, y = 56.6, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Darnassus
+    { name = "Brannock", faction = "Alliance", zoneID = 1444, x = 32.2, y = 41.6, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Feralas
+    { name = "Donald Rabonne", faction = "Alliance", zoneID = 1424, x = 50.6, y = 61, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Hillsbrad Foothills
+    { name = "Grimnur Stonebrand", faction = "Alliance", zoneID = 1455, x = 48.2, y = 6.6, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Ironforge
+    { name = "Harold Riggs", faction = "Alliance", zoneID = 1437, x = 8, y = 58.4, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Wetlands
+    { name = "Lee Brown", faction = "Alliance", zoneID = 1429, x = 47.4, y = 62.2, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Elwynn Forest
+    { name = "Matthew Hooper", faction = "Alliance", zoneID = 1433, x = 26.4, y = 50.4, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Redridge Mountains
+    { name = "Paxton Ganter", faction = "Alliance", zoneID = 1426, x = 35.4, y = 40.2, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Dun Morogh
+    { name = "Warg Deepwater", faction = "Alliance", zoneID = 1432, x = 40.4, y = 39.4, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Loch Modan
+    { name = "Armand Cromwell", faction = "Horde", zoneID = 1458, x = 80.8, y = 31.2, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Undercity
+    { name = "Clyde Kellen", faction = "Horde", zoneID = 1420, x = 67.2, y = 51, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Tirisfal Glades
+    { name = "Kah Mistrunner", faction = "Horde", zoneID = 1456, x = 56, y = 46.8, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Thunder Bluff
+    { name = "Katoom the Angler", faction = "Horde", zoneID = 1425, x = 80.2, y = 81.4, minSkill = 0, maxSkill = 300, professionID = 356 }, -- The Hinterlands
+    { name = "Kil'Hiwana", faction = "Horde", zoneID = 1440, x = 10.8, y = 33.4, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Ashenvale
+    { name = "Lau'Tiki", faction = "Horde", zoneID = 1411, x = 53.2, y = 81.4, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Durotar
+    { name = "Lui'Mala", faction = "Horde", zoneID = 1443, x = 22.6, y = 72.4, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Desolace
+    { name = "Lumak", faction = "Horde", zoneID = 1454, x = 69.4, y = 29.2, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Orgrimmar
+    { name = "Uthan Stillwater", faction = "Horde", zoneID = 1412, x = 44.4, y = 60.4, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Mulgore
+    { name = "Myizz Luckycatch", faction = "Neutral", zoneID = 1434, x = 27.4, y = 77, minSkill = 0, maxSkill = 300, professionID = 356 }, -- Stranglethorn Vale
+}
