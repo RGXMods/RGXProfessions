@@ -111,26 +111,10 @@ for _, old in ipairs({ "Wo zu bekommen", "Dónde conseguirlo", "Où l'obtenir", 
   check(not loc:find('WHERE_TO_GET = "' .. old .. '"', 1, true), "'" .. old .. "' is renamed to the recipe-location wording in every locale")
 end
 
--- 6. Addons-menu setting calls the framework and tells the player when a reload is needed.
+-- 6. The Addons-menu entry is always on: it is not an option, and the button is always created with it.
 local ow = read("UI/OptionsWindow.lua")
-local s1 = assert(ow:find("function RGXProf.OptionsWindow:SetAddonMenu", 1, true))
-local s2 = assert(ow:find("-- The gear in the guide header", s1, true))
-local said
-RGXProf = { OptionsWindow = {}, L = { OPT_ADDON_MENU_RELOAD = "reload" }, Utils = { SendMsg = function(_, m) said = m end } }
-RGXProf_Settings = {}
-function RGXProf.OptionsWindow:SetSetting(k, v) RGXProf_Settings[k] = v end
-assert(loadstring(ow:sub(s1, s2 - 1)))()
-local result, last = true, nil
-RGXProf.minimapButton = { SetCompartmentVisible = function(_, v) last = v return result end }
-RGXProf.OptionsWindow:SetAddonMenu(false)
-check(RGXProf_Settings.addonMenu == false and last == false and said == nil, "turning the Addons-menu entry off is saved and applied")
-result = false
-RGXProf.OptionsWindow:SetAddonMenu(true)
-check(RGXProf_Settings.addonMenu == true and said == "reload", "a client that cannot remove the entry gets a reload hint")
-RGXProf.minimapButton = {}
-RGXProf.OptionsWindow:SetAddonMenu(false)
-check(RGXProf_Settings.addonMenu == false, "an older framework without SetCompartmentVisible is tolerated")
-check(read("Core/Core.lua"):find("compartment = RGXProf_Settings.addonMenu ~= false", 1, true), "the button is created with the saved Addons-menu choice")
+check(not ow:find("addonMenu", 1, true) and not ow:find("SetAddonMenu", 1, true), "the settings page offers no Addons-menu option")
+check(read("Core/Core.lua"):find("compartment = true", 1, true), "the button is always created with its Addons-menu entry")
 -- 7. Shipped code uses only the framework's timers (RGX-Framework is a required dependency).
 for _, f in ipairs({ "Core/StateManager.lua", "UI/MainWindow.lua", "UI/MatsWindow.lua", "UI/BookWindow.lua", "Core/Events.lua", "Core/Core.lua" }) do
   check(not read(f):find("C_Timer", 1, true), f .. " uses a raw C_Timer instead of RGX:After")

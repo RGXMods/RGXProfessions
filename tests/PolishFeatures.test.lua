@@ -82,7 +82,7 @@ end
 -- 6. Settings window + minimap switch persist and take effect
 local ow = read("UI/OptionsWindow.lua")
 local o1 = assert(ow:find("-- Show or hide the minimap button now", 1, true))
-local o2 = assert(ow:find("-- Show or hide the Blizzard Addons menu entry", o1, true))
+local o2 = assert(ow:find("-- All options live in the game", o1, true))
 RGXProf = { OptionsWindow = {}, L = {} }
 RGXProf_Settings = {}
 function RGXProf.OptionsWindow:SetSetting(k, v) RGXProf_Settings[k] = v end
@@ -96,7 +96,7 @@ check(RGXProf_Settings.minimapIconEnabled == true and created == 1 and RGXProf.m
 RGXProf.OptionsWindow:SetMinimapIcon(false)
 check(RGXProf.minimapButton.shown == false, "turning it off hides the existing button")
 check(book:find('f.gear = CreateFrame("Button"', 1, true) and book:find("RGXProf.OptionsWindow:Toggle()", 1, true), "the guide header has a gear that opens the settings window")
-for _, key in ipairs({ "OPT_MINIMAP_HEADER", "OPT_ADDON_MENU", "OPT_GUIDE_HEADER", "OPT_BOOK_OPEN", "OPT_BOOK_CLOSE", "OPT_AUTOOPEN", "OPT_SELECT", "OPT_CHAT_HEADER", "OPT_LOGIN" }) do check(ow:find("\"" .. key .. "\"", 1, true), "the settings page offers " .. key) end
+for _, key in ipairs({ "OPT_MINIMAP_HEADER", "OPT_GUIDE_HEADER", "OPT_BOOK_OPEN", "OPT_BOOK_CLOSE", "OPT_AUTOOPEN", "OPT_SELECT", "OPT_CHAT_HEADER", "OPT_LOGIN" }) do check(ow:find("\"" .. key .. "\"", 1, true), "the settings page offers " .. key) end
 check(cmd:find('command == "settings"', 1, true), "/prof settings opens it")
 
 -- 7. Materials popup lock: Escape closes it only while unlocked

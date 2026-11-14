@@ -86,9 +86,6 @@ RGXProf.Events = {
             if RGXProf_Settings.followProfessionWindow == nil then
                 RGXProf_Settings.followProfessionWindow = true
             end
-            if RGXProf_Settings.addonMenu == nil then
-                RGXProf_Settings.addonMenu = true
-            end
             if RGXProf_Settings.loginMessage == nil then
                 RGXProf_Settings.loginMessage = true
             end

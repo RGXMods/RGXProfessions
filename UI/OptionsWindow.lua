@@ -128,12 +128,10 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
                             local chat = Card(host, L("OPT_CHAT_HEADER", "Chat"), "chatOutput", settings.chatOutput ~= false)
                             Tick(chat, L("OPT_LOGIN", "Print a loaded message at login"), "loginMessage", settings.loginMessage ~= false)
 
-                            -- Minimap: no header switch; the button and the Addons menu entry are tick boxes in the card.
+                            -- Minimap: no header switch; the button is a tick box in the card (the Addons menu entry is always on).
                             local minimap = Card(host, L("OPT_MINIMAP_HEADER", "Minimap"))
                             Tick(minimap, L("OPT_MINIMAP_SHOW", "Show minimap button"), "minimapIconEnabled",
                                 settings.minimapIconEnabled ~= false, function(v) self_:SetMinimapIcon(v) end)
-                            Tick(minimap, L("OPT_ADDON_MENU", "List in the Addons menu"), "addonMenu",
-                                settings.addonMenu ~= false, function(v) self_:SetAddonMenu(v) end)
                             return { chat, minimap }
                         end,
                         function(host)
@@ -155,19 +153,6 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
 
     self.panel = panel
     return panel
-end
-
--- Show or hide the Blizzard Addons menu entry. Needs framework 2.16 (SetCompartmentVisible); on a client
--- that cannot remove an entry the choice applies after the next reload, and the player is told.
-function RGXProf.OptionsWindow:SetAddonMenu(show)
-    show = show and true or false
-    self:SetSetting("addonMenu", show)
-    local button = RGXProf.minimapButton
-    if button and button.SetCompartmentVisible then
-        if button:SetCompartmentVisible(show) == false then
-            RGXProf.Utils:SendMsg(RGXProf.L.OPT_ADDON_MENU_RELOAD)
-        end
-    end
 end
 
 -- The gear in the guide header, /prof settings and the minimap menu all land
