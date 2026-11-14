@@ -108,8 +108,10 @@ local W = RGXProf.MatsWindow
 RGXProf_Settings = {}
 UISpecialFrames = { "OtherFrame" }
 local tint
+-- A real Button has no SetVertexColor: the tint goes on its normal texture (the client errors on the button call).
+local normalTexture = { SetVertexColor = function(_, r) tint = r end }
 W.frame = { lock = { SetNormalTexture = function(_, tex) W._lockTex = tex end,
-  SetVertexColor = function(_, r) tint = r end, SetAlpha = function() end } }
+  GetNormalTexture = function() return normalTexture end, SetAlpha = function() end } }
 assert(loadstring("local W = RGXProf.MatsWindow\n" .. mats:sub(m1, m2 - 1)))()
 W:SetLocked(false)
 local function has(n) for _, v in ipairs(UISpecialFrames) do if v == n then return true end end return false end
