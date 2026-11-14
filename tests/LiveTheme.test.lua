@@ -21,6 +21,7 @@ assert(loadfile("UI/Theme.lua"))()
 local rebuilt = { book = 0, mats = 0 }
 RGXProf.BookWindow = { Rebuild = function() rebuilt.book = rebuilt.book + 1 end }
 RGXProf.MatsWindow = { Rebuild = function() rebuilt.mats = rebuilt.mats + 1 end }
+RGXProf.MainWindow = { Rebuild = function() rebuilt.main = (rebuilt.main or 0) + 1 end }
 
 local ring = RGXProf.Brand.primary
 check(RGXProf.Themed(function() return "ok" end) == "ok" and built and built.id == "RGXProfessions", "windows are built through the registered brand")
@@ -28,7 +29,7 @@ check(type(listener) == "function", "the addon listens for theme changes")
 override = true
 listener()
 check(ring[1] == GOLD[1] and RGXProf.BrandHex.primary == "|cffFFD700", "a change re-resolves the live brand colours in place")
-check(rebuilt.book == 1 and rebuilt.mats == 1, "the book and the Materials overlay are rebuilt")
+check(rebuilt.book == 1 and rebuilt.mats == 1 and rebuilt.main == 1, "the book, the Materials overlay and the profession-window guide are rebuilt")
 local src = assert(io.open("UI/OptionsWindow.lua")):read("*a")
 check(src:find("brand = RGXProf.GetBrand(),", 1, true), "the settings page is built with the brand, so it redraws itself")
 check(src:find("title = function()", 1, true), "the settings page title is re-coloured on a change")

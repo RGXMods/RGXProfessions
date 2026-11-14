@@ -46,6 +46,7 @@ local function BrandObject()
             RGXProf.RefreshBrand()
             if RGXProf.BookWindow and RGXProf.BookWindow.Rebuild then RGXProf.BookWindow:Rebuild() end
             if RGXProf.MatsWindow and RGXProf.MatsWindow.Rebuild then RGXProf.MatsWindow:Rebuild() end
+            if RGXProf.MainWindow and RGXProf.MainWindow.Rebuild then RGXProf.MainWindow:Rebuild() end
         end)
     end
     return RGXProf.BrandObj
