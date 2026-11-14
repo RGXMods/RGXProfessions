@@ -481,10 +481,15 @@ local function BuildFrame(self)
     -- sliced from the framework panel texture, rounded top corners
     -- matching the window's own radius, straight sides and bottom); the
     -- progress strip below doubles as the band's bottom edge.
+    -- WoW Classic / WoW Forever draw the window with the game's own frame, which is thicker than the 1px
+    -- ring: the header (and the skill bar under it) sit inside that frame, and the band draws no fill of its
+    -- own so the frame's top edge stays visible.
+    local clientArt = Design and type(Design.UsesClientArt) == "function" and Design:UsesClientArt() or false
+    local edge = clientArt and 8 or 1
     local header = CreateFrame("Frame", nil, f)
     header:SetHeight(HEADER_HEIGHT)
-    header:SetPoint("TOPLEFT", 1, -1)
-    header:SetPoint("TOPRIGHT", -1, -1)
+    header:SetPoint("TOPLEFT", edge, -edge)
+    header:SetPoint("TOPRIGHT", -edge, -edge)
     local R = 12
     local function HeaderFill(color, alpha)
         local function piece(u1, u2, v1, v2)
@@ -509,7 +514,7 @@ local function BuildFrame(self)
     end
     local hsr, hsg, hsb = 0.086, 0.086, 0.110
     if Design then hsr, hsg, hsb = Design:Unpack("surface") end
-    HeaderFill({ hsr, hsg, hsb }, 0.95)
+    if not clientArt then HeaderFill({ hsr, hsg, hsb }, 0.95) end
 
     f.headerIcon = header:CreateTexture(nil, "ARTWORK")
     f.headerIcon:SetSize(48, 48)
@@ -587,7 +592,7 @@ local function BuildFrame(self)
     end
 
     f.close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
-    f.close:SetPoint("TOPRIGHT", -4, -4)
+    f.close:SetPoint("TOPRIGHT", -(edge + 3), -(edge + 3))
 
     -- Settings gear: opens the RGX settings window (minimap icon, auto-open, recipe clicks).
     f.gear = CreateFrame("Button", nil, f)
