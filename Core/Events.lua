@@ -161,11 +161,11 @@ function RGXProf:TRADE_SHOW(event, forceShow)
 
     -- Optionally open the book itself, on the profession whose window just opened.
     local book = RGXProf.BookWindow
-    if RGXProf_Settings.bookAutoOpen == true and book and not (book.frame and book.frame:IsShown()) then
+    if RGXProf.GuideEnabled() and RGXProf_Settings.bookAutoOpen == true and book and not (book.frame and book.frame:IsShown()) then
         book:Show()
     end
 
-    if not forceShow and not self.Settings.autoOpen then return end
+    if not forceShow and not (RGXProf.GuideEnabled() and self.Settings.autoOpen) then return end
 
     if not self.MainWindow.initializedUI then
         RGXProf.MainWindow:SetupUI()
@@ -176,7 +176,7 @@ end
 
 function RGXProf:TRADE_CLOSE()
     -- Optionally close the book together with the profession window.
-    if RGXProf_Settings and RGXProf_Settings.bookAutoClose == true and RGXProf.BookWindow and RGXProf.BookWindow.Hide then
+    if RGXProf_Settings and RGXProf.GuideEnabled() and RGXProf_Settings.bookAutoClose == true and RGXProf.BookWindow and RGXProf.BookWindow.Hide then
         RGXProf.BookWindow:Hide()
     end
     -- Keep a manually opened guide visible when no profession window is involved

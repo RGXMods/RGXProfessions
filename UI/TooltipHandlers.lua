@@ -6,8 +6,8 @@ RGXProf.TooltipHandlers.RecipeTooltip = function(frame)
     if not data or not data.link then return end
     GameTooltip:SetOwner(frame, "ANCHOR_TOPLEFT")
     GameTooltip:SetHyperlink(data.link)
-    local selectInProfessionWindow = not RGXProf.Settings
-        or RGXProf.Settings.selectRecipesInProfessionWindow ~= false
+    local selectInProfessionWindow = RGXProf.GuideEnabled() and (not RGXProf.Settings
+        or RGXProf.Settings.selectRecipesInProfessionWindow ~= false)
     if selectInProfessionWindow and data.slot ~= RGXProf.CurrentState.selectedRecipe then
         GameTooltip:AddLine(RGXProf.L.SELECT, 1, 1, 1, 0)
         SetCursor("CAST_CURSOR")
