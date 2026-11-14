@@ -83,6 +83,7 @@ local base = {
     PREVIEW_TITLE_SKILL = "%s Preview - Starting from skill %d",
     MATS_TITLE = "Remaining Materials",
     NEXT_UP = "Next up",
+    OPT_MINIMAP_SHOW = "Show minimap button",
     OPT_ADDON_MENU = "List in the Addons menu",
     OPT_ADDON_MENU_DESC = "Adds RGX | Professions to the Addons menu on the minimap, so it stays reachable when the round button is hidden.",
     OPT_ADDON_MENU_RELOAD = "The Addons menu entry changes after /reload on this client.",

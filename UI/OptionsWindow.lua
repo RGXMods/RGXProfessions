@@ -128,8 +128,9 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
                             local chat = Card(host, L("OPT_CHAT_HEADER", "Chat"), "chatOutput", settings.chatOutput ~= false)
                             Tick(chat, L("OPT_LOGIN", "Print a loaded message at login"), "loginMessage", settings.loginMessage ~= false)
 
-                            -- Minimap: the switch is the minimap button; the tick is the Addons menu entry.
-                            local minimap = Card(host, L("OPT_MINIMAP_HEADER", "Minimap"), "minimapIconEnabled",
+                            -- Minimap: no header switch; the button and the Addons menu entry are tick boxes in the card.
+                            local minimap = Card(host, L("OPT_MINIMAP_HEADER", "Minimap"))
+                            Tick(minimap, L("OPT_MINIMAP_SHOW", "Show minimap button"), "minimapIconEnabled",
                                 settings.minimapIconEnabled ~= false, function(v) self_:SetMinimapIcon(v) end)
                             Tick(minimap, L("OPT_ADDON_MENU", "List in the Addons menu"), "addonMenu",
                                 settings.addonMenu ~= false, function(v) self_:SetAddonMenu(v) end)

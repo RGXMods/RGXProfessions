@@ -11,7 +11,7 @@ Requires **RGX-Framework 2.18.0 or later**.
 
 Requires **RGX-Framework 2.18.0 or later**.
 
-- The options page follows the RGX standard: three cards (Chat, Minimap, Guide), each with a switch in its header that turns the whole card on or off, and tick boxes for the options inside.
+- The options page follows the RGX standard: Chat and Guide have a header switch that turns the whole card on or off, with tick boxes inside. Minimap has no header switch; the minimap button and the Addons menu entry are tick boxes in its card.
 - New options: open the book when a profession window opens, and close it when the profession window closes. The guide already opens to the profession whose window is open.
 - The book now tracks your live skill on its own. Before, it only refreshed after the trade-window guide had been built, so with that guide off a skill-up did not update an open book.
 
