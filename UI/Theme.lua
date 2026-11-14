@@ -10,10 +10,16 @@ RGXProf = RGXProf or {}
 
 -- The addon's brand pair (user-defined, per mod): RGX red #8B1538 for rings and bars, and a light grey
 -- (#BDC3C7, the Breeze "cloud" grey used across KDE Plasma) for titles and highlights, so the look is
--- grey on grey with red only as an outline.
-RGXProf.Brand = {
+-- grey on grey with red only as an outline. This own pair never changes at runtime.
+RGXProf.OwnBrand = {
     primary = { 0.545, 0.082, 0.220 },
     accent  = { 0.741, 0.765, 0.780 },
+}
+-- The live pair every window reads. It is the own pair, or the framework's main colour while the beta theme
+-- override is on; RefreshBrand rewrites the values in place so every reference held elsewhere follows.
+RGXProf.Brand = {
+    primary = { unpack(RGXProf.OwnBrand.primary) },
+    accent  = { unpack(RGXProf.OwnBrand.accent) },
 }
 
 local function Hex(c)
@@ -29,29 +35,46 @@ function RGXProf.BrandTitle(name)
 end
 RGXProf.BRAND_STYLE = "materialround"   -- the addon's own look, used unless the operator chose another style
 
---- The interface style to build in: the one chosen on the RGX-Framework settings page (Theme tab) while
---- "Apply the framework theme to addons" is on, otherwise RGX Material Round. The brand colours stay the
---- addon's own in every style.
-function RGXProf.ActiveStyle()
+--- The colours and style to build with: the addon's own pair in RGX Material Round, or the framework's main
+--- colour and interface style while the beta global theme override is on. Rewrites RGXProf.Brand and
+--- RGXProf.BrandHex in place and returns the style id.
+function RGXProf.RefreshBrand()
     local D = _G.RGXDesign
-    local db = rawget(_G, "RGXFrameworkDB")
-    if type(db) == "table" and db.themeOverride ~= false and type(db.style) == "string"
-        and D and D.ResolveStyle then
-        local id = D:ResolveStyle(db.style)
-        if id then return id end
+    local own, live = RGXProf.OwnBrand, RGXProf.Brand
+    local theme, style
+    if D and type(D.ResolveAddonTheme) == "function" then
+        theme, style = D:ResolveAddonTheme(own, RGXProf.BRAND_STYLE)
+    else
+        -- A framework without ResolveAddonTheme: honour the saved style only while the override is on.
+        local db = rawget(_G, "RGXFrameworkDB")
+        if type(db) == "table" and db.themeOverride == true and type(db.style) == "string"
+            and D and D.ResolveStyle then
+            style = D:ResolveStyle(db.style)
+        end
     end
-    return RGXProf.BRAND_STYLE
+    theme = theme or own
+    local p, a = theme.primary or own.primary, theme.accent or own.accent
+    live.primary[1], live.primary[2], live.primary[3] = p[1], p[2], p[3]
+    live.accent[1], live.accent[2], live.accent[3] = a[1], a[2], a[3]
+    RGXProf.BrandHex.primary = Hex(live.primary)
+    RGXProf.BrandHex.accent = Hex(live.accent)
+    return style or RGXProf.BRAND_STYLE
 end
 
---- Run a window/widget builder in RGXProfessions' theme: its own primary/accent in the framework's
---- RGX Material Round style, restored afterwards so no other addon is affected. Returns the builder's
---- results. On a framework without styles the builder simply runs with the framework's defaults.
+--- The interface style to build in (see RefreshBrand).
+function RGXProf.ActiveStyle()
+    return RGXProf.RefreshBrand()
+end
+
+--- Run a window/widget builder in RGXProfessions' theme (own pair and style, or the override's), restored
+--- afterwards so no other addon is affected. Returns the builder's results. On a framework without styles the
+--- builder simply runs with the framework's defaults.
 function RGXProf.Themed(fn)
     local D = _G.RGXDesign
-    if not (D and D.WithTheme and D.WithStyle and D.ResolveStyle and D:ResolveStyle(RGXProf.BRAND_STYLE)) then
+    local style = RGXProf.RefreshBrand()
+    if not (D and D.WithTheme and D.WithStyle and D.ResolveStyle and D:ResolveStyle(style)) then
         return fn()
     end
-    local style = RGXProf.ActiveStyle()
     local r1, r2
     D:WithTheme(RGXProf.Brand, function()
         D:WithStyle(style, function() r1, r2 = fn() end)

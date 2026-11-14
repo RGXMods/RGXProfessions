@@ -23,7 +23,6 @@ local HEADER_HEIGHT = 60
 local BRAND_BORDER = RGXProf.Brand.primary
 local BRAND_RGB = BRAND_BORDER
 local BRAND_TEXT = RGXProf.Brand.accent
-local BRAND_TEXT_HEX = RGXProf.BrandHex.accent
 local HEADER_TEXT = { 0.922, 0.922, 0.941 }
 local INSET = 8                                  -- padding between a panel edge and its content
 local HEADER_GAP = 8                             -- breathing room under a card header title
@@ -79,9 +78,9 @@ local function C(key)
     end
     return "|cffffffff"
 end
--- Brand highlight: the same crimson as the RGX mark, the version text,
--- and the window border - deliberately NOT the active theme's primary.
-local function Accent() return "|cff8B1538" end
+-- Brand highlight: the addon's primary (the RGX mark, the version text and the window ring), or the
+-- framework's main colour while the beta theme override is on.
+local function Accent() return RGXProf.BrandHex.primary end
 -- Instruction text (what to do next): WoW's standard gold, readable on the dark panel and distinct
 -- from the crimson brand accents.
 local function Instruct() return "|cffffd100" end
@@ -246,7 +245,6 @@ end
 
 -- Title in the RGX family style: "RGX | Professions" (see UI/Theme.lua for the escaping).
 local BrandTitle = RGXProf.BrandTitle
-local HEADER_TITLE = BrandTitle("Professions")
 
 -- Real in-game tooltip for a guide step: the crafted item when the step
 -- carries an itemID, otherwise the craft spell. SetHyperlink renders true
@@ -523,7 +521,7 @@ local function BuildFrame(self)
 
     f.headerTitle = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     f.headerTitle:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, 10)
-    f.headerTitle:SetText(HEADER_TITLE)
+    f.headerTitle:SetText(BrandTitle("Professions"))
 
     f.headerSub = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.headerSub:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, -8)
@@ -536,7 +534,7 @@ local function BuildFrame(self)
     f.headerBrand = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.headerBrand:SetPoint("TOPRIGHT", -46, -40)
     f.headerBrand:SetJustifyH("RIGHT")
-    f.headerBrand:SetText("|cff8B1538RGX|r |cffffd700Mods|r")
+    f.headerBrand:SetText(RGXProf.BrandHex.primary .. "RGX|r |cffffd700Mods|r")
 
     local function HeaderMeta(key)
         if C_AddOns and C_AddOns.GetAddOnMetadata then
@@ -1330,7 +1328,7 @@ RenderDetail = function(self)
         else
             detail.locCoords:SetText("")
         end
-        detail.locAction:SetText(BRAND_TEXT_HEX .. RGXProf.L.PIN_HINT)
+        detail.locAction:SetText(RGXProf.BrandHex.accent .. RGXProf.L.PIN_HINT)
         detail.locHit:Show()
     elseif step.zones and ((step.zones.alliance and step.zones.alliance ~= "") or (step.zones.horde and step.zones.horde ~= "")) then
         local first = (faction == "Horde") and step.zones.horde or step.zones.alliance
@@ -1349,7 +1347,7 @@ RenderDetail = function(self)
     -- Notes: hide the card entirely when there is nothing to say.
     local notes = {}
     if IsKeep(step) then
-        table.insert(notes, BRAND_TEXT_HEX .. RGXProf.L.KEEP_FOR_LATER)
+        table.insert(notes, RGXProf.BrandHex.accent .. RGXProf.L.KEEP_FOR_LATER)
         if step.keepNote then
             table.insert(notes, Text() .. step.keepNote)
         end
@@ -1795,7 +1793,7 @@ function RGXProf.BookWindow:Show()
     else
         ResetAutoHeight(self)
         self.frame.headerIcon:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\square.tga")
-        self.frame.headerTitle:SetText(HEADER_TITLE)
+        self.frame.headerTitle:SetText(BrandTitle("Professions"))
         self.frame.progressLabel:SetText("")
         self.frame.progress:SetMinMaxValues(0, 1)
         self.frame.progress:SetValue(0)

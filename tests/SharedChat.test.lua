@@ -36,12 +36,32 @@ _G.RGXDesign = { ResolveStyle = function(_, n) return ({ forever = "forever", ma
 _G.RGXFrameworkDB = {}
 check(RGXProf.ActiveStyle() == "materialround", "no saved style: the addon's own Material Round")
 _G.RGXFrameworkDB = { style = "forever" }
-check(RGXProf.ActiveStyle() == "forever", "a saved framework style is used")
+check(RGXProf.ActiveStyle() == "materialround", "an unset override is off (the framework writes false on first load)")
+_G.RGXFrameworkDB = { style = "forever", themeOverride = true }
+check(RGXProf.ActiveStyle() == "forever", "a saved framework style is used while the override is on")
 _G.RGXFrameworkDB = { style = "forever", themeOverride = false }
 check(RGXProf.ActiveStyle() == "materialround", "theme switched off: back to the addon's own style")
-_G.RGXFrameworkDB = { style = "bogus" }
+_G.RGXFrameworkDB = { style = "bogus", themeOverride = true }
 check(RGXProf.ActiveStyle() == "materialround", "an unknown saved style is ignored")
 io.write("ActiveStyle OK\n")
+
+-- Colours: the brand pair is the addon's own until the framework answers with the override's pair.
+local GOLD, PURPLE = { 1, 0.843, 0 }, { 0.737, 0.435, 0.659 }
+local override = false
+_G.RGXDesign.ResolveAddonTheme = function(_, brand, style)
+    if override then return { primary = GOLD, accent = PURPLE }, "forever" end
+    return { primary = brand.primary, accent = brand.accent }, style
+end
+local ring = RGXProf.Brand.primary          -- a reference held by a window, like BookWindow's locals
+check(RGXProf.RefreshBrand() == "materialround" and ring[1] == RGXProf.OwnBrand.primary[1], "override off: the own pair")
+override = true
+check(RGXProf.RefreshBrand() == "forever", "override on: the chosen style")
+check(ring[1] == GOLD[1] and ring[2] == GOLD[2] and RGXProf.Brand.accent[1] == PURPLE[1], "override on: held references follow the framework colour")
+check(RGXProf.BrandHex.primary == "|cffFFD700", "override on: the hex follows too (" .. RGXProf.BrandHex.primary .. ")")
+override = false
+RGXProf.RefreshBrand()
+check(ring[1] == RGXProf.OwnBrand.primary[1], "override off again: back to the own pair")
+io.write("BrandOverride OK\n")
 
 -- The options page reads RGXProf.L as a table: it must not call it.
 local src = assert(io.open("UI/OptionsWindow.lua")):read("*a")

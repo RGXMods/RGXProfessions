@@ -102,6 +102,8 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
         return w
     end
 
+    -- Resolve the brand first: the titles below are coloured strings built from it.
+    local style = RGXProf.RefreshBrand and RGXProf.RefreshBrand() or RGXProf.ActiveStyle()
     local panel = UI:CreateOptionsPanel({
         addonName = "RGXProfessions",
         title = RGXProf.BrandTitle("Professions"),
@@ -112,7 +114,7 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
         version = "v" .. tostring(GetMeta("Version") or ""):gsub("^v+", ""),
         author = "DonnieDice",
         brand = "|cff8b4b5cRGX|r |cffffd700Mods|r",
-        style = RGXProf.ActiveStyle(),
+        style = style,
         width = 820,
         height = 640,
         hideTabRow = true,
