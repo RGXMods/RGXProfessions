@@ -1763,10 +1763,27 @@ function RGXProf.BookWindow:OnProfessionWindowOpened()
     end
 end
 
+--- Redraw the window after a theme change: build it again in the new colours and style and put it back where it
+--- was, on the same page.
+function RGXProf.BookWindow:Rebuild()
+    local f = self.frame
+    if not f then return end
+    local shown = f:IsShown()
+    f:Hide()
+    self.frame, self.rows = nil, nil
+    if shown then
+        self._rebuilding = true
+        local ok, err = pcall(self.Show, self)
+        self._rebuilding = nil
+        if not ok then error(err, 0) end
+    end
+end
+
 function RGXProf.BookWindow:Show()
     self:EnsureFrame()
     if not self.frame:IsShown() then
-        self:FollowProfessionWindow()
+        -- A theme-change rebuild keeps the page the player was on.
+        if not self._rebuilding then self:FollowProfessionWindow() end
     end
     if RGXProf_Settings.bookPosition then
         local pos = RGXProf_Settings.bookPosition

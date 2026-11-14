@@ -531,6 +531,16 @@ function W:Hide()
     if self.frame then self.frame:Hide() end
 end
 
+--- Redraw the overlay after a theme change, keeping what it showed.
+function W:Rebuild()
+    local f = self.frame
+    if not f then return end
+    local shown = f:IsShown()
+    f:Hide()
+    self.frame = nil
+    if shown and self.info then self:Show(self.info) end
+end
+
 function W:IsShown()
     return self.frame ~= nil and self.frame:IsShown()
 end

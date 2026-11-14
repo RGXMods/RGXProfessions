@@ -8,7 +8,7 @@
 ## Group: RealmGX
 ## Version: v0.4.7
 ## RequiredDeps: RGX-Framework
-## X-RGX-Framework-MinVersion: 2.18.0
+## X-RGX-Framework-MinVersion: 2.19.0
 ## SavedVariables: RGXProf_Settings, RGXProf_SimResults
 ## IconTexture: Interface\AddOns\RGXProfessions\Media\RGXIcon.tga
 ## LoadOnDemand: 0

@@ -30,9 +30,23 @@ check(#printed == 2, "chat output off prints nothing")
 print = nil
 io.write("SharedChat OK\n")
 
--- Style choice: the framework's saved style is honoured while the theme switch is on.
+-- Style choice: the framework's saved style is honoured while the theme switch is on. The framework (2.19+)
+-- answers through a registered brand; this stand-in applies the same rules as RGXDesign:ResolveAddonTheme.
 RGXProf.Brand = RGXProf.Brand or {}
-_G.RGXDesign = { ResolveStyle = function(_, n) return ({ forever = "forever", materialround = "materialround" })[n] end }
+local styles = { forever = "forever", materialround = "materialround" }
+local function resolveStyle(_, n) return styles[n] end
+_G.RGXDesign = { ResolveStyle = resolveStyle,
+  RegisterBrand = function(_, id, own, style)
+    return { own = own, style = style, OnChange = function() end, Build = function(_, fn) return fn() end,
+      Resolve = function(self)
+        local db = _G.RGXFrameworkDB
+        if type(_G.RGXDesign.ResolveAddonTheme) == "function" then return _G.RGXDesign:ResolveAddonTheme(self.own, self.style) end
+        if type(db) == "table" and db.themeOverride == true then
+          return { primary = self.own.primary, accent = self.own.accent }, resolveStyle(nil, db.style) or self.style
+        end
+        return { primary = self.own.primary, accent = self.own.accent }, self.style
+      end }
+  end }
 _G.RGXFrameworkDB = {}
 check(RGXProf.ActiveStyle() == "materialround", "no saved style: the addon's own Material Round")
 _G.RGXFrameworkDB = { style = "forever" }

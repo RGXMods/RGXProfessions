@@ -35,23 +35,30 @@ function RGXProf.BrandTitle(name)
 end
 RGXProf.BRAND_STYLE = "materialround"   -- the addon's own look, used unless the operator chose another style
 
---- The colours and style to build with: the addon's own pair in RGX Material Round, or the framework's main
---- colour and interface style while the beta global theme override is on. Rewrites RGXProf.Brand and
---- RGXProf.BrandHex in place and returns the style id.
-function RGXProf.RefreshBrand()
+-- The addon's brand, registered with the framework: it answers with the own pair and Material Round, or with
+-- the framework's main colour and interface style while the beta global theme override is on, and it tells
+-- RGXProfessions when that changes so open windows are redrawn without a reload.
+local function BrandObject()
     local D = _G.RGXDesign
+    if not RGXProf.BrandObj and D and type(D.RegisterBrand) == "function" then
+        RGXProf.BrandObj = D:RegisterBrand("RGXProfessions", RGXProf.OwnBrand, RGXProf.BRAND_STYLE)
+        RGXProf.BrandObj:OnChange(function()
+            RGXProf.RefreshBrand()
+            if RGXProf.BookWindow and RGXProf.BookWindow.Rebuild then RGXProf.BookWindow:Rebuild() end
+            if RGXProf.MatsWindow and RGXProf.MatsWindow.Rebuild then RGXProf.MatsWindow:Rebuild() end
+        end)
+    end
+    return RGXProf.BrandObj
+end
+RGXProf.GetBrand = BrandObject
+
+--- Rewrite RGXProf.Brand and RGXProf.BrandHex in place from the brand (so every held reference follows) and
+--- return the style id to build in.
+function RGXProf.RefreshBrand()
+    local brand = BrandObject()
     local own, live = RGXProf.OwnBrand, RGXProf.Brand
     local theme, style
-    if D and type(D.ResolveAddonTheme) == "function" then
-        theme, style = D:ResolveAddonTheme(own, RGXProf.BRAND_STYLE)
-    else
-        -- A framework without ResolveAddonTheme: honour the saved style only while the override is on.
-        local db = rawget(_G, "RGXFrameworkDB")
-        if type(db) == "table" and db.themeOverride == true and type(db.style) == "string"
-            and D and D.ResolveStyle then
-            style = D:ResolveStyle(db.style)
-        end
-    end
+    if brand then theme, style = brand:Resolve() end
     theme = theme or own
     local p, a = theme.primary or own.primary, theme.accent or own.accent
     live.primary[1], live.primary[2], live.primary[3] = p[1], p[2], p[3]
@@ -66,20 +73,13 @@ function RGXProf.ActiveStyle()
     return RGXProf.RefreshBrand()
 end
 
---- Run a window/widget builder in RGXProfessions' theme (own pair and style, or the override's), restored
---- afterwards so no other addon is affected. Returns the builder's results. On a framework without styles the
---- builder simply runs with the framework's defaults.
+--- Run a window/widget builder in RGXProfessions' brand (colours and style, restored afterwards). Panels and
+--- dropdowns built inside follow theme changes live. Returns the builder's results.
 function RGXProf.Themed(fn)
-    local D = _G.RGXDesign
-    local style = RGXProf.RefreshBrand()
-    if not (D and D.WithTheme and D.WithStyle and D.ResolveStyle and D:ResolveStyle(style)) then
-        return fn()
-    end
-    local r1, r2
-    D:WithTheme(RGXProf.Brand, function()
-        D:WithStyle(style, function() r1, r2 = fn() end)
-    end)
-    return r1, r2
+    RGXProf.RefreshBrand()
+    local brand = BrandObject()
+    if not brand then return fn() end
+    return brand:Build(fn)
 end
 
 --- The framework's rounded panel texture (for the few hand-drawn nine-slice pieces).
