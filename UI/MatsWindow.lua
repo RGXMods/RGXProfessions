@@ -357,12 +357,14 @@ function W:SetLocked(locked)
         f.lock:SetNormalTexture(locked and "Interface\\Buttons\\LockButton-Locked-Up" or "Interface\\Buttons\\LockButton-Unlocked-Up")
         -- Icon shape alone is easy to miss at 16px: locked is accent-tinted and
         -- brighter, unlocked is dimmed grey.
+        -- A button has no SetVertexColor of its own: the tint goes on its normal texture.
+        local icon = f.lock.GetNormalTexture and f.lock:GetNormalTexture()
         if locked then
             local c = RGXProf.Brand.accent
-            f.lock:SetVertexColor(c[1], c[2], c[3], 1)
+            if icon and icon.SetVertexColor then icon:SetVertexColor(c[1], c[2], c[3], 1) end
             f.lock:SetAlpha(1)
         else
-            f.lock:SetVertexColor(0.65, 0.65, 0.65, 1)
+            if icon and icon.SetVertexColor then icon:SetVertexColor(0.65, 0.65, 0.65, 1) end
             f.lock:SetAlpha(0.85)
         end
     end

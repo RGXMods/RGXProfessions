@@ -27,7 +27,7 @@ function RGXProf.DataManager:GetProfession()
 	local pName, pEarned, pTotal = adapter:getProfessionInfo()
 	local professionID = RGXProf.Constants.ProfessionNameToID[pName]
 	if not professionID then
-		print("|cffff0000[RGXProf]|r Unknown profession name:", pName)
+		RGXProf.Utils:SendMsg("Unknown profession name: " .. tostring(pName))
 		return
 	end
 
@@ -55,7 +55,7 @@ function RGXProf.DataManager:GetOtherProfession(pName)
 
 	local professionID = RGXProf.Constants.ProfessionNameToID[prof]
 	if not professionID then
-		print("|cffff0000[RGXProf]|r Unknown profession name:", prof)
+		RGXProf.Utils:SendMsg("Unknown profession name: " .. tostring(prof))
 		return
 	end
 

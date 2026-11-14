@@ -25,7 +25,7 @@ end
 function RGXProf.MiniWindow:Show(professionName, skill)
     local profession = RGXProf.DataManager:GetOtherProfession(professionName)
     if not profession then
-        print("|cffff0000[RGXProf]|r Unknown profession name:", professionName)
+        RGXProf.Utils:SendMsg("Unknown profession name: " .. tostring(professionName))
 		return
     end
     if not self.initializedUI then

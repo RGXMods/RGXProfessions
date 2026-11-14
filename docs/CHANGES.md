@@ -1,8 +1,18 @@
+## v0.4.7 - 2026-11-12
+
+Requires **RGX-Framework 2.18.0 or later**.
+
+- The options page is laid out as two columns of cards (Chat and Minimap, then Guide), sized to their rows, with no lone tab row above them. Rows fill each card and the page lays itself out again once the client has sized it.
+- The chat prefix is no longer an option: it is the branded RGX prefix and the settings page no longer offers a box for it.
+- Fixed an error when clicking Materials to Max (the lock icon tint was applied to the button instead of its texture).
+- Every chat line the addon prints (slash commands, errors, notes) now goes through the shared RGX chat, so it carries the one standard prefix and obeys the Chat switch. The "[RGXProf]" tag that was written into the message strings is gone.
+- The minimum framework version is now 2.18.0, which the card header switches need.
+
 ## v0.4.6 - 2026-11-12
 
 Requires **RGX-Framework 2.18.0 or later**.
 
-- The options page follows the RGX standard: three cards (Chat, Minimap, Guide), each with a switch in its header that turns the whole card on or off, and tick boxes for the options inside.
+- The options page follows the RGX standard: Chat and Guide have a header switch that turns the whole card on or off, with tick boxes inside. Minimap has no header switch; "Show minimap button" is a tick box in its card. The Addons menu entry is always on and is no longer an option.
 - New options: open the book when a profession window opens, and close it when the profession window closes. The guide already opens to the profession whose window is open.
 - The book now tracks your live skill on its own. Before, it only refreshed after the trade-window guide had been built, so with that guide off a skill-up did not update an open book.
 

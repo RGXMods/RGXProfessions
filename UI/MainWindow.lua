@@ -31,12 +31,12 @@ function RGXProf.MainWindow:SetupUI()
         btn:SetScript("OnClick", function()
         local state = RGXProf.CurrentState
         if not state then
-            print("⚠️  " .. RGXProf.L.SIM_NO_ACTIVE)
+            RGXProf.Utils:SendMsg("⚠️  " .. RGXProf.L.SIM_NO_ACTIVE)
             return
         end
         local next = state.nextStep
         if not next then
-            print("✅  " .. RGXProf.L.SIM_END_OF_PATH)
+            RGXProf.Utils:SendMsg("✅  " .. RGXProf.L.SIM_END_OF_PATH)
             return
         end
         RGXProf:SimulateStep(state.profession.id, next.minSkill, state.player.faction)
