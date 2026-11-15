@@ -47,8 +47,6 @@ Expansions\Expansions.lua
 Constants/Professions.lua
 
 Adapters/AddonAdapter.lua
-Adapters/TSMAdapter.lua
-Adapters/SkilletAdapter.lua
 Adapters/TradeskillAdapter.lua
 Adapters/CraftAdapter.lua
 Adapters/AdapterManager.lua
