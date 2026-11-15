@@ -92,6 +92,30 @@ local function Label() return C("label") end
 local PanelTexture = RGXProf.PanelTexture
 local NewButton = RGXProf.NewButton
 
+-- A clickable card tile in the active style (the game's inset frame in WoW Classic / WoW Forever, a rounded card
+-- in Material Round, a square card in RGX Framework) with a soft hover highlight. Big tiles are cards, not the
+-- style's push button.
+local function NewTile(parent, width, height)
+    return RGXProf.Themed(function()
+        local D = _G.RGXDesign
+        local btn = CreateFrame("Button", nil, parent, "BackdropTemplate")
+        btn:SetSize(width, height)
+        if D then
+            local square = D.cornerStyle == "square" and not (D.UsesClientArt and D:UsesClientArt())
+            if square and D.ApplyBackdrop then
+                D:ApplyBackdrop(btn, "dark")
+            elseif D.ApplyPanel then
+                D:ApplyPanel(btn, { role = "card", color = "surface", borderColor = "border", radius = 8 })
+            end
+        end
+        local highlight = btn:CreateTexture(nil, "HIGHLIGHT")
+        highlight:SetPoint("TOPLEFT", 4, -4)
+        highlight:SetPoint("BOTTOMRIGHT", -4, 4)
+        highlight:SetColorTexture(1, 1, 1, 0.07)
+        return btn
+    end)
+end
+
 -- Guide data stores "keep" as true/false (Classic) or 1/0; 0 must not count as keep, because in Lua
 -- 0 is true and every step would then claim its crafts are needed later.
 -- Card headers come from the framework's RGX Material Round style (rounded band, the mod's accent as
@@ -613,7 +637,7 @@ local function BuildFrame(self)
     -- Landing page: profession grid with live skill under each.
     f.landing = CreateFrame("Frame", nil, f)
     f.landing:SetPoint("TOPLEFT", f.progress, "BOTTOMLEFT", INSET - 1, -(INSET + 4))
-    f.landing:SetPoint("BOTTOMRIGHT", -INSET, 12)
+    f.landing:SetPoint("BOTTOMRIGHT", -(INSET + edge - 1), 12 + edge - 1)
 
     f.landingHint = f.landing:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     f.landingHint:SetPoint("TOP", 0, -10)
@@ -631,7 +655,7 @@ local function BuildFrame(self)
     -- Guide view: left step list + right detail.
     f.guide = CreateFrame("Frame", nil, f)
     f.guide:SetPoint("TOPLEFT", f.progress, "BOTTOMLEFT", INSET - 1, -(INSET + 4))
-    f.guide:SetPoint("BOTTOMRIGHT", -INSET, 12 + 26 + INSET) -- room for the footer row under the list
+    f.guide:SetPoint("BOTTOMRIGHT", -(INSET + edge - 1), 12 + 26 + INSET + edge - 1) -- room for the footer row under the list
     f.guide:Hide()
 
     -- Rounded panel behind the recipe list column: the same nine-slice
@@ -1569,7 +1593,7 @@ BuildLanding = function(self)
         local prof = RGXProf.Constants.Professions[professionID]
         local btn = landing._buttons[index]
         if not btn then
-            btn = NewButton(landing, nil, tileW, tileH)
+            btn = NewTile(landing, tileW, tileH)
             btn.icon = btn:CreateTexture(nil, "ARTWORK")
             btn.name = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             btn.skill = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -1735,14 +1759,29 @@ end
 
 --- The profession whose window is open right now (nil when none, or the guide has no path for it). Quiet:
 --- unlike DataManager:GetProfession it never prints.
+-- The profession of the window that just opened. The window's own event decides which client API to ask
+-- (Enchanting opens a craft window, the others a trade skill window): the current adapter is only switched when
+-- the window's frame shows, which can come after the event, the first time the craft UI loads.
+local function GuideID(name)
+    local id = name and RGXProf.Constants.ProfessionNameToID[name]
+    if id and RGXProf.currentExpansion and RGXProf.currentExpansion.paths[id] then return id end
+    return nil
+end
+
 function RGXProf.BookWindow:GetOpenProfessionID()
+    local event = RGXProf._lastProfessionEvent
+    local direct = (event == "CRAFT_SHOW" and _G.GetCraftDisplaySkillLine)
+        or (event == "TRADE_SKILL_SHOW" and _G.GetTradeSkillLine) or nil
+    if type(direct) == "function" then
+        local ok, name = pcall(direct)
+        local id = ok and GuideID(name)
+        if id then return id end
+    end
     local manager = RGXProf.AdapterManager
     local adapter = manager and manager.GetCurrent and manager:GetCurrent()
     if not (adapter and adapter.getProfessionInfo) then return nil end
     local ok, name = pcall(adapter.getProfessionInfo, adapter)
-    local id = ok and name and RGXProf.Constants.ProfessionNameToID[name]
-    if id and RGXProf.currentExpansion and RGXProf.currentExpansion.paths[id] then return id end
-    return nil
+    return ok and GuideID(name) or nil
 end
 
 --- "Open to the current profession window" (on by default): when the book opens, or a profession window

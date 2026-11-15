@@ -148,6 +148,8 @@ function RGXProf:RegisterEvents()
 end
 
 function RGXProf:TRADE_SHOW(event, forceShow)
+    -- Which kind of profession window opened (the book asks the matching client API for its profession).
+    if event == "CRAFT_SHOW" or event == "TRADE_SKILL_SHOW" then RGXProf._lastProfessionEvent = event end
 
     -- A real profession window takes over from manual guide mode
     if RGXProf.StateManager and RGXProf.StateManager.ClearManualProfession then
