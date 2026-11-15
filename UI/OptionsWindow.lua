@@ -106,7 +106,7 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
     -- brand live (colours, style and the header title below).
     local style = RGXProf.RefreshBrand()
     local panel = UI:CreateOptionsPanel({
-        brand = RGXProf.GetBrand(),
+        addonBrand = RGXProf.GetBrand(),
         addonName = "RGXProfessions",
         title = function() RGXProf.RefreshBrand() return RGXProf.BrandTitle("Professions") end,
         theme = { primary = RGXProf.Brand.primary, accent = RGXProf.Brand.accent },
