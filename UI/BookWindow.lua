@@ -1090,79 +1090,17 @@ end
 -- Detail pane
 --------------------------------------------------------------------------------
 
--- Closest-NPC helpers: compare positions in world coordinates when the
--- client can translate both points, else prefer NPCs on the player's map.
--- Everything is pcall-guarded; missing APIs degrade to the first candidate.
--- C_Map.GetWorldPosFromMapPos returns (continentID, worldX, worldY) on most
--- clients, but the Forever beta hands the position back as a vector-like
--- table. Normalize both shapes to continentID, x, y; nil when unusable.
-local function WorldPos(mapID, x, y)
-    if not (C_Map and C_Map.GetWorldPosFromMapPos and CreateVector2D and mapID) then return nil end
-    local ok, a, b, c = pcall(C_Map.GetWorldPosFromMapPos, mapID, CreateVector2D(x, y))
-    if not ok then return nil end
-    if type(b) == "table" then
-        if type(b.GetXY) == "function" then
-            local okXY, bx, by = pcall(b.GetXY, b)
-            if okXY and type(bx) == "number" and type(by) == "number" then
-                return a, bx, by
-            end
-        end
-        if type(b.x) == "number" and type(b.y) == "number" then
-            return a, b.x, b.y
-        end
-        return nil
-    end
-    if type(b) == "number" and type(c) == "number" then
-        return a, b, c
-    end
-    return nil
-end
-
--- NPC data stores map coordinates as percentages (22.8, 43.6); the client reports the player's position
--- as fractions (0.228, 0.436). Compare both as fractions.
-local function NpcDistance(npc, playerMapID, playerX, playerY)
-    if not (npc.x and npc.y) then return nil end
-    local nx, ny = npc.x / 100, npc.y / 100
-    if npc.zoneID == playerMapID and playerX and playerY then
-        local dx, dy = nx - playerX, ny - playerY
-        return dx * dx + dy * dy
-    end
-    if playerMapID and playerX and playerY and npc.zoneID then
-        local pCont, pwx, pwy = WorldPos(playerMapID, playerX, playerY)
-        local nCont, nwx, nwy = WorldPos(npc.zoneID, nx, ny)
-        if pCont and nCont and pCont == nCont
-            and type(pwx) == "number" and type(pwy) == "number"
-            and type(nwx) == "number" and type(nwy) == "number" then
-            local dx, dy = nwx - pwx, nwy - pwy
-            return dx * dx + dy * dy
-        end
-    end
-    return nil
-end
-
+-- The trainer or vendor nearest the player (RGXWorldMap:Nearest: world distance on the player's continent);
+-- the first candidate when the framework or the player's position is unavailable.
 local function NearestNpc(candidates)
     if not candidates or #candidates == 0 then return nil end
-    local playerMapID
-    if C_Map and C_Map.GetBestMapForUnit then
-        local ok, mapID = pcall(C_Map.GetBestMapForUnit, "player")
-        if ok and mapID then playerMapID = mapID end
+    local RGX = _G.RGXFramework
+    local WorldMap = RGX and RGX.GetWorldMap and RGX:GetWorldMap()
+    if WorldMap and WorldMap.Nearest then
+        local ok, best = pcall(WorldMap.Nearest, WorldMap, candidates)
+        if ok and best then return best end
     end
-    local px, py
-    if playerMapID and C_Map.GetPlayerMapPosition then
-        local ok, pos = pcall(C_Map.GetPlayerMapPosition, playerMapID, "player")
-        if ok and pos and pos.GetXY then
-            local okXY, x, y = pcall(pos.GetXY, pos)
-            if okXY then px, py = x, y end
-        end
-    end
-    local best, bestDist = candidates[1], nil
-    for _, npc in ipairs(candidates) do
-        local d = NpcDistance(npc, playerMapID, px, py)
-        if d and (not bestDist or d < bestDist) then
-            best, bestDist = npc, d
-        end
-    end
-    return best
+    return candidates[1]
 end
 
 -- Which rows the Materials card shows, in order. The card has 8 rows: reagents first
@@ -1389,32 +1327,15 @@ RenderDetail = function(self)
     LayoutDetail(self)
 end
 
--- Click on the Where card: put the game's own map pin on the spot and track it. Forever has no UiMapPoint helper
--- (it only loads on Retail), so the point is a plain table with the same shape.
+-- Click on the Where card: put the game's own map pin on the spot and track it (RGXWorldMap:SetWaypoint).
 function RGXProf.BookWindow.PinTarget(target)
     if not (target and target.zoneID and target.x and target.y) then return false end
-    local mapID, x, y = target.zoneID, target.x / 100, target.y / 100
     local name = target.name or "RGX Professions"
-    if C_Map and C_Map.SetUserWaypoint and CreateVector2D then
-        local can = true
-        if C_Map.CanSetUserWaypointOnMap then
-            local ok, result = pcall(C_Map.CanSetUserWaypointOnMap, mapID)
-            can = ok and result ~= false
-        end
-        if can then
-            local point = { uiMapID = mapID, position = CreateVector2D(x, y) }
-            if UiMapPoint and UiMapPoint.CreateFromCoordinates then
-                point = UiMapPoint.CreateFromCoordinates(mapID, x, y)
-            end
-            local ok = pcall(C_Map.SetUserWaypoint, point)
-            if ok then
-                if C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
-                    pcall(C_SuperTrack.SetSuperTrackedUserWaypoint, true)
-                end
-                RGXProf.Utils:SendMsg(string.format(RGXProf.L.PIN_SET, name))
-                return true
-            end
-        end
+    local RGX = _G.RGXFramework
+    local WorldMap = RGX and RGX.GetWorldMap and RGX:GetWorldMap()
+    if WorldMap and WorldMap.SetWaypoint and WorldMap:SetWaypoint(target.zoneID, target.x, target.y) then
+        RGXProf.Utils:SendMsg(string.format(RGXProf.L.PIN_SET, name))
+        return true
     end
     RGXProf.Utils:SendMsg(string.format(RGXProf.L.PIN_FALLBACK, name, target.x, target.y))
     return false
