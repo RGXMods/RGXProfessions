@@ -39,23 +39,16 @@ function RGXProf.AdapterManager:GetCurrent()
     return self.currentAdapter
 end
 
+-- Waypoints use the game's own map pin (C_Map.SetUserWaypoint), the same pin the book's Where card sets.
 function RGXProf.AdapterManager:HasNavigationAddon()
-    for _, addon in pairs(self.registeredAdapters) do
-        if addon.type == "navigation" and addon.loaded and addon.waypoint then
-            return true
-        end
-    end
-    return false
+    return C_Map ~= nil and type(C_Map.SetUserWaypoint) == "function"
 end
 
 function RGXProf.AdapterManager:SetWaypoint(name, zoneID, x, y)
-    for _, addon in pairs(RGXProf.AdapterManager.registeredAdapters) do
-        if addon.type == "navigation" and addon.loaded and addon.waypoint then
-            addon.waypoint(name, zoneID, x, y)
-            return
-        end
+    local pin = RGXProf.BookWindow and RGXProf.BookWindow.PinTarget
+    if type(pin) == "function" then
+        pin({ name = name, zoneID = zoneID, x = x, y = y })
     end
-    RGXProf.Utils:SendMsg(RGXProf.L.NO_WAYPOINT_ADDON)
 end
 
 function RGXProf.AdapterManager:RegisterMissedAdapters()

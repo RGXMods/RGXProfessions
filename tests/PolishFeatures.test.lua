@@ -65,10 +65,6 @@ check(RGXProf.BookWindow.PinTarget({ name = "Bowen", zoneID = 1420, x = 52.6, y 
 check(set and set.uiMapID == 1420 and math.abs(set.position.x - 0.526) < 1e-9 and math.abs(set.position.y - 0.555) < 1e-9, "waypoint uses 0-1 coordinates on the right map")
 check(tracked == true and RGXProf.said == "Pinned Bowen.", "the waypoint is tracked and the player is told")
 C_Map = nil
-local tt
-TomTom = { AddWaypoint = function(_, m, x, y, o) tt = { m, x, y, o.title } end }
-check(RGXProf.BookWindow.PinTarget({ name = "Bowen", zoneID = 1420, x = 52.6, y = 55.5 }) and tt[1] == 1420, "TomTom is used when the map API is missing")
-TomTom = nil
 check(RGXProf.BookWindow.PinTarget({ name = "Bowen", zoneID = 1420, x = 52.6, y = 55.5 }) == false and RGXProf.said:find("52.6", 1, true), "last resort: print the coordinates")
 check(RGXProf.BookWindow.PinTarget({ name = "x" }) == false, "a target without coordinates is ignored")
 

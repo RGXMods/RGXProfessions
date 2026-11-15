@@ -1389,8 +1389,8 @@ RenderDetail = function(self)
     LayoutDetail(self)
 end
 
--- Click on the Where card: put a waypoint on the map. Forever has no UiMapPoint helper (it only loads
--- on Retail), so the point is a plain table with the same shape; a navigation addon is used when one is installed.
+-- Click on the Where card: put the game's own map pin on the spot and track it. Forever has no UiMapPoint helper
+-- (it only loads on Retail), so the point is a plain table with the same shape.
 function RGXProf.BookWindow.PinTarget(target)
     if not (target and target.zoneID and target.x and target.y) then return false end
     local mapID, x, y = target.zoneID, target.x / 100, target.y / 100
@@ -1414,13 +1414,6 @@ function RGXProf.BookWindow.PinTarget(target)
                 RGXProf.Utils:SendMsg(string.format(RGXProf.L.PIN_SET, name))
                 return true
             end
-        end
-    end
-    if TomTom and TomTom.AddWaypoint then
-        local ok = pcall(TomTom.AddWaypoint, TomTom, mapID, x, y, { title = name })
-        if ok then
-            RGXProf.Utils:SendMsg(string.format(RGXProf.L.PIN_SET, name))
-            return true
         end
     end
     RGXProf.Utils:SendMsg(string.format(RGXProf.L.PIN_FALLBACK, name, target.x, target.y))
