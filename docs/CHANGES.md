@@ -1,3 +1,12 @@
+## v0.4.8 - 2026-11-14
+
+Requires **RGX-Framework 2.19.0 or later**.
+
+- RGX Professions follows the RGX-Framework theme override (beta, off by default) live: the settings page, the book, Materials to Max and the guide on the profession window take the framework's colour and style as soon as they change, without a reload. With the override off it looks as before.
+- The location card names the trainer or vendor nearest to where you are and pins it on the map, for every profession, including Alchemy, Herbalism, Mining, Skinning and Fishing. It updates when you change zone.
+- Turning off the Guide switch now also turns off the options inside its card (opening and closing the book with the profession window, opening the guide with it, and selecting recipes from it).
+- In WoW Classic and WoW Forever the book's header and skill bar sit inside the game's window frame.
+
 ## v0.4.7 - 2026-11-12
 
 Requires **RGX-Framework 2.18.0 or later**.
