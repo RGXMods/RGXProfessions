@@ -1390,7 +1390,7 @@ RenderDetail = function(self)
 end
 
 -- Click on the Where card: put a waypoint on the map. Forever has no UiMapPoint helper (it only loads
--- on Retail), so the point is a plain table with the same shape; TomTom is used when it is installed.
+-- on Retail), so the point is a plain table with the same shape; a navigation addon is used when one is installed.
 function RGXProf.BookWindow.PinTarget(target)
     if not (target and target.zoneID and target.x and target.y) then return false end
     local mapID, x, y = target.zoneID, target.x / 100, target.y / 100
