@@ -111,14 +111,6 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Package and release
-        uses: BigWigsMods/packager@master
-        env:
-          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
-          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
-          CF_API_KEY: ${{ secrets.CF_API_KEY }}
-          WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
-
       - name: Determine channel
         id: channel
         shell: bash
@@ -135,6 +127,45 @@ jobs:
           fi
           echo "channel=$channel" >> "$GITHUB_OUTPUT"
           echo "Channel: $channel"
+
+      - name: Write release notes
+        shell: bash
+        env:
+          NOTES: ${{ steps.changelog.outputs.body }}
+        run: printf '%s\n' "$NOTES" > "${RUNNER_TEMP}/release-notes.md"
+
+      - name: Build package
+        run: node tools/release/packager.mjs --toc "${{ steps.meta.outputs.addon }}.toc" --out artifacts
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+        run: |
+          addon="${{ steps.meta.outputs.addon }}"
+          version="${{ steps.meta.outputs.version }}"
+          node tools/release/publish-release.mjs \
+            --toc "${addon}.toc" \
+            --archive "artifacts/${addon}-v${version#v}.zip" \
+            --tag "${GITHUB_REF_NAME}" \
+            --release-type "${{ steps.channel.outputs.channel }}" \
+            --changelog-file "${RUNNER_TEMP}/release-notes.md" \
+            --out artifacts
+
+      - name: Publish to WoWInterface
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
+        run: |
+          addon="${{ steps.meta.outputs.addon }}"
+          version="${{ steps.meta.outputs.version }}"
+          node tools/release/publish-wowinterface.mjs \
+            --toc "${addon}.toc" \
+            --archive "artifacts/${addon}-v${version#v}.zip" \
+            --changelog-file "${RUNNER_TEMP}/release-notes.md"
 
       - name: Release notes
         run: |
