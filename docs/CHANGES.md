@@ -1,3 +1,7 @@
+## Unreleased
+
+- Blacksmithing: Imperial Plate Boots now shows the game's yellow threshold (290).
+
 ## v0.4.8 - 2026-11-14
 
 Requires **RGX-Framework 2.19.0 or later**.

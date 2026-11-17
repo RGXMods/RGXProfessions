@@ -18,5 +18,5 @@ RGXProf.ForeverPaths.Blacksmithing = {
   { minSkill = 250, maxSkill = 255, spellID = 1252301, name = "Sentinel's Gloves", colors = { y = 255, g = 255, r = 255 }, learnAt = 250, source = "new", crafts = 5 },
   { minSkill = 255, maxSkill = 281, spellID = 1252339, name = "Blessed Plate Bracers", colors = { y = 275, g = 285, r = 295 }, learnAt = 255, source = "new", crafts = 27 },
   { minSkill = 281, maxSkill = 295, spellID = 1252341, name = "Blessed Plate Belt", colors = { y = 290, g = 300, r = 310 }, learnAt = 270, source = "new", crafts = 15 },
-  { minSkill = 295, maxSkill = 300, spellID = 16657, name = "Imperial Plate Boots", colors = { y = 295, g = 300, r = 310 }, learnAt = 295, source = "quest", crafts = 6 },
+  { minSkill = 295, maxSkill = 300, spellID = 16657, name = "Imperial Plate Boots", colors = { y = 290, g = 300, r = 310 }, learnAt = 295, source = "quest", crafts = 6 },
 }
