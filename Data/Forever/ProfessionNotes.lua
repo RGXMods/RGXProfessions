@@ -3,7 +3,7 @@ RGXProf.ForeverNotes = RGXProf.ForeverNotes or {}
 -- WoW Forever leveling data.
 RGXProf.ForeverNotes[171] = { -- Alchemy
   tagline = "No more healing potions. Elixirs carry you instead.",
-  summary = "Forever took the healing potion ladder away from Alchemy and handed it to First Aid, which kills the route every Classic guide uses. What is left is still the cheapest crafting profession to level: elixirs and mana potions from 1 to 232, two Detect draughts to 286, then Greater Dreamless Sleep from a vendor pattern to finish.",
+  summary = "Forever took the healing potion ladder away from Alchemy and handed it to First Aid, which kills the route every Classic guide uses. What is left is still cheap to level: Elixir of Minor Defense from 1 to 64, Minor Fortitude and Wisdom, the two mana potions to 200, Catseye Draught to 250, then Stonescale Oil and Major Discolored Healing Potions to finish.",
   changes = {
     { text = "Minor through Major Healing Potion are gone from Alchemy and now sit in First Aid. Alchemy keeps a separate Discolored Healing Potion line that uses Murloc Eyes.", source = "Beta data" },
     { text = "Elixir of Minor Defense now takes Silverleaf, Peacebloom and a vial instead of two Silverleaf. It carries you from 1 to 90 on its own.", source = "Beta data" },
@@ -11,9 +11,9 @@ RGXProf.ForeverNotes[171] = { -- Alchemy
     { text = "Camp objects: Mana Well at 20, Fermenter at 140, Alchemy Laboratory at 300. The 300 one needs a Blueprint from a dungeon boss.", source = "Blizzard" },
   },
   tips = {
-    "Buy vials in bulk from any alchemy supplier before you start. The route eats 210 Empty Vials, 80 Leaded and 84 Crystal.",
-    "Stranglekelp is the herb people forget. You need 84 of it for the mana potions between 120 and 195, so pick it up while you are fishing or swimming past.",
-    "Greater Dreamless Sleep Potion is a vendor pattern. Buy it before 275 so you are not stuck at 286.",
+    "Buy vials in bulk from any alchemy supplier before you start. The route uses about 168 Empty Vials, 133 Leaded Vials and 45 Crystal Vials.",
+    "Stranglekelp is the herb people forget. You need about 92 of it for the mana potions between 120 and 200, so pick it up while you are fishing or swimming past.",
+    "Catseye Draught takes about 74 Goldthorn and 74 Fadeleaf, and the last step needs about 45 Plaguebloom and 45 Murloc Eyes, so keep the eyes you loot.",
   },
   ranks = {
     "Journeyman unlocks at skill 50, Expert at 125 and Artisan at 200, each raising the cap by 75.",
@@ -23,7 +23,7 @@ RGXProf.ForeverNotes[171] = { -- Alchemy
 }
 RGXProf.ForeverNotes[164] = { -- Blacksmithing
   tagline = "Every plan moved down 25 points. Bring a lot of bars.",
-  summary = "Forever made Blacksmithing the hungriest route in the game. Plans, stones and weightstones all moved about 25 points down the skill ladder: you learn them sooner and they go grey sooner, and every stone past Rough only gives skill for 10 to 15 points. The route below still does 1 to 84 almost for free on Rough Stone. After that you are feeding bars into gear and selling what you can.",
+  summary = "Forever made Blacksmithing the hungriest route in the game. Plans, stones and weightstones all moved about 25 points down the skill ladder: you learn them sooner and they go grey sooner, and every stone past Rough only gives skill for 10 to 15 points. The route below still does 1 to 82 almost for free on Rough Stones. After that you are feeding bars into gear and selling what you can.",
   changes = {
     { text = "Coarse, Heavy, Solid and Dense stones are learned 25 points earlier than in Classic and go grey 10 to 15 points later. That is enough for Heavy Grinding Stone (100 to 121), Solid Sharpening Stone (175 to 185) and Dense Weightstone (225 to 235) to earn a place in the route.", source = "Beta data" },
     { text = "Rough Grinding Stone runs orange to 45 and grey at 85, which makes it the 35 to 84 recipe.", source = "Beta data" },
@@ -33,8 +33,8 @@ RGXProf.ForeverNotes[164] = { -- Blacksmithing
     { text = "Camp objects: Sharpening Wheel at 20 (an Attack Power buff), Anvil at 140, Master Forge at 300.", source = "Blizzard" },
   },
   tips = {
-    "Take Mining with it. Buying 1,046 Thorium and 650 Mithril Bars on a launch auction house is how guilds go bankrupt.",
-    "Ornate Mithril and Imperial Plate plans are quest rewards. Look the quests up before 225 and 265 so the plans are waiting when you get there.",
+    "Take Mining with it. Buying the Mithril and Thorium this route eats on the auction house is expensive.",
+    "The Imperial Plate plans are quest rewards. Start those quests early so the plans are ready at 245, 270 and 280.",
     "Keep the Blessed Plate and Imperial pieces you make: they vendor, disenchant or go on alts.",
   },
   ranks = {
@@ -45,7 +45,7 @@ RGXProf.ForeverNotes[164] = { -- Blacksmithing
 }
 RGXProf.ForeverNotes[185] = { -- Cooking
   tagline = "Fish it, cook it, done by 60.",
-  summary = "Cooking colours did not change, and Cooking now unlocks camping, so everybody wants it. The cheapest route is almost all fish: catch it yourself with Fishing and Cooking costs you nothing but Mild Spices. Only Lean Wolf Steak, from 125 to 179, needs meat off a mob.",
+  summary = "Cooking colours did not change, and Cooking now unlocks camping, so everybody wants it. The cheapest route is almost all fish: catch it yourself with Fishing and Cooking costs you nothing but Mild Spices. Only Lean Wolf Steak, from 125 to 178, needs meat off a mob.",
   changes = {
     { text = "Skill-up colours are unchanged from Classic.", source = "Beta data" },
     { text = "Cooking unlocks camping. Campfires come in tiers: Basic at 1, Journeyman at 90, Expert at 200 and an Iron Oven at 300.", source = "Beta data" },
@@ -54,7 +54,7 @@ RGXProf.ForeverNotes[185] = { -- Cooking
   },
   tips = {
     "All the fish recipes here are sold by fishing and cooking suppliers. Buy them as soon as you can.",
-    "Lean Wolf Flank drops from wolves in the level 30s, and Lean Wolf Steak is a vendor recipe. Farm the flanks while you quest through that bracket.",
+    "Lean Wolf Flank drops from wolves in the level 30s, and the Lean Wolf Steak recipe is sold by Super-Seller 680 in Desolace. Spotted Yellowtail is sold by Gikkix in Tanaris. Farm the flanks while you quest through that bracket.",
     "Level Fishing first or at the same time: every fish you catch on the Fishing route below is a Cooking skill-up waiting to happen.",
   },
   ranks = {
@@ -74,9 +74,9 @@ RGXProf.ForeverNotes[333] = { -- Enchanting
     { text = "Camp objects: Enchanted Lute at 20, Arcane Salvager at 140, Arcane Forge at 300.", source = "Blizzard" },
   },
   tips = {
-    "You only need one Runed Copper Rod. The extra rods from 1 to 10 are just the cheapest points, so vendor them.",
-    "Disenchant every green you or your guild does not need from the start. The route wants 179 Strange Dust, 105 Soul Dust, 74 Vision Dust and 143 Dream Dust.",
-    "Lesser Mana Oil and Greater Stamina on shields are vendor formulas. Buy them before 260.",
+    "Make the Runed Copper Rod first: every later recipe needs a rod in your bags. Have the Silver, Golden and Truesilver Rods ready by skill 130, 160 and 210.",
+    "Disenchant every green you or your guild does not need from the start. The route wants about 175 Strange Dust, 66 Soul Dust, 127 Vision Dust and 174 Dream Dust.",
+    "The Greater Stamina shield formula is a vendor pattern. Buy it before 278.",
   },
   ranks = {
     "Journeyman unlocks at skill 50, Expert at 125 and Artisan at 200, each raising the cap by 75.",
@@ -94,8 +94,8 @@ RGXProf.ForeverNotes[202] = { -- Engineering
     { text = "Engineering has no trained passive in Forever. The gadgets are the bonus.", source = "Reported" },
   },
   tips = {
-    "Mining is close to mandatory: this route needs 400 Solid Stone and 84 Rough Stone on top of the bars.",
-    "Craft all 158 Solid Blasting Powder you need at 175 while it still gives skill, then bank them for the slugs and Gyro-Shots.",
+    "Mining is close to mandatory: this route needs 400 Solid Stone and 54 Rough Stone on top of the bars.",
+    "Craft the 173 Solid Blasting Powder you need at 175 while it still gives skill, then bank it for the slugs and Gyro-Shots.",
     "Thorium Tube is a vendor schematic. Pick it up before you reach 275.",
   },
   ranks = {
@@ -114,8 +114,8 @@ RGXProf.ForeverNotes[129] = { -- FirstAid
     { text = "Heavy Silk, Mageweave and Heavy Mageweave Bandage manuals come from Deneb Walker in Arathi and Balai Lok’Wein in Dustwallow Marsh. Artisan needs the Triage quest from Theramore or Hammerfall, and the Triage doctor then teaches the Runecloth bandages. No changes to either were found.", source = "Classic" },
   },
   tips = {
-    "Keep 152 Linen, 144 Wool, 127 Silk, 92 Mageweave and 65 Runecloth back from the auction house.",
-    "Heavy Linen Bandage carries you from 45 to 80. Make the Minor Healing Potions for your own bags if you like, but they cost more per point than bandages.",
+    "Keep 153 Linen, 144 Wool, 126 Silk, 92 Mageweave and 65 Runecloth back from the auction house.",
+    "Heavy Linen Bandage carries you from 40 to 80. Make the Minor Healing Potions for your own bags if you like, but they cost more per point than bandages.",
     "Do the Triage quest at 225. It needs level 35 in Classic.",
   },
   ranks = {
@@ -126,7 +126,7 @@ RGXProf.ForeverNotes[129] = { -- FirstAid
 }
 RGXProf.ForeverNotes[165] = { -- Leatherworking
   tagline = "Every pattern moved down. A mountain of Rugged and Thick Leather.",
-  summary = "Most Leatherworking patterns moved 15 to 25 points down the skill ladder, so you learn them sooner and they go grey sooner, and the leather conversions only give skill for a few points. The route changes recipe 17 times. Light Armor Kits take you from 1 to 52 for a stack of Light Leather. From 250 onward the old patterns run dry and the route leans on the new Skulker’s and Blue Suede patterns.",
+  summary = "Most Leatherworking patterns moved 15 to 25 points down the skill ladder, so you learn them sooner and they go grey sooner, and the leather conversions only give skill for a few points. The route changes recipe 17 times. Light Armor Kits take you from 1 to 48 for a stack of Light Leather. From 253 the route leans on vendor patterns: Wicked Leather Gauntlets, Runic Leather Headband and Heavy Scorpid Helm.",
   changes = {
     { text = "Medium and Heavy Leather conversions give skill for 10 points after you learn them and Thick Leather for 5. Rugged Leather is grey at once.", source = "Beta data" },
     { text = "Most older patterns are learned and go grey 15 to 25 points sooner than in Classic. Heavy Armor Kit is learned at 125 and goes grey at 165, against 150 and 190.", source = "Beta data" },
@@ -134,9 +134,9 @@ RGXProf.ForeverNotes[165] = { -- Leatherworking
     { text = "Camp object: Tanning Rack at 140, which enables the advanced patterns.", source = "Blizzard" },
   },
   tips = {
-    "Skinning pays for this entirely. The route needs 554 Thick Leather, 377 Light and 634 Rugged.",
+    "Skinning pays for this entirely. The route needs about 544 Thick Leather, 212 Light and 778 Rugged.",
     "The Wild Leather patterns are quest rewards in Feralas. Do that chain before 205 or you will be buying worse patterns.",
-    "Buy salt from any leatherworking supplier. You need 116 for the cured hides.",
+    "Buy salt from any leatherworking supplier. You need 100 for the cured hides. The last step needs 180 Heavy Scorpid Scales, so start collecting them while skinning in Silithus or the Burning Steppes.",
   },
   ranks = {
     "Journeyman unlocks at skill 50, Expert at 125 and Artisan at 200, each raising the cap by 75.",
@@ -146,7 +146,7 @@ RGXProf.ForeverNotes[165] = { -- Leatherworking
 }
 RGXProf.ForeverNotes[197] = { -- Tailoring
   tagline = "Every pattern moved down the ladder. Runecloth is the bill.",
-  summary = "Tailoring is still the most expensive profession to level in Forever. Almost every pattern moved 20 to 35 points down the skill ladder, so you can learn it sooner and it goes grey sooner by the same amount, and bolts only give a few points each. The route below is the cheapest the data allows, and it still asks for about 2,500 Runecloth. Level it alongside your character and keep every scrap.",
+  summary = "Tailoring is still the most expensive profession to level in Forever. Almost every pattern moved 20 to 35 points down the skill ladder, so you can learn it sooner and it goes grey sooner by the same amount, and bolts only give a few points each. The route below is the cheapest the data allows, and its endgame runs on Runecloth: 664 Bolts of Runecloth plus 35 loose, about 3,350 in all. Level it alongside your character and keep every scrap.",
   changes = {
     { text = "Bolts moved down too and give skill for 10 to 20 points: Silk is learned at 100 and grey at 120, Mageweave at 140 and 150, Runecloth at 205 and 215. Bolt of Woolen Cloth goes grey at 85 instead of 105.", source = "Beta data" },
     { text = "Most older patterns are learned and go grey 20 to 35 points sooner than in Classic. Enchanter’s Cowl is learned at 130 and goes grey at 180, against 165 and 215.", source = "Beta data" },
@@ -155,8 +155,8 @@ RGXProf.ForeverNotes[197] = { -- Tailoring
     { text = "Camp objects: Faction Banner at 20 (a Spirit buff), Spinning Wheel at 140, Loom at 300.", source = "Blizzard" },
   },
   tips = {
-    "Do not sell cloth while levelling your character. The route wants 150 Linen, 93 Wool, 664 Silk, 690 Mageweave and 2,530 Runecloth.",
-    "Several steps are vendor patterns (Bright Yellow Shirt, Azure Silk Cloak, Runecloth Gloves and Boots, Mooncloth Robe). Buy them as you pass the vendor.",
+    "Do not sell cloth while levelling your character. Silk and Mageweave bolts carry the middle of the route, and Runecloth carries everything after 205.",
+    "Several steps are vendor patterns (Azure Silk Cloak, Runecloth Gloves and Runecloth Cuffs). Buy them as you pass the vendor. The Earthenweave Crown pattern for the last stretch has no known source yet.",
     "Pair it with Enchanting and disenchant what you make, or send the greens to an enchanter friend.",
   },
   ranks = {

@@ -28,7 +28,7 @@ for _, name in ipairs(files) do
     end
   end
 end
-check(crafted == 100 and withNote == 7, "every Forever route loaded (" .. crafted .. " craft steps, " .. withNote .. " gathering notes)")
+check(crafted == 101 and withNote == 7, "every Forever route loaded (" .. crafted .. " craft steps, " .. withNote .. " gathering notes)")
 
 -- The step note is rendered once, in the Notes card, not again in the recipe card's meta lines.
 local render = src:sub(assert(src:find("RenderDetail = function(self)", 1, true)), assert(src:find("LayoutDetail = function(self)", 1, true)))

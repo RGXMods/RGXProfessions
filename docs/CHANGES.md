@@ -1,6 +1,8 @@
 ## Unreleased
 
-- Blacksmithing: Imperial Plate Boots now shows the game's yellow threshold (290).
+- The Forever crafting guides (Alchemy, Blacksmithing, Cooking, Enchanting, Engineering, First Aid, Leatherworking and Tailoring) follow the current routes: 101 steps with new recipe choices, skill ranges, craft counts and where each recipe is learned. Recipe IDs, skill colours and materials come from the game's own data, and the guide notes' figures match the new routes.
+- Tailoring now uses Double-stitched Woolen Shoulders at 116, Mageweave Bag twice, and Runecloth Cuffs for 250 to 292 before Earthenweave Crown; Alchemy runs Elixir of Minor Defense to 64, then Minor Fortitude, Wisdom, the mana potions, Catseye Draught, Stonescale Oil and Major Discolored Healing Potions.
+- A new test checks every route: it runs from 1 to 300 without gaps, no step goes past the point its recipe turns gray, every recipe has materials and an icon.
 
 ## v0.4.8 - 2026-11-14
 
