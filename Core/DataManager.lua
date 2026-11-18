@@ -452,6 +452,17 @@ function RGXProf.DataManager:GetTrainers(playerFaction, searchLevel, professionI
 	return RGXProf.Utils:NpcSort(results)
 end
 
+--- Every trainer of a profession the player can use, whatever skill band they are listed for.
+function RGXProf.DataManager:GetProfessionTrainers(playerFaction, professionID)
+	local results = {}
+	for _, trainer in pairs(RGXProf.TrainerData or {}) do
+		if trainer.professionID == professionID and RGXProf.Utils:IsFaction(playerFaction, trainer.faction) then
+			table.insert(results, trainer)
+		end
+	end
+	return RGXProf.Utils:NpcSort(results)
+end
+
 --- Shows all the vendors that sell a recipe and are friendly or neutral to the player
 --- @param step Step 
 --- @param playerFaction string

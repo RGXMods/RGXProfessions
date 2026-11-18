@@ -102,17 +102,21 @@ function RGXProf.OptionsWindow:CreateOptionsPanel()
         return w
     end
 
+    -- Resolve the brand first: the sidebar title is a coloured string built from it. The panel itself follows the
+    -- brand live (colours, style and the header title below).
+    local style = RGXProf.RefreshBrand()
     local panel = UI:CreateOptionsPanel({
+        addonBrand = RGXProf.GetBrand(),
         addonName = "RGXProfessions",
-        title = RGXProf.BrandTitle("Professions"),
+        title = function() RGXProf.RefreshBrand() return RGXProf.BrandTitle("Professions") end,
+        theme = { primary = RGXProf.Brand.primary, accent = RGXProf.Brand.accent },
         sidebarTitle = RGXProf.BrandTitle("Professions"),
         subtitle = L("SETTINGS_TITLE", "RGX Professions Settings"),
         icon = "Interface\\AddOns\\RGX-Framework\\media\\square.tga",
-        theme = { primary = RGXProf.Brand.primary, accent = RGXProf.Brand.accent },
         version = "v" .. tostring(GetMeta("Version") or ""):gsub("^v+", ""),
         author = "DonnieDice",
         brand = "|cff8b4b5cRGX|r |cffffd700Mods|r",
-        style = RGXProf.ActiveStyle(),
+        style = style,
         width = 820,
         height = 640,
         hideTabRow = true,

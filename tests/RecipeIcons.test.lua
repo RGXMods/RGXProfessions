@@ -33,15 +33,15 @@ for spellID, itemID in pairs(RGXProf.Constants.ProductItemIcons) do
     check(display.name == "Recipe" and display.link:find("Hspell:" .. spellID, 1, true), "product icon preserves the recipe name and spell link")
     count = count + 1
 end
-check(count == 92, "all 92 verified Forever recipe outputs are covered (got " .. count .. ")")
+check(count == 116, "all 116 verified Forever recipe outputs are covered (got " .. count .. ")")
 check(RGXProf.Constants.ProductItemIcons[1255039] == 252548, "Forever-only Skulker's Leather Gauntlets uses its verified product")
 check(wow:GetItemLinkAndIconOrSpell({ spellID = 2152, itemID = 999, name = "Light Armor Kit" }).icon == 1002304,
     "verified product wins even when historical step data carries an incorrect item ID")
 
 -- Every item-producing step in the shipped Forever routes is covered;
--- the seven enchants have no product and intentionally use spell textures.
+-- the enchants have no product and intentionally use spell textures.
 local paths = { "Alchemy", "Blacksmithing", "Cooking", "Enchanting", "Engineering", "FirstAid", "Leatherworking", "Tailoring" }
-local spellOnly = { [7420] = true, [7771] = true, [13501] = true, [13637] = true, [13815] = true, [13948] = true, [20017] = true }
+local spellOnly = { [7418] = true, [7420] = true, [7771] = true, [13501] = true, [13637] = true, [13661] = true, [13815] = true, [13939] = true, [13948] = true, [20017] = true }
 for _, name in ipairs(paths) do
     assert(loadfile("Data/Forever/ProfessionPaths/" .. name .. ".lua"))()
     for _, step in ipairs(RGXProf.ForeverPaths[name]) do

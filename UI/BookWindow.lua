@@ -23,7 +23,6 @@ local HEADER_HEIGHT = 60
 local BRAND_BORDER = RGXProf.Brand.primary
 local BRAND_RGB = BRAND_BORDER
 local BRAND_TEXT = RGXProf.Brand.accent
-local BRAND_TEXT_HEX = RGXProf.BrandHex.accent
 local HEADER_TEXT = { 0.922, 0.922, 0.941 }
 local INSET = 8                                  -- padding between a panel edge and its content
 local HEADER_GAP = 8                             -- breathing room under a card header title
@@ -79,9 +78,9 @@ local function C(key)
     end
     return "|cffffffff"
 end
--- Brand highlight: the same crimson as the RGX mark, the version text,
--- and the window border - deliberately NOT the active theme's primary.
-local function Accent() return "|cff8B1538" end
+-- Brand highlight: the addon's primary (the RGX mark, the version text and the window ring), or the
+-- framework's main colour while the beta theme override is on.
+local function Accent() return RGXProf.BrandHex.primary end
 -- Instruction text (what to do next): WoW's standard gold, readable on the dark panel and distinct
 -- from the crimson brand accents.
 local function Instruct() return "|cffffd100" end
@@ -92,6 +91,30 @@ local function Label() return C("label") end
 -- The framework owns the rounded panel texture and the buttons; both come from UI/Theme.lua.
 local PanelTexture = RGXProf.PanelTexture
 local NewButton = RGXProf.NewButton
+
+-- A clickable card tile in the active style (the game's inset frame in WoW Classic / WoW Forever, a rounded card
+-- in Material Round, a square card in RGX Framework) with a soft hover highlight. Big tiles are cards, not the
+-- style's push button.
+local function NewTile(parent, width, height)
+    return RGXProf.Themed(function()
+        local D = _G.RGXDesign
+        local btn = CreateFrame("Button", nil, parent, "BackdropTemplate")
+        btn:SetSize(width, height)
+        if D then
+            local square = D.cornerStyle == "square" and not (D.UsesClientArt and D:UsesClientArt())
+            if square and D.ApplyBackdrop then
+                D:ApplyBackdrop(btn, "dark")
+            elseif D.ApplyPanel then
+                D:ApplyPanel(btn, { role = "card", color = "surface", borderColor = "border", radius = 8 })
+            end
+        end
+        local highlight = btn:CreateTexture(nil, "HIGHLIGHT")
+        highlight:SetPoint("TOPLEFT", 4, -4)
+        highlight:SetPoint("BOTTOMRIGHT", -4, 4)
+        highlight:SetColorTexture(1, 1, 1, 0.07)
+        return btn
+    end)
+end
 
 -- Guide data stores "keep" as true/false (Classic) or 1/0; 0 must not count as keep, because in Lua
 -- 0 is true and every step would then claim its crafts are needed later.
@@ -246,7 +269,6 @@ end
 
 -- Title in the RGX family style: "RGX | Professions" (see UI/Theme.lua for the escaping).
 local BrandTitle = RGXProf.BrandTitle
-local HEADER_TITLE = BrandTitle("Professions")
 
 -- Real in-game tooltip for a guide step: the crafted item when the step
 -- carries an itemID, otherwise the craft spell. SetHyperlink renders true
@@ -481,10 +503,15 @@ local function BuildFrame(self)
     -- sliced from the framework panel texture, rounded top corners
     -- matching the window's own radius, straight sides and bottom); the
     -- progress strip below doubles as the band's bottom edge.
+    -- WoW Classic / WoW Forever draw the window with the game's own frame, which is thicker than the 1px
+    -- ring: the header (and the skill bar under it) sit inside that frame, and the band draws no fill of its
+    -- own so the frame's top edge stays visible.
+    local clientArt = Design and type(Design.UsesClientArt) == "function" and Design:UsesClientArt() or false
+    local edge = clientArt and 8 or 1
     local header = CreateFrame("Frame", nil, f)
     header:SetHeight(HEADER_HEIGHT)
-    header:SetPoint("TOPLEFT", 1, -1)
-    header:SetPoint("TOPRIGHT", -1, -1)
+    header:SetPoint("TOPLEFT", edge, -edge)
+    header:SetPoint("TOPRIGHT", -edge, -edge)
     local R = 12
     local function HeaderFill(color, alpha)
         local function piece(u1, u2, v1, v2)
@@ -509,7 +536,7 @@ local function BuildFrame(self)
     end
     local hsr, hsg, hsb = 0.086, 0.086, 0.110
     if Design then hsr, hsg, hsb = Design:Unpack("surface") end
-    HeaderFill({ hsr, hsg, hsb }, 0.95)
+    if not clientArt then HeaderFill({ hsr, hsg, hsb }, 0.95) end
 
     f.headerIcon = header:CreateTexture(nil, "ARTWORK")
     f.headerIcon:SetSize(48, 48)
@@ -518,7 +545,7 @@ local function BuildFrame(self)
 
     f.headerTitle = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     f.headerTitle:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, 10)
-    f.headerTitle:SetText(HEADER_TITLE)
+    f.headerTitle:SetText(BrandTitle("Professions"))
 
     f.headerSub = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.headerSub:SetPoint("LEFT", f.headerIcon, "RIGHT", 10, -8)
@@ -531,7 +558,7 @@ local function BuildFrame(self)
     f.headerBrand = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.headerBrand:SetPoint("TOPRIGHT", -46, -40)
     f.headerBrand:SetJustifyH("RIGHT")
-    f.headerBrand:SetText("|cff8B1538RGX|r |cffffd700Mods|r")
+    f.headerBrand:SetText(RGXProf.BrandHex.primary .. "RGX|r |cffffd700Mods|r")
 
     local function HeaderMeta(key)
         if C_AddOns and C_AddOns.GetAddOnMetadata then
@@ -587,7 +614,7 @@ local function BuildFrame(self)
     end
 
     f.close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
-    f.close:SetPoint("TOPRIGHT", -4, -4)
+    f.close:SetPoint("TOPRIGHT", -(edge + 3), -(edge + 3))
 
     -- Settings gear: opens the RGX settings window (minimap icon, auto-open, recipe clicks).
     f.gear = CreateFrame("Button", nil, f)
@@ -610,7 +637,7 @@ local function BuildFrame(self)
     -- Landing page: profession grid with live skill under each.
     f.landing = CreateFrame("Frame", nil, f)
     f.landing:SetPoint("TOPLEFT", f.progress, "BOTTOMLEFT", INSET - 1, -(INSET + 4))
-    f.landing:SetPoint("BOTTOMRIGHT", -INSET, 12)
+    f.landing:SetPoint("BOTTOMRIGHT", -(INSET + edge - 1), 12 + edge - 1)
 
     f.landingHint = f.landing:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     f.landingHint:SetPoint("TOP", 0, -10)
@@ -628,7 +655,7 @@ local function BuildFrame(self)
     -- Guide view: left step list + right detail.
     f.guide = CreateFrame("Frame", nil, f)
     f.guide:SetPoint("TOPLEFT", f.progress, "BOTTOMLEFT", INSET - 1, -(INSET + 4))
-    f.guide:SetPoint("BOTTOMRIGHT", -INSET, 12 + 26 + INSET) -- room for the footer row under the list
+    f.guide:SetPoint("BOTTOMRIGHT", -(INSET + edge - 1), 12 + 26 + INSET + edge - 1) -- room for the footer row under the list
     f.guide:Hide()
 
     -- Rounded panel behind the recipe list column: the same nine-slice
@@ -1063,75 +1090,17 @@ end
 -- Detail pane
 --------------------------------------------------------------------------------
 
--- Closest-NPC helpers: compare positions in world coordinates when the
--- client can translate both points, else prefer NPCs on the player's map.
--- Everything is pcall-guarded; missing APIs degrade to the first candidate.
--- C_Map.GetWorldPosFromMapPos returns (continentID, worldX, worldY) on most
--- clients, but the Forever beta hands the position back as a vector-like
--- table. Normalize both shapes to continentID, x, y; nil when unusable.
-local function WorldPos(mapID, x, y)
-    if not (C_Map and C_Map.GetWorldPosFromMapPos and CreateVector2D and mapID) then return nil end
-    local ok, a, b, c = pcall(C_Map.GetWorldPosFromMapPos, mapID, CreateVector2D(x, y))
-    if not ok then return nil end
-    if type(b) == "table" then
-        if type(b.GetXY) == "function" then
-            local okXY, bx, by = pcall(b.GetXY, b)
-            if okXY and type(bx) == "number" and type(by) == "number" then
-                return a, bx, by
-            end
-        end
-        if type(b.x) == "number" and type(b.y) == "number" then
-            return a, b.x, b.y
-        end
-        return nil
-    end
-    if type(b) == "number" and type(c) == "number" then
-        return a, b, c
-    end
-    return nil
-end
-
-local function NpcDistance(npc, playerMapID, playerX, playerY)
-    if npc.zoneID == playerMapID and npc.x and npc.y and playerX and playerY then
-        local dx, dy = npc.x - playerX, npc.y - playerY
-        return dx * dx + dy * dy
-    end
-    if playerMapID and playerX and playerY and npc.zoneID and npc.x and npc.y then
-        local pCont, pwx, pwy = WorldPos(playerMapID, playerX, playerY)
-        local nCont, nwx, nwy = WorldPos(npc.zoneID, npc.x, npc.y)
-        if pCont and nCont and pCont == nCont
-            and type(pwx) == "number" and type(pwy) == "number"
-            and type(nwx) == "number" and type(nwy) == "number" then
-            local dx, dy = nwx - pwx, nwy - pwy
-            return dx * dx + dy * dy
-        end
-    end
-    return nil
-end
-
+-- The trainer or vendor nearest the player (RGXWorldMap:Nearest: world distance on the player's continent);
+-- the first candidate when the framework or the player's position is unavailable.
 local function NearestNpc(candidates)
     if not candidates or #candidates == 0 then return nil end
-    local playerMapID
-    if C_Map and C_Map.GetBestMapForUnit then
-        local ok, mapID = pcall(C_Map.GetBestMapForUnit, "player")
-        if ok and mapID then playerMapID = mapID end
+    local RGX = _G.RGXFramework
+    local WorldMap = RGX and RGX.GetWorldMap and RGX:GetWorldMap()
+    if WorldMap and WorldMap.Nearest then
+        local ok, best = pcall(WorldMap.Nearest, WorldMap, candidates)
+        if ok and best then return best end
     end
-    local px, py
-    if playerMapID and C_Map.GetPlayerMapPosition then
-        local ok, pos = pcall(C_Map.GetPlayerMapPosition, playerMapID, "player")
-        if ok and pos and pos.GetXY then
-            local okXY, x, y = pcall(pos.GetXY, pos)
-            if okXY then px, py = x, y end
-        end
-    end
-    local best, bestDist = candidates[1], nil
-    for _, npc in ipairs(candidates) do
-        local d = NpcDistance(npc, playerMapID, px, py)
-        if d and (not bestDist or d < bestDist) then
-            best, bestDist = npc, d
-        end
-    end
-    return best
+    return candidates[1]
 end
 
 -- Which rows the Materials card shows, in order. The card has 8 rows: reagents first
@@ -1294,6 +1263,11 @@ RenderDetail = function(self)
     -- Where: the nearest vendor / trainer (click pins it on the map); gathering steps list their zones.
     local vendors = step.npcs and RGXProf.DataManager:GetVendors(step, faction) or {}
     local trainers = RGXProf.DataManager:GetTrainers(faction, step.minSkill, professionID) or {}
+    if #trainers == 0 and #vendors == 0 then
+        -- No trainer listed for this exact skill band: any trainer of the profession still teaches its
+        -- recipes once the rank is learned, so point at the nearest one rather than a generic note.
+        trainers = RGXProf.DataManager:GetProfessionTrainers(faction, professionID) or {}
+    end
     local allLocs = {}
     for _, v in ipairs(vendors) do table.insert(allLocs, v) end
     for _, t in ipairs(trainers) do table.insert(allLocs, t) end
@@ -1316,7 +1290,7 @@ RenderDetail = function(self)
         else
             detail.locCoords:SetText("")
         end
-        detail.locAction:SetText(BRAND_TEXT_HEX .. RGXProf.L.PIN_HINT)
+        detail.locAction:SetText(RGXProf.BrandHex.accent .. RGXProf.L.PIN_HINT)
         detail.locHit:Show()
     elseif step.zones and ((step.zones.alliance and step.zones.alliance ~= "") or (step.zones.horde and step.zones.horde ~= "")) then
         local first = (faction == "Horde") and step.zones.horde or step.zones.alliance
@@ -1335,7 +1309,7 @@ RenderDetail = function(self)
     -- Notes: hide the card entirely when there is nothing to say.
     local notes = {}
     if IsKeep(step) then
-        table.insert(notes, BRAND_TEXT_HEX .. RGXProf.L.KEEP_FOR_LATER)
+        table.insert(notes, RGXProf.BrandHex.accent .. RGXProf.L.KEEP_FOR_LATER)
         if step.keepNote then
             table.insert(notes, Text() .. step.keepNote)
         end
@@ -1353,39 +1327,15 @@ RenderDetail = function(self)
     LayoutDetail(self)
 end
 
--- Click on the Where card: put a waypoint on the map. Forever has no UiMapPoint helper (it only loads
--- on Retail), so the point is a plain table with the same shape; TomTom is used when it is installed.
+-- Click on the Where card: put the game's own map pin on the spot and track it (RGXWorldMap:SetWaypoint).
 function RGXProf.BookWindow.PinTarget(target)
     if not (target and target.zoneID and target.x and target.y) then return false end
-    local mapID, x, y = target.zoneID, target.x / 100, target.y / 100
     local name = target.name or "RGX Professions"
-    if C_Map and C_Map.SetUserWaypoint and CreateVector2D then
-        local can = true
-        if C_Map.CanSetUserWaypointOnMap then
-            local ok, result = pcall(C_Map.CanSetUserWaypointOnMap, mapID)
-            can = ok and result ~= false
-        end
-        if can then
-            local point = { uiMapID = mapID, position = CreateVector2D(x, y) }
-            if UiMapPoint and UiMapPoint.CreateFromCoordinates then
-                point = UiMapPoint.CreateFromCoordinates(mapID, x, y)
-            end
-            local ok = pcall(C_Map.SetUserWaypoint, point)
-            if ok then
-                if C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
-                    pcall(C_SuperTrack.SetSuperTrackedUserWaypoint, true)
-                end
-                RGXProf.Utils:SendMsg(string.format(RGXProf.L.PIN_SET, name))
-                return true
-            end
-        end
-    end
-    if TomTom and TomTom.AddWaypoint then
-        local ok = pcall(TomTom.AddWaypoint, TomTom, mapID, x, y, { title = name })
-        if ok then
-            RGXProf.Utils:SendMsg(string.format(RGXProf.L.PIN_SET, name))
-            return true
-        end
+    local RGX = _G.RGXFramework
+    local WorldMap = RGX and RGX.GetWorldMap and RGX:GetWorldMap()
+    if WorldMap and WorldMap.SetWaypoint and WorldMap:SetWaypoint(target.zoneID, target.x, target.y) then
+        RGXProf.Utils:SendMsg(string.format(RGXProf.L.PIN_SET, name))
+        return true
     end
     RGXProf.Utils:SendMsg(string.format(RGXProf.L.PIN_FALLBACK, name, target.x, target.y))
     return false
@@ -1557,7 +1507,7 @@ BuildLanding = function(self)
         local prof = RGXProf.Constants.Professions[professionID]
         local btn = landing._buttons[index]
         if not btn then
-            btn = NewButton(landing, nil, tileW, tileH)
+            btn = NewTile(landing, tileW, tileH)
             btn.icon = btn:CreateTexture(nil, "ARTWORK")
             btn.name = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             btn.skill = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -1723,14 +1673,29 @@ end
 
 --- The profession whose window is open right now (nil when none, or the guide has no path for it). Quiet:
 --- unlike DataManager:GetProfession it never prints.
+-- The profession of the window that just opened. The window's own event decides which client API to ask
+-- (Enchanting opens a craft window, the others a trade skill window): the current adapter is only switched when
+-- the window's frame shows, which can come after the event, the first time the craft UI loads.
+local function GuideID(name)
+    local id = name and RGXProf.Constants.ProfessionNameToID[name]
+    if id and RGXProf.currentExpansion and RGXProf.currentExpansion.paths[id] then return id end
+    return nil
+end
+
 function RGXProf.BookWindow:GetOpenProfessionID()
+    local event = RGXProf._lastProfessionEvent
+    local direct = (event == "CRAFT_SHOW" and _G.GetCraftDisplaySkillLine)
+        or (event == "TRADE_SKILL_SHOW" and _G.GetTradeSkillLine) or nil
+    if type(direct) == "function" then
+        local ok, name = pcall(direct)
+        local id = ok and GuideID(name)
+        if id then return id end
+    end
     local manager = RGXProf.AdapterManager
     local adapter = manager and manager.GetCurrent and manager:GetCurrent()
     if not (adapter and adapter.getProfessionInfo) then return nil end
     local ok, name = pcall(adapter.getProfessionInfo, adapter)
-    local id = ok and name and RGXProf.Constants.ProfessionNameToID[name]
-    if id and RGXProf.currentExpansion and RGXProf.currentExpansion.paths[id] then return id end
-    return nil
+    return ok and GuideID(name) or nil
 end
 
 --- "Open to the current profession window" (on by default): when the book opens, or a profession window
@@ -1751,10 +1716,27 @@ function RGXProf.BookWindow:OnProfessionWindowOpened()
     end
 end
 
+--- Redraw the window after a theme change: build it again in the new colours and style and put it back where it
+--- was, on the same page.
+function RGXProf.BookWindow:Rebuild()
+    local f = self.frame
+    if not f then return end
+    local shown = f:IsShown()
+    f:Hide()
+    self.frame, self.rows = nil, nil
+    if shown then
+        self._rebuilding = true
+        local ok, err = pcall(self.Show, self)
+        self._rebuilding = nil
+        if not ok then error(err, 0) end
+    end
+end
+
 function RGXProf.BookWindow:Show()
     self:EnsureFrame()
     if not self.frame:IsShown() then
-        self:FollowProfessionWindow()
+        -- A theme-change rebuild keeps the page the player was on.
+        if not self._rebuilding then self:FollowProfessionWindow() end
     end
     if RGXProf_Settings.bookPosition then
         local pos = RGXProf_Settings.bookPosition
@@ -1781,7 +1763,7 @@ function RGXProf.BookWindow:Show()
     else
         ResetAutoHeight(self)
         self.frame.headerIcon:SetTexture("Interface\\AddOns\\RGX-Framework\\media\\square.tga")
-        self.frame.headerTitle:SetText(HEADER_TITLE)
+        self.frame.headerTitle:SetText(BrandTitle("Professions"))
         self.frame.progressLabel:SetText("")
         self.frame.progress:SetMinMaxValues(0, 1)
         self.frame.progress:SetValue(0)
@@ -1823,6 +1805,15 @@ function RGXProf.BookWindow:Refresh()
     RenderStepList(self)
     RenderDetail(self)
     self:FitWindow()
+end
+
+-- Re-render the detail page after the player changes zone, so the Where card names the trainer or vendor
+-- nearest to where the player is now.
+function RGXProf.BookWindow:RefreshLocation()
+    local f = self.frame
+    if not f or not f:IsShown() then return end
+    if not self:GetCurrentProfession() then return end
+    RenderDetail(self)
 end
 
 -- Re-render only the detail page (counts and to-max totals) after a bag change.

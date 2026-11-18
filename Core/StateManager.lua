@@ -87,7 +87,7 @@ function RGXProf.StateManager:RequestRefresh(forceShow)
 
     local backFrame = legacyReady and mainWindow.UIElements and mainWindow.UIElements.backFrame
     local legacyWanted = legacyReady and windowOpen
-        and (forceShow or not RGXProf.Settings or RGXProf.Settings.autoOpen or (backFrame and backFrame:IsShown()))
+        and (forceShow or not RGXProf.Settings or (RGXProf.GuideEnabled() and RGXProf.Settings.autoOpen) or (backFrame and backFrame:IsShown()))
 
     -- The book tracks the live skill on its own: it refreshes whenever it is open, with or without a
     -- profession window and whether or not the trade-window guide has ever been built.
@@ -216,8 +216,8 @@ function RGXProf.StateManager:SwitchRecipeSlot(slot)
             or state.altRecipe
 
     local adapter = RGXProf.AdapterManager:GetCurrent()
-    local selectInProfessionWindow = not RGXProf.Settings
-        or RGXProf.Settings.selectRecipesInProfessionWindow ~= false
+    local selectInProfessionWindow = RGXProf.GuideEnabled() and (not RGXProf.Settings
+        or RGXProf.Settings.selectRecipesInProfessionWindow ~= false)
     if selectInProfessionWindow and state.activeRecipe and adapter then
         adapter:selectBySpellID(state.activeRecipe.spellID, state.activeRecipe.name)
     end

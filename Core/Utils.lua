@@ -1,4 +1,12 @@
 RGXProf = RGXProf or {}
+
+--- The Guide card's header switch (followProfessionWindow) gates every option inside the card: with it off,
+--- the book does not open or close with the profession window, the guide does not open with it, and guide
+--- clicks do not select recipes. Manual opens (/prof, the minimap button) still work.
+function RGXProf.GuideEnabled()
+	local settings = RGXProf_Settings or RGXProf.Settings
+	return not (type(settings) == "table" and settings.followProfessionWindow == false)
+end
 RGXProf.Utils = RGXProf.Utils or {}
 
 -- One chat voice for every RGX addon: the framework's shared chat ("<icon> - [Professions] message"), driven by

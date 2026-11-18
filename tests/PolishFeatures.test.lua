@@ -51,25 +51,21 @@ check(book:find("detail.locHit", 1, true) and book:find("RGXProf.BookWindow.PinT
 check(book:find('btn:HookScript("OnEnter"', 1, true), "profession tiles show a tooltip")
 check(book:find("detail.titleHover:SetPoint", 1, true), "icon and name show the recipe tooltip")
 
--- 4. PinTarget on a client without UiMapPoint (Forever)
+-- 4. PinTarget hands the spot to the framework's map pin (RGXWorldMap:SetWaypoint, tested in the framework) and
+--    tells the player the outcome.
 local p1 = assert(book:find("function RGXProf.BookWindow.PinTarget", 1, true))
 local p2 = assert(book:find("\nend\n", p1, true))
 RGXProf = { BookWindow = {}, L = { PIN_SET = "Pinned %s.", PIN_FALLBACK = "%s %.1f %.1f" }, Utils = { SendMsg = function(_, m) RGXProf.said = m end } }
 assert(loadstring(book:sub(p1, p2 + 4)))()
-local set, tracked
-CreateVector2D = function(x, y) return { x = x, y = y } end
-C_Map = { CanSetUserWaypointOnMap = function() return true end, SetUserWaypoint = function(pt) set = pt end }
-C_SuperTrack = { SetSuperTrackedUserWaypoint = function(v) tracked = v end }
-UiMapPoint = nil
+local asked, answer = nil, true
+_G.RGXFramework = { GetWorldMap = function() return { SetWaypoint = function(_, mapID, x, y) asked = { mapID, x, y } return answer end } end }
 check(RGXProf.BookWindow.PinTarget({ name = "Bowen", zoneID = 1420, x = 52.6, y = 55.5 }), "pin succeeds")
-check(set and set.uiMapID == 1420 and math.abs(set.position.x - 0.526) < 1e-9 and math.abs(set.position.y - 0.555) < 1e-9, "waypoint uses 0-1 coordinates on the right map")
-check(tracked == true and RGXProf.said == "Pinned Bowen.", "the waypoint is tracked and the player is told")
-C_Map = nil
-local tt
-TomTom = { AddWaypoint = function(_, m, x, y, o) tt = { m, x, y, o.title } end }
-check(RGXProf.BookWindow.PinTarget({ name = "Bowen", zoneID = 1420, x = 52.6, y = 55.5 }) and tt[1] == 1420, "TomTom is used when the map API is missing")
-TomTom = nil
-check(RGXProf.BookWindow.PinTarget({ name = "Bowen", zoneID = 1420, x = 52.6, y = 55.5 }) == false and RGXProf.said:find("52.6", 1, true), "last resort: print the coordinates")
+check(asked and asked[1] == 1420 and asked[2] == 52.6 and asked[3] == 55.5, "the framework gets the map and the zone coordinates (0-100)")
+check(RGXProf.said == "Pinned Bowen.", "the player is told the pin is set")
+answer = false
+check(RGXProf.BookWindow.PinTarget({ name = "Bowen", zoneID = 1420, x = 52.6, y = 55.5 }) == false and RGXProf.said:find("52.6", 1, true), "a map that cannot be pinned: the coordinates are printed")
+_G.RGXFramework = nil
+check(RGXProf.BookWindow.PinTarget({ name = "Bowen", zoneID = 1420, x = 52.6, y = 55.5 }) == false, "no framework map module: no error, the coordinates are printed")
 check(RGXProf.BookWindow.PinTarget({ name = "x" }) == false, "a target without coordinates is ignored")
 
 -- 5. No "derived/source" labels

@@ -16,7 +16,7 @@ RGX-Framework integration and a book-style UI.
   next/previous page navigation through every step in a profession path.
 - `Data/` holds the per-expansion guide data (Classic, Cata, Mists, Forever
   paths, recipes, NPCs); keep it data-only. The expansion is auto-selected from the client build.
-- `Adapters/` integrate third-party trade windows (Skillet, TSM); preserve
+- `Adapters/` integrate other trade-window addons; preserve
   the adapter interface when touching `Core/DataManager.lua`.
 
 ## Development Rules

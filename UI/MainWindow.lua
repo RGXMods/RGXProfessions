@@ -44,6 +44,20 @@ function RGXProf.MainWindow:SetupUI()
     end
 end
 
+--- Redraw the guide after a theme change: build the layout again in the new colours and style, hide the old one
+--- and render the current state into the new frames.
+function RGXProf.MainWindow:Rebuild()
+    if not self.initializedUI then return end
+    local old = self.UIElements and self.UIElements.backFrame
+    local wasShown = old and old:IsShown()
+    if old then old:Hide() end
+    self.UIElements = {}
+    self:SetupUI()
+    if wasShown and RGXProf.StateManager and RGXProf.StateManager.RequestRefresh then
+        RGXProf.StateManager:RequestRefresh(true)
+    end
+end
+
 ---
 --- @param state State
 function RGXProf.MainWindow:Render(state)

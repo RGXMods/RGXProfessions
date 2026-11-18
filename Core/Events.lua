@@ -56,6 +56,15 @@ RGXProf.Events = {
         if RGXProf.MatsWindow and RGXProf.MatsWindow.Refresh then RGXProf.MatsWindow:Refresh() end
         RGXProf.StateManager:RequestRefresh()
     end,
+    -- The Where card names the nearest trainer or vendor, so it follows the player between zones.
+    ZONE_CHANGED_NEW_AREA = function(self)
+        local book = RGXProf.BookWindow
+        if book and book.RefreshLocation then book:RefreshLocation() end
+    end,
+    ZONE_CHANGED = function(self)
+        local book = RGXProf.BookWindow
+        if book and book.RefreshLocation then book:RefreshLocation() end
+    end,
     GET_ITEM_INFO_RECEIVED = function(self, ...)
         if RGXProf.MatsWindow and RGXProf.MatsWindow.Refresh then RGXProf.MatsWindow:Refresh() end
         RGXProf.StateManager:RequestRefresh()
@@ -139,6 +148,8 @@ function RGXProf:RegisterEvents()
 end
 
 function RGXProf:TRADE_SHOW(event, forceShow)
+    -- Which kind of profession window opened (the book asks the matching client API for its profession).
+    if event == "CRAFT_SHOW" or event == "TRADE_SKILL_SHOW" then RGXProf._lastProfessionEvent = event end
 
     -- A real profession window takes over from manual guide mode
     if RGXProf.StateManager and RGXProf.StateManager.ClearManualProfession then
@@ -152,11 +163,11 @@ function RGXProf:TRADE_SHOW(event, forceShow)
 
     -- Optionally open the book itself, on the profession whose window just opened.
     local book = RGXProf.BookWindow
-    if RGXProf_Settings.bookAutoOpen == true and book and not (book.frame and book.frame:IsShown()) then
+    if RGXProf.GuideEnabled() and RGXProf_Settings.bookAutoOpen == true and book and not (book.frame and book.frame:IsShown()) then
         book:Show()
     end
 
-    if not forceShow and not self.Settings.autoOpen then return end
+    if not forceShow and not (RGXProf.GuideEnabled() and self.Settings.autoOpen) then return end
 
     if not self.MainWindow.initializedUI then
         RGXProf.MainWindow:SetupUI()
@@ -167,7 +178,7 @@ end
 
 function RGXProf:TRADE_CLOSE()
     -- Optionally close the book together with the profession window.
-    if RGXProf_Settings and RGXProf_Settings.bookAutoClose == true and RGXProf.BookWindow and RGXProf.BookWindow.Hide then
+    if RGXProf_Settings and RGXProf.GuideEnabled() and RGXProf_Settings.bookAutoClose == true and RGXProf.BookWindow and RGXProf.BookWindow.Hide then
         RGXProf.BookWindow:Hide()
     end
     -- Keep a manually opened guide visible when no profession window is involved
