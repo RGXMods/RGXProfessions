@@ -1,13 +1,10 @@
-## Unreleased
+## v0.4.8 - 2026-11-18
+
+Requires **RGX-Framework 2.19.0 or later**.
 
 - The Forever crafting guides (Alchemy, Blacksmithing, Cooking, Enchanting, Engineering, First Aid, Leatherworking and Tailoring) follow the current routes: 101 steps with new recipe choices, skill ranges, craft counts and where each recipe is learned. Recipe IDs, skill colours and materials come from the game's own data, and the guide notes' figures match the new routes.
 - Tailoring now uses Double-stitched Woolen Shoulders at 116, Mageweave Bag twice, and Runecloth Cuffs for 250 to 292 before Earthenweave Crown; Alchemy runs Elixir of Minor Defense to 64, then Minor Fortitude, Wisdom, the mana potions, Catseye Draught, Stonescale Oil and Major Discolored Healing Potions.
 - A new test checks every route: it runs from 1 to 300 without gaps, no step goes past the point its recipe turns gray, every recipe has materials and an icon.
-
-## v0.4.8 - 2026-11-14
-
-Requires **RGX-Framework 2.19.0 or later**.
-
 - RGX Professions follows the RGX-Framework theme override (beta, off by default) live: the settings page, the book, Materials to Max and the guide on the profession window take the framework's colour and style as soon as they change, without a reload. With the override off it looks as before.
 - The location card names the trainer or vendor nearest to where you are and pins it on the map, for every profession, including Alchemy, Herbalism, Mining, Skinning and Fishing. It updates when you change zone.
 - Turning off the Guide switch now also turns off the options inside its card (opening and closing the book with the profession window, opening the guide with it, and selecting recipes from it).
