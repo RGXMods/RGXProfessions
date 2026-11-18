@@ -1,3 +1,9 @@
+## v0.4.9 - 2026-11-18
+
+Requires **RGX-Framework 2.19.0 or later**.
+
+- Releases reach CurseForge again: v0.4.6 to v0.4.8 were published on GitHub only, because the release step was not given the CurseForge key. This release carries everything from v0.4.6, v0.4.7 and v0.4.8 below to CurseForge and WoWInterface. No other changes.
+
 ## v0.4.8 - 2026-11-18
 
 Requires **RGX-Framework 2.19.0 or later**.
