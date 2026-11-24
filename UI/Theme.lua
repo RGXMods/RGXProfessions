@@ -78,6 +78,10 @@ end
 --- dropdowns built inside follow theme changes live. Returns the builder's results.
 function RGXProf.Themed(fn)
     RGXProf.RefreshBrand()
+    local D = _G.RGXDesign
+    -- A retained brand object can still depend on style support that is not
+    -- available. Preserve the unstyled builder fallback before invoking it.
+    if not D or type(D.WithStyle) ~= "function" then return fn() end
     local brand = BrandObject()
     if not brand then return fn() end
     return brand:Build(fn)

@@ -7,6 +7,7 @@ local listener, built
 RGXProf = {}
 _G.RGXDesign = {
   ResolveStyle = function(_, n) return n end,
+  WithStyle = function(_, _, fn) return fn() end,
   RegisterBrand = function(_, id, own, style)
     return { id = id, own = own, style = style,
       OnChange = function(_, fn) listener = fn end,
