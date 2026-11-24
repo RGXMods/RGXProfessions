@@ -159,6 +159,11 @@ end
 ---@param spellName string
 ---@return number, boolean, {}
 function RGXProf.AddonAdapter:getRecipeLineInfo(spellID, spellName)
+    local profession = self:getProfessionInfo()
+    if self.knowledgeProfession ~= profession then
+        self.knownRecipes = {}
+        self.knowledgeProfession = profession
+    end
     -- Background refreshes must not expand profession headers. Expanding here
     -- fires another trade-skill update and makes a user's collapsed category
     -- immediately reopen. Explicit recipe selection expands before calling us.

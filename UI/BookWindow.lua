@@ -1189,8 +1189,9 @@ RenderDetail = function(self)
 
     -- Extra lines are only actionable facts: when you can train it, and Classic-style alternates.
     local lines = {}
-    if step.learnAt then
-        if skill and skill >= step.learnAt then
+    local learned = RGXProf.DataManager:GetRecipeKnowledge(step, professionID)
+    if step.learnAt and learned ~= true then
+        if learned == false and step.source == "trainer" and skill and skill >= step.learnAt then
             table.insert(lines, C("success") .. RGXProf.L.TRAIN_AVAILABLE)
         else
             table.insert(lines, Dim() .. string.format(RGXProf.L.TRAIN_AT, step.learnAt))

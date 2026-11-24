@@ -41,6 +41,26 @@ function RGXProf.WowAPI:GetSpellInfo(spellID)
 	if GetSpellInfo then return GetSpellInfo(spellID) end
 	return nil
 end
+
+-- Forever 1.60.1.71037, Gethe 734f065329cff4992835b01a84f210a297db91b6:
+-- TradeSkillUIDocumentation.lua:639-652 and TradeSkillUITypesDocumentation.lua:388-402.
+-- Unavailable/mismatched data is unknown, never evidence that a recipe needs training.
+function RGXProf.WowAPI:GetRecipeKnowledge(spellID)
+	if type(spellID) ~= "number" then return nil end
+	-- SpellBookDocumentation.lua:738-752. Positive spellbook evidence takes
+	-- precedence; absence there alone is insufficient to advertise training.
+	if C_SpellBook and type(C_SpellBook.IsSpellKnown) == "function" then
+		local ok, known = pcall(C_SpellBook.IsSpellKnown, spellID)
+		if ok and known == true then return true end
+	end
+	if C_TradeSkillUI and type(C_TradeSkillUI.GetRecipeInfo) == "function" then
+		local ok, info = pcall(C_TradeSkillUI.GetRecipeInfo, spellID)
+		if ok and type(info) == "table" and info.recipeID == spellID and type(info.learned) == "boolean" then
+			return info.learned
+		end
+	end
+	return nil
+end
 function RGXProf.WowAPI:GetBuildInfo() return GetBuildInfo() end
 
 ---------------------------------------------------------------------------------

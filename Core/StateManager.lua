@@ -155,9 +155,9 @@ function RGXProf.StateManager:RefreshState()
     state.altStep = altStep
 
     -- RECIPE (includes REAGENTS) --
-    state.mainRecipe = RGXProf.DataManager:GetRecipeWithReagents(state.profession.pointsEarned, step)
-    state.altRecipe  = altStep and RGXProf.DataManager:GetRecipeWithReagents(state.profession.pointsEarned, altStep) or nil
-    state.nextRecipe = nextStep and RGXProf.DataManager:GetRecipeWithReagents(state.profession.pointsEarned, nextStep) or nil
+    state.mainRecipe = RGXProf.DataManager:GetRecipeWithReagents(state.profession.pointsEarned, step, profession.id)
+    state.altRecipe  = altStep and RGXProf.DataManager:GetRecipeWithReagents(state.profession.pointsEarned, altStep, profession.id) or nil
+    state.nextRecipe = nextStep and RGXProf.DataManager:GetRecipeWithReagents(state.profession.pointsEarned, nextStep, profession.id) or nil
     if RGXProf.CurrentState and RGXProf.CurrentState.activeRecipe.name == state.mainRecipe.name then 
         state.selectedRecipe = RGXProf.Constants.MAIN
     elseif RGXProf.CurrentState and state.altRecipe and RGXProf.CurrentState.activeRecipe.name  == state.altRecipe.name  then 
