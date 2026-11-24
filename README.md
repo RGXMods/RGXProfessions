@@ -22,7 +22,7 @@ The profession leveling bible for **WoW Forever**. Open the book, pick a profess
 
 ## Installation
 
-1. Install [RGX-Framework](https://github.com/RGXMods/RGX-Framework) **2.15.2 or later** (required).
+1. Install [RGX-Framework](https://github.com/RGXMods/RGX-Framework) **2.19.0 or later** (required).
 2. Copy the `RGXProfessions` folder into your WoW Forever `Interface\AddOns` folder.
 3. Restart the client (or `/reload`) and enable both addons.
 
@@ -46,7 +46,7 @@ RGXProfessions is localized for all twelve WoW client locales: enUS (base), deDE
 ## Compatibility
 
 - WoW Forever (Interface 16001).
-- Requires RGX-Framework 2.15.2 or later. RGXProfessions draws nothing itself: its windows, cards, headers and buttons come from the framework's **RGX Material Round** interface style, in RGXProfessions' own colours, and no other addon's theme is touched.
+- Requires RGX-Framework 2.19.0 or later. RGXProfessions draws nothing itself: its windows, cards, headers and buttons come from the framework's **RGX Material Round** interface style, in RGXProfessions' own colours, and no other addon's theme is touched.
 - WoW Forever (Interface 16001). This build ships the WoW Forever data set only; Classic, Cataclysm and Mists are not packaged.
 
 ## Data

@@ -12,6 +12,13 @@ local function DeferOutOfSecure(self, fn, label)
     end
 end
 
+local function RefreshRecipeKnowledge()
+    for _, adapter in pairs(RGXProf.AdapterManager.registeredAdapters) do
+        adapter.knownRecipes = {}
+    end
+    RGXProf.StateManager:RequestRefresh()
+end
+
 RGXProf.Events = {
     -- Bag contents changed: keep the book page's material counts live. The client
     -- batches this event, so no extra debounce is needed.
@@ -41,9 +48,11 @@ RGXProf.Events = {
     CRAFT_UPDATE = function(self)
         RGXProf.StateManager:RequestRefresh()
     end,
-    SKILL_LINES_CHANGED = function(self)
-        RGXProf.StateManager:RequestRefresh()
-    end,
+    SKILL_LINES_CHANGED = RefreshRecipeKnowledge,
+    -- Forever Gethe 734f065329cff4992835b01a84f210a297db91b6:
+    -- SpellBookDocumentation.lua:966-968; TradeSkillUIDocumentation.lua:1252-1260.
+    SPELLS_CHANGED = RefreshRecipeKnowledge,
+    NEW_RECIPE_LEARNED = RefreshRecipeKnowledge,
     TRADE_SKILL_LIST_UPDATE = function(self)
         RGXProf.StateManager:RequestRefresh()
     end,

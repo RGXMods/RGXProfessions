@@ -108,15 +108,22 @@ function RGXProf.AddonAdapter:position(frame)
     RGXProf.LayoutManager:RestoreOrAlignToAnchor(frame, anchor)
 end
 
-function RGXProf.AddonAdapter:matchedIndexOnSpellLink(index, spellID)
-    local link = self:getSkillLink(index)
-    if not link then return false end
+local function RecipeIDFromLink(link)
+    if type(link) ~= "string" then return nil end
+    -- Lua patterns do not support regex alternation or non-capturing groups.
+    -- Match the hyperlink kind and its complete first field separately.
+    local kind, field = link:match("|H(%a+):([^:|]+)")
+    if kind ~= "enchant" and kind ~= "recipe" then return nil end
+    return field and field:match("^%d+$") and tonumber(field) or nil
+end
 
-    local id = tonumber(link:match("H(?:enchant|recipe):(%d+):"))
-    return id == spellID
+function RGXProf.AddonAdapter:matchedIndexOnSpellLink(index, spellID)
+    if type(spellID) ~= "number" then return false end
+    return RecipeIDFromLink(self:getSkillLink(index)) == spellID
 end
 
 function RGXProf.AddonAdapter:matchedIndexOnSpellName(index, spellName) 
+    if type(spellName) ~= "string" or spellName == "" then return false end
     local details = self:getDetailsAtIndex(index)
     return (not details.isHeader and details.name == spellName)
     
@@ -153,6 +160,11 @@ end
 ---@param spellName string
 ---@return number, boolean, {}
 function RGXProf.AddonAdapter:getRecipeLineInfo(spellID, spellName)
+    local profession = self:getProfessionInfo()
+    if self.knowledgeProfession ~= profession then
+        self.knownRecipes = {}
+        self.knowledgeProfession = profession
+    end
     -- Background refreshes must not expand profession headers. Expanding here
     -- fires another trade-skill update and makes a user's collapsed category
     -- immediately reopen. Explicit recipe selection expands before calling us.
@@ -162,7 +174,10 @@ function RGXProf.AddonAdapter:getRecipeLineInfo(spellID, spellName)
         local details = self:getDetailsAtIndex(i)
 
         if not details.isHeader then
-            if self:matchedIndexOnSpellLink(i, spellID) or self:matchedIndexOnSpellName(i, spellName) then
+            local linkedID = RecipeIDFromLink(self:getSkillLink(i))
+            -- A valid recipe ID outranks a matching name (different ranks can
+            -- have the same localized name). Names are a missing-link fallback.
+            if (linkedID and linkedID == spellID) or (not linkedID and self:matchedIndexOnSpellName(i, spellName)) then
                 local color = RGXProf.Constants.SkillUpColors[details.skillType] or RGXProf.Constants.SkillUpColors.none
                 if cacheKey then
                     self.knownRecipes = self.knownRecipes or {}

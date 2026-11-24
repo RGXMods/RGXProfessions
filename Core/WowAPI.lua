@@ -18,18 +18,23 @@ end
 --   1 name, 2 link, 3 quality, 4 itemLevel, 5 itemMinLevel, 6 itemType,
 --   7 itemSubType, 8 itemStackCount, 9 itemEquipLoc, 10 icon, 11 sellPrice, ...
 function RGXProf.WowAPI:GetItemInfo(itemID)
-	if C_Item and C_Item.GetItemInfo then
+	if C_Item and type(C_Item.GetItemInfo) == "function" then
 		local name, link, quality, itemLevel, itemMinLevel, itemType, itemSubType,
 		      itemStackCount, itemEquipLoc, icon, sellPrice = C_Item.GetItemInfo(itemID)
 		if name then
 			return name, link, quality, itemLevel, itemMinLevel, itemType, itemSubType,
 			       itemStackCount, itemEquipLoc, icon, sellPrice
 		end
-		pcall(C_Item.RequestLoadItemDataByID, itemID)
 	end
-	if GetItemInfo then
-		return GetItemInfo(itemID)
+	if type(GetItemInfo) == "function" then
+		local name, link, quality, itemLevel, itemMinLevel, itemType, itemSubType,
+		      itemStackCount, itemEquipLoc, icon, sellPrice = GetItemInfo(itemID)
+		if name then
+			return name, link, quality, itemLevel, itemMinLevel, itemType, itemSubType,
+			       itemStackCount, itemEquipLoc, icon, sellPrice
+		end
 	end
+	self:QueueItemLoad(itemID)
 	return nil
 end
 function RGXProf.WowAPI:GetSpellInfo(spellID)
@@ -39,6 +44,26 @@ function RGXProf.WowAPI:GetSpellInfo(spellID)
 	end
 
 	if GetSpellInfo then return GetSpellInfo(spellID) end
+	return nil
+end
+
+-- Forever 1.60.1.71037, Gethe 734f065329cff4992835b01a84f210a297db91b6:
+-- TradeSkillUIDocumentation.lua:639-652 and TradeSkillUITypesDocumentation.lua:388-408.
+-- Unavailable/mismatched data is unknown, never evidence that a recipe needs training.
+function RGXProf.WowAPI:GetRecipeKnowledge(spellID)
+	if type(spellID) ~= "number" then return nil end
+	-- SpellBookDocumentation.lua:738-752. Positive spellbook evidence takes
+	-- precedence; absence there alone is insufficient to advertise training.
+	if C_SpellBook and type(C_SpellBook.IsSpellKnown) == "function" then
+		local ok, known = pcall(C_SpellBook.IsSpellKnown, spellID)
+		if ok and known == true then return true end
+	end
+	if C_TradeSkillUI and type(C_TradeSkillUI.GetRecipeInfo) == "function" then
+		local ok, info = pcall(C_TradeSkillUI.GetRecipeInfo, spellID)
+		if ok and type(info) == "table" and info.recipeID == spellID and type(info.learned) == "boolean" then
+			return info.learned
+		end
+	end
 	return nil
 end
 function RGXProf.WowAPI:GetBuildInfo() return GetBuildInfo() end
@@ -93,7 +118,12 @@ function RGXProf.WowAPI:IsAddOnLoaded(addonName)
 
 	return false
 end
-function RGXProf.WowAPI:QueueItemLoad(itemID) return C_Item.RequestLoadItemDataByID(itemID) end
+function RGXProf.WowAPI:QueueItemLoad(itemID)
+	if C_Item and type(C_Item.RequestLoadItemDataByID) == "function" then
+		return pcall(C_Item.RequestLoadItemDataByID, itemID)
+	end
+	return false
+end
 function RGXProf.WowAPI:GetTradeSkillReagentInfo(recipeIndex, reagentIndex) return GetTradeSkillReagentInfo(recipeIndex, reagentIndex) end
 function RGXProf.WowAPI:GetTradeSkillReagentItemLink(recipeIndex, reagentIndex) return GetTradeSkillReagentItemLink(recipeIndex, reagentIndex) end
 function RGXProf.WowAPI:GetBestMapForUnit(unit) return C_Map.GetBestMapForUnit(unit) end
@@ -179,9 +209,7 @@ function RGXProf.WowAPI:GetReagentInfoByItemID(itemID)
     icon = icon or self:GetItemIconInstant(itemID)
     local onHand = self:GetItemCount(itemID, false, false)
 
-    if not name then
-        self:QueueItemLoad(itemID)
-    end
+    -- GetItemInfo owns the single load request for an uncached item.
 	return name, link, icon, onHand
 end
 

@@ -16,7 +16,9 @@ if not path then print("FrameworkTheme.test SKIPPED (no RGX-Framework checkout n
 local function widget(kind, parent)
   local w = { kind = kind, parent = parent, scripts = {} }
   return setmetatable(w, { __index = function(t, k)
-    if type(k) == "string" and k:sub(1, 1) == "_" then return nil end   -- private fields exist only when set
+    -- Only synthesize widget methods. Absent data fields (notably clientBar)
+    -- must stay nil: a made-up function is truthy and selects native-header art.
+    if type(k) ~= "string" or not k:match("^[A-Z]") then return nil end
     if k == "SetVertexColor" then return function(s, r, g, b, a) s.vertex = { r, g, b, a } end end
     if k == "SetTextColor" then return function(s, r, g, b) s.textColor = { r, g, b } end end
     if k == "SetText" then return function(s, v) s.text = v end end
@@ -27,6 +29,10 @@ local function widget(kind, parent)
     return function(s) return s end
   end })
 end
+local probe = widget("Frame")
+check(probe.clientBar == nil and probe._panelBorder == nil, "unset fixture data fields remain absent")
+probe.clientBar = true
+check(probe.clientBar == true, "explicit native-header flags survive fixture lookup")
 function CreateFrame(kind, _, parent) return widget(kind, parent) end
 UIParent = widget("Frame")
 GameTooltip = widget("Tooltip")
@@ -58,6 +64,7 @@ end)
 
 check(card._panelBorder and near(card._panelBorder[1].vertex, B.primary), "panels are ringed in the addon's primary colour, not the shared green")
 check(header._panelBorder and near(header._panelBorder[1].vertex, B.primary), "card header bands use the addon ring too")
+check(header.clientBar == nil, "Material Round headers are not native client bars")
 check(near(header.label.textColor, B.accent), "card titles use the addon's accent colour")
 check(button._panelBorder, "buttons are rounded (framework Material Round button)")
 button.scripts.OnEnter(button)

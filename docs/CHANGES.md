@@ -1,3 +1,14 @@
+## v0.4.10 - 2026-11-24
+
+Requires **RGX-Framework 2.19.0 or later**.
+
+- Learned recipes no longer appear as available to train. The book and profession-window guide share learned, unlearned and unknown states; unavailable recipe data does not imply a recipe needs training.
+- Recipe links match by their full recipe ID even when the guide and profession window use different names. Collapsed legacy categories retain observed knowledge, which is cleared when spells or professions change.
+- Uncached materials show a loading label with their item ID instead of "Unknown". Item data is requested once per lookup, unavailable load requests are contained, and the existing item-data event refreshes the display.
+- Current-step material requirements use the guide's estimated craft count and never become negative after completing a step.
+- Restored the unstyled builder fallback when framework style support is unavailable. Corrected theme-test widget semantics without removing or weakening existing assertions.
+- The documented framework minimum now matches the addon's dependency metadata.
+
 ## v0.4.9 - 2026-11-18
 
 Requires **RGX-Framework 2.19.0 or later**.

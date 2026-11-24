@@ -161,7 +161,7 @@ end
 --- @field icon string The file path to the icon texture.
 --- @field skillColor table RGB colors for the skill
 --- @field craftCount number how many times to craft
---- @field hasSkill boolean Has the player learned this recipe yet?
+--- @field hasSkill boolean|nil Learned, explicitly unlearned, or unknown (nil).
 --- @field itemID number The itemID produced by the recipe, if applicable.
 --- @field spellID number The spellID of the recipe, if applicable.
 --- @field slot number MAIN or ALTERNATE
@@ -173,19 +173,36 @@ end
 --- @param step Step
 --- @param pointsEarned number Current or simulated profession skill.
 --- @return Recipe recipe An object containing recipe and reagent information
-function RGXProf.DataManager:GetRecipeDetails(step, pointsEarned)
+-- One knowledge policy for the book and the profession-window guide.
+-- true = observed learned, false = explicit unlearned metadata, nil = unknown.
+function RGXProf.DataManager:GetRecipeKnowledge(step, professionID)
+	local color = RGXProf.Constants.SkillUpColors.none
+	if RGXProf.IsSimulation then return nil, color end
+	local known = RGXProf.WowAPI:GetRecipeKnowledge(step.spellID)
+	local adapter = RGXProf.AdapterManager:GetCurrent()
+	if adapter then
+		local ok, observed, detectedColor = pcall(function()
+			local name = adapter:getProfessionInfo()
+			if professionID and RGXProf.Constants.ProfessionNameToID[name] ~= professionID then return end
+			local _, learned, skillColor = adapter:getRecipeLineInfo(step.spellID, step.name)
+			return learned, skillColor
+		end)
+		if ok then
+			color = detectedColor or color
+			if known == nil and observed == true then known = true end
+		end
+	end
+	return known, color
+end
+
+function RGXProf.DataManager:GetRecipeDetails(step, pointsEarned, professionID)
 
 	-- The item link from the wow api has more info and is clickable automatically.
 	-- Prefer item link over the constructed spell link.
 
-	local adapter = RGXProf.AdapterManager:GetCurrent()
 	local displayInfo = RGXProf.WowAPI:GetItemLinkAndIconOrSpell(step)
-	local hasSkill = false
-	local skillColor = RGXProf.Constants.SkillUpColors.none
-	if adapter and not RGXProf.IsSimulation then
-		local _, detectedHasSkill, detectedSkillColor = adapter:getRecipeLineInfo(step.spellID, step.name)
-		hasSkill, skillColor = detectedHasSkill, detectedSkillColor
-	elseif RGXProf.IsSimulation then
+	local hasSkill, skillColor = self:GetRecipeKnowledge(step, professionID)
+	if RGXProf.IsSimulation then
 		-- Prefer the step's own skill-up colors: Forever beta steps carry
 		-- thresholds that differ from the global (Classic) spell table.
 		local thresholds = step.colors
@@ -223,10 +240,11 @@ end
 --- @param pointsEarned number Skill points so far
 --- @param step table Step data containing spellID and/or itemID fields.
 --- @return Recipe recipe An object containing recipe and reagent information
-function RGXProf.DataManager:GetRecipeWithReagents(pointsEarned, step)
+function RGXProf.DataManager:GetRecipeWithReagents(pointsEarned, step, professionID)
 
-	local recipe = self:GetRecipeDetails(step, pointsEarned)
-	recipe.craftCount = step.maxSkill - pointsEarned
+	local recipe = self:GetRecipeDetails(step, pointsEarned, professionID)
+	local currentSkill = math.max(pointsEarned or step.minSkill, step.minSkill)
+	recipe.craftCount = currentSkill >= step.maxSkill and 0 or self:GetEstimatedCrafts(currentSkill, step)
 	recipe.reagents = self:GetReagentListWithDetails(step.spellID, recipe.craftCount)
 
 	return recipe
@@ -281,19 +299,21 @@ end
 ---------------------------
 function RGXProf.DataManager:GetReagentListWithDetails(spellID, craftCount)
 
+	craftCount = math.max(0, tonumber(craftCount) or 1)
 	local reagents = NormalizeReagentList(RGXProf.Data.Recipes[spellID])
 	local currentSlot = 1
 	local output = {}
 
 	for itemID, count in pairs(reagents) do
 		local name, link, icon, onHand = RGXProf.WowAPI:GetReagentInfoByItemID(itemID)
+		onHand = tonumber(onHand) or 0
 		local text = string.format("%d/%d", onHand, count * craftCount)
 		local tooltip = {count * craftCount, count, craftCount}
 
 		local reagent = {
 			itemID = itemID,
 			slot = currentSlot,
-			name = name or "Unknown",
+			name = name or string.format("%s (#%d)", RGXProf.L.LOADING, itemID),
 			displayText = text,
 			icon = icon or "Interface\\Icons\\INV_Misc_QuestionMark",
 			link = link or "",
@@ -382,7 +402,7 @@ function RGXProf.DataManager:DetermineTraining(playerFaction, step, recipe, prof
 		table.insert(instructions, template.instructions)
 	end
 
-	if not hasSkill then
+	if hasSkill == false then
 		if step._vendors and #(step._vendors) > 0 then
 			template = RGXProf.Utils:DeepCopy(RGXProf.Training.VENDOR_RECIPE)
 			list = step._vendors
