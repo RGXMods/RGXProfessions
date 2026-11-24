@@ -109,14 +109,20 @@ function RGXProf.AddonAdapter:position(frame)
 end
 
 function RGXProf.AddonAdapter:matchedIndexOnSpellLink(index, spellID)
+    if type(spellID) ~= "number" then return false end
     local link = self:getSkillLink(index)
-    if not link then return false end
+    if type(link) ~= "string" then return false end
 
-    local id = tonumber(link:match("H(?:enchant|recipe):(%d+):"))
+    -- Lua patterns do not support regex alternation or non-capturing groups.
+    -- Match the hyperlink kind and its complete first field separately.
+    local kind, field = link:match("|H(%a+):([^:|]+)")
+    if kind ~= "enchant" and kind ~= "recipe" then return false end
+    local id = field and field:match("^%d+$") and tonumber(field)
     return id == spellID
 end
 
 function RGXProf.AddonAdapter:matchedIndexOnSpellName(index, spellName) 
+    if type(spellName) ~= "string" or spellName == "" then return false end
     local details = self:getDetailsAtIndex(index)
     return (not details.isHeader and details.name == spellName)
     
