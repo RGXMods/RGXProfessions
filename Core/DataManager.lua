@@ -243,7 +243,8 @@ end
 function RGXProf.DataManager:GetRecipeWithReagents(pointsEarned, step, professionID)
 
 	local recipe = self:GetRecipeDetails(step, pointsEarned, professionID)
-	recipe.craftCount = step.maxSkill - pointsEarned
+	local currentSkill = math.max(pointsEarned or step.minSkill, step.minSkill)
+	recipe.craftCount = currentSkill >= step.maxSkill and 0 or self:GetEstimatedCrafts(currentSkill, step)
 	recipe.reagents = self:GetReagentListWithDetails(step.spellID, recipe.craftCount)
 
 	return recipe
@@ -298,19 +299,21 @@ end
 ---------------------------
 function RGXProf.DataManager:GetReagentListWithDetails(spellID, craftCount)
 
+	craftCount = math.max(0, tonumber(craftCount) or 1)
 	local reagents = NormalizeReagentList(RGXProf.Data.Recipes[spellID])
 	local currentSlot = 1
 	local output = {}
 
 	for itemID, count in pairs(reagents) do
 		local name, link, icon, onHand = RGXProf.WowAPI:GetReagentInfoByItemID(itemID)
+		onHand = tonumber(onHand) or 0
 		local text = string.format("%d/%d", onHand, count * craftCount)
 		local tooltip = {count * craftCount, count, craftCount}
 
 		local reagent = {
 			itemID = itemID,
 			slot = currentSlot,
-			name = name or "Unknown",
+			name = name or string.format("%s (#%d)", RGXProf.L.LOADING, itemID),
 			displayText = text,
 			icon = icon or "Interface\\Icons\\INV_Misc_QuestionMark",
 			link = link or "",

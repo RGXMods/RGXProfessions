@@ -18,18 +18,23 @@ end
 --   1 name, 2 link, 3 quality, 4 itemLevel, 5 itemMinLevel, 6 itemType,
 --   7 itemSubType, 8 itemStackCount, 9 itemEquipLoc, 10 icon, 11 sellPrice, ...
 function RGXProf.WowAPI:GetItemInfo(itemID)
-	if C_Item and C_Item.GetItemInfo then
+	if C_Item and type(C_Item.GetItemInfo) == "function" then
 		local name, link, quality, itemLevel, itemMinLevel, itemType, itemSubType,
 		      itemStackCount, itemEquipLoc, icon, sellPrice = C_Item.GetItemInfo(itemID)
 		if name then
 			return name, link, quality, itemLevel, itemMinLevel, itemType, itemSubType,
 			       itemStackCount, itemEquipLoc, icon, sellPrice
 		end
-		pcall(C_Item.RequestLoadItemDataByID, itemID)
 	end
-	if GetItemInfo then
-		return GetItemInfo(itemID)
+	if type(GetItemInfo) == "function" then
+		local name, link, quality, itemLevel, itemMinLevel, itemType, itemSubType,
+		      itemStackCount, itemEquipLoc, icon, sellPrice = GetItemInfo(itemID)
+		if name then
+			return name, link, quality, itemLevel, itemMinLevel, itemType, itemSubType,
+			       itemStackCount, itemEquipLoc, icon, sellPrice
+		end
 	end
+	self:QueueItemLoad(itemID)
 	return nil
 end
 function RGXProf.WowAPI:GetSpellInfo(spellID)
@@ -113,7 +118,12 @@ function RGXProf.WowAPI:IsAddOnLoaded(addonName)
 
 	return false
 end
-function RGXProf.WowAPI:QueueItemLoad(itemID) return C_Item.RequestLoadItemDataByID(itemID) end
+function RGXProf.WowAPI:QueueItemLoad(itemID)
+	if C_Item and type(C_Item.RequestLoadItemDataByID) == "function" then
+		return pcall(C_Item.RequestLoadItemDataByID, itemID)
+	end
+	return false
+end
 function RGXProf.WowAPI:GetTradeSkillReagentInfo(recipeIndex, reagentIndex) return GetTradeSkillReagentInfo(recipeIndex, reagentIndex) end
 function RGXProf.WowAPI:GetTradeSkillReagentItemLink(recipeIndex, reagentIndex) return GetTradeSkillReagentItemLink(recipeIndex, reagentIndex) end
 function RGXProf.WowAPI:GetBestMapForUnit(unit) return C_Map.GetBestMapForUnit(unit) end
@@ -199,9 +209,7 @@ function RGXProf.WowAPI:GetReagentInfoByItemID(itemID)
     icon = icon or self:GetItemIconInstant(itemID)
     local onHand = self:GetItemCount(itemID, false, false)
 
-    if not name then
-        self:QueueItemLoad(itemID)
-    end
+    -- GetItemInfo owns the single load request for an uncached item.
 	return name, link, icon, onHand
 end
 
