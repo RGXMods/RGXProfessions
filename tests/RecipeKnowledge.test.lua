@@ -36,6 +36,8 @@ check(not otherKnown, "unobserved recipes do not inherit another recipe's knowle
 
 rows = { { name = "Named recipe", skillType = "optimal" } }
 check(select(2, adapter:getRecipeLineInfo(9999, "Named recipe")), "name fallback survives a missing link")
+rows = { { name = "Same name", link = "|Henchant:9997|h[Same name]|h", skillType = "optimal" } }
+check(not select(2, adapter:getRecipeLineInfo(9996, "Same name")), "a matching name cannot override a different explicit recipe ID")
 rows = { { name = "Header", isHeader = true, link = "|Hrecipe:9998|h[Header]|h" } }
 check(not select(2, adapter:getRecipeLineInfo(9998, "Header")), "headers never establish recipe knowledge")
 rows = { {} }

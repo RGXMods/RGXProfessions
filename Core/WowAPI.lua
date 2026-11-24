@@ -48,7 +48,7 @@ function RGXProf.WowAPI:GetSpellInfo(spellID)
 end
 
 -- Forever 1.60.1.71037, Gethe 734f065329cff4992835b01a84f210a297db91b6:
--- TradeSkillUIDocumentation.lua:639-652 and TradeSkillUITypesDocumentation.lua:388-402.
+-- TradeSkillUIDocumentation.lua:639-652 and TradeSkillUITypesDocumentation.lua:388-408.
 -- Unavailable/mismatched data is unknown, never evidence that a recipe needs training.
 function RGXProf.WowAPI:GetRecipeKnowledge(spellID)
 	if type(spellID) ~= "number" then return nil end
