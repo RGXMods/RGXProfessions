@@ -301,24 +301,29 @@ function RGXProf.DataManager:GetReagentListWithDetails(spellID, craftCount)
 
 	craftCount = math.max(0, tonumber(craftCount) or 1)
 	local reagents = NormalizeReagentList(RGXProf.Data.Recipes[spellID])
+	local materials = _G.RGXFramework:GetInventory():GetRemainingMaterials({
+		{ crafts = craftCount, reagents = reagents },
+	})
 	local currentSlot = 1
 	local output = {}
 
 	for itemID, count in pairs(reagents) do
-		local name, link, icon, onHand = RGXProf.WowAPI:GetReagentInfoByItemID(itemID)
-		onHand = tonumber(onHand) or 0
-		local text = string.format("%d/%d", onHand, count * craftCount)
-		local tooltip = {count * craftCount, count, craftCount}
+		-- Keep zero-craft legacy display slots without inventing requirements.
+		local material = materials[itemID] or { requiredCount = 0 }
+		local onHand = material.onHandCount or 0
+		local text = string.format("%d/%d", onHand, material.requiredCount)
+		local tooltip = {material.requiredCount, count, craftCount}
 
 		local reagent = {
 			itemID = itemID,
 			slot = currentSlot,
-			name = name or string.format("%s (#%d)", RGXProf.L.LOADING, itemID),
+			name = material.name or string.format("%s (#%d)", RGXProf.L.LOADING, itemID),
 			displayText = text,
-			icon = icon or "Interface\\Icons\\INV_Misc_QuestionMark",
-			link = link or "",
-			requiredCount = count * craftCount,
+			icon = material.icon or "Interface\\Icons\\INV_Misc_QuestionMark",
+			link = material.link or "",
+			requiredCount = material.requiredCount,
 			onHandCount = onHand or 0,
+			countKnown = material.onHandCount ~= nil,
 			tooltip = tooltip
 		}
 
@@ -590,17 +595,19 @@ local function ComputeRemainingBuckets(self, currentSkillLevel, professionPath)
 
     for _, skillCap in ipairs(buckets) do
         if skillCap > currentSkillLevel then
-            table.insert(bucketsWithMats, { skillCap = skillCap, mats = {} })
+            table.insert(bucketsWithMats, { skillCap = skillCap, mats = {}, plan = {} })
         end
     end
 
+    if #bucketsWithMats == 0 then return bucketsWithMats end
     local progressedSkillLevel = currentSkillLevel
 
 	for _, step in ipairs(professionPath) do
         local stepMin, stepMax = step.minSkill, step.maxSkill
         local spellID = step.spellID
+        progressedSkillLevel = math.max(progressedSkillLevel, stepMin)
 
-		while progressedSkillLevel < stepMax do
+		while progressedSkillLevel < math.min(stepMax, bucketsWithMats[#bucketsWithMats].skillCap) do
 			for i, bucket in ipairs(bucketsWithMats) do
 
 				if bucket.skillCap > progressedSkillLevel and bucket.skillCap > stepMin then
@@ -615,14 +622,13 @@ local function ComputeRemainingBuckets(self, currentSkillLevel, professionPath)
 						if step.crafts then
 							for j = i, #bucketsWithMats do
 								local targetBucket = bucketsWithMats[j]
-								for itemID, countPerCraft in pairs(reagents) do
-									targetBucket.mats[itemID] = (targetBucket.mats[itemID] or 0) + countPerCraft * crafts
-								end
+								table.insert(targetBucket.plan, { crafts = crafts, reagents = reagents })
 							end
 							progressedSkillLevel = math.min(stepMax, bucket.skillCap)
 						end
+						local actualCrafts = 0
 						for c = 1, (step.crafts and 0 or crafts) do					
-							factor = self:GetRecipeCraftFactor(spellID, progressedSkillLevel)
+							local factor = self:GetRecipeCraftFactor(spellID, progressedSkillLevel)
 							if not factor or factor <= 0 or factor ~= factor then
 								progressedSkillLevel = stepMax
 								break
@@ -634,17 +640,18 @@ local function ComputeRemainingBuckets(self, currentSkillLevel, professionPath)
 								break
 							end
 
-							--accumulate in higher buckets
-							for j = i, #bucketsWithMats do
-								local targetBucket = bucketsWithMats[j]
-								for itemID, countPerCraft in pairs(reagents) do
-									targetBucket.mats[itemID] = (targetBucket.mats[itemID] or 0) + countPerCraft
-								end
-							end
+							actualCrafts = actualCrafts + 1
     						progressedSkillLevel = progressedSkillLevel + skillUps
 
 						    if progressedSkillLevel >= stepMax then break end
 						end
+						if actualCrafts > 0 then
+							for j = i, #bucketsWithMats do
+								table.insert(bucketsWithMats[j].plan, { crafts = actualCrafts, reagents = reagents })
+							end
+						end
+					else
+						progressedSkillLevel = math.min(stepMax, bucket.skillCap)
 					end
 					break
 
@@ -653,6 +660,14 @@ local function ComputeRemainingBuckets(self, currentSkillLevel, professionPath)
   		end
 	end
 
+    local Inventory = _G.RGXFramework:GetInventory()
+    for _, bucket in ipairs(bucketsWithMats) do
+        bucket.materials = Inventory:GetRemainingMaterials(bucket.plan)
+        for itemID, material in pairs(bucket.materials) do
+            bucket.mats[itemID] = material.requiredCount
+        end
+        bucket.plan = nil
+    end
     return bucketsWithMats
 end
 
@@ -706,9 +721,14 @@ function RGXProf.DataManager:GetRemainingMaterialsSummary(currentSkillLevel, pro
 	local buckets = ComputeRemainingBuckets(self, currentSkillLevel, professionPath)
 	local top = buckets and buckets[#buckets]
 	if not top then return nil end
-	local summary = RGXProf.DataManager.SummarizeMats(top.mats, function(itemID)
-		return RGXProf.WowAPI:GetItemCount(itemID, false, false)
-	end)
+	local summary = { items = 0, needed = 0, missing = 0, countsKnown = true }
+	for _, material in pairs(top.materials) do
+		summary.items = summary.items + 1
+		summary.needed = summary.needed + material.requiredCount
+		if material.stillNeeded == nil then summary.countsKnown = false
+		else summary.missing = summary.missing + material.stillNeeded end
+	end
+	if not summary.countsKnown then summary.missing = nil end
 	summary.skillCap = top.skillCap
 	return summary
 end
@@ -718,33 +738,43 @@ end
 -- first, then by name. `getInfo(itemID)` returns name, icon, have; it defaults to the live client.
 function RGXProf.DataManager:GetRemainingMaterialsTiers(currentSkillLevel, professionPath, getInfo)
 	if not professionPath then return {} end
-	getInfo = getInfo or function(itemID)
-		local name, _, icon, have = RGXProf.WowAPI:GetReagentInfoByItemID(itemID)
-		return name, icon, have
-	end
 	local buckets = ComputeRemainingBuckets(self, currentSkillLevel or 1, professionPath) or {}
 	local tiers = {}
 	for _, bucket in ipairs(buckets) do
 		local items, needed, have, missing, ready = {}, 0, 0, 0, 0
+		local countsKnown = true
 		for itemID, count in pairs(bucket.mats or {}) do
-			local name, icon, held = getInfo(itemID)
-			held = tonumber(held) or 0
-			local short = math.max(0, count - held)
+			local name, icon, held, short
+			if getInfo then
+				-- Explicit display-data injection remains available for callers
+				-- and fixtures; live counts/aggregation use the shared module.
+				name, icon, held = getInfo(itemID)
+				held = tonumber(held) or 0
+				short = math.max(0, count - held)
+			else
+				local material = bucket.materials[itemID]
+				name, icon = material.name, material.icon
+				held, short = material.onHandCount, material.stillNeeded
+			end
 			items[#items + 1] = { itemID = itemID, name = name, icon = icon, need = count, have = held, short = short }
 			needed = needed + count
-			have = have + math.min(held, count)
-			missing = missing + short
-			if short == 0 then ready = ready + 1 end
+			if short ~= nil then
+				have = have + math.min(held, count)
+				missing = missing + short
+				if short == 0 then ready = ready + 1 end
+			else countsKnown = false end
 		end
 		table.sort(items, function(a, b)
-			if (a.short > 0) ~= (b.short > 0) then return a.short > 0 end
+			local aShort, bShort = (a.short or 0) > 0, (b.short or 0) > 0
+			if aShort ~= bShort then return aShort end
 			local an, bn = a.name or "", b.name or ""
 			if an ~= bn then return an < bn end
 			return a.itemID < b.itemID
 		end)
 		tiers[#tiers + 1] = {
 			skillCap = bucket.skillCap, label = self:getTierLabel(bucket.skillCap), items = items,
-			needed = needed, have = have, missing = missing, ready = ready,
+			needed = needed, have = have, missing = countsKnown and missing or nil, ready = ready,
+			countsKnown = countsKnown,
 		}
 	end
 	return tiers

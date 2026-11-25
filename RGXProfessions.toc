@@ -6,9 +6,9 @@
 ## X-Discord: discord.gg/N7kdKAHVVF
 ## Category: RealmGX
 ## Group: RealmGX
-## Version: v0.4.10
+## Version: v0.4.11
 ## RequiredDeps: RGX-Framework
-## X-RGX-Framework-MinVersion: 2.19.0
+## X-RGX-Framework-MinVersion: 2.20.0
 ## SavedVariables: RGXProf_Settings, RGXProf_SimResults
 ## IconTexture: Interface\AddOns\RGXProfessions\Media\RGXIcon.tga
 ## LoadOnDemand: 0

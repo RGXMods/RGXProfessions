@@ -1,3 +1,12 @@
+## v0.4.11 - 2026-11-24
+
+Requires **RGX-Framework 2.20.0 or later**.
+
+- Live material counts, shared-reagent aggregation and bag/item-data notifications now use the framework inventory module. The guide keeps ownership of recipe choices, skill estimates and rank boundaries.
+- Materials to Max and the in-book summary refresh from shared notifications rather than separate bag subscriptions or item-name retry timers.
+- Unavailable inventory counts display as unknown instead of a definite zero or shortage, including recipe hover tooltips.
+- A runtime compatibility handshake gives a clear update requirement when the installed framework is too old.
+
 ## v0.4.10 - 2026-11-24
 
 Requires **RGX-Framework 2.19.0 or later**.

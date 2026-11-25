@@ -1,6 +1,7 @@
 RGXProf = RGXProf or {}
 
 local RGX = assert(_G.RGXFramework, "RGXProfessions: RGX-Framework not loaded")
+RGX:RequireContract("RGXProfessions", 1, "2.20.0")
 
 local hasInitialized = false
 

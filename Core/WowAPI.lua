@@ -214,7 +214,7 @@ function RGXProf.WowAPI:GetReagentInfoByItemID(itemID)
 end
 
 function RGXProf.WowAPI:GetItemCount(itemID, includeBank, includeReagentBank)
-	return C_Item.GetItemCount(itemID, includeBank, includeReagentBank)
+	return _G.RGXFramework:GetInventory():GetItemCount(itemID, includeBank, includeReagentBank)
 end
 
 

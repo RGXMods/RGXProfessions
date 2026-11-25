@@ -336,7 +336,8 @@ local function ShowStepMaterials(owner, step)
         local have = tonumber(reagent.onHandCount) or 0
         local need = tonumber(reagent.requiredCount) or 0
         local haveHex = (have >= need) and C("success") or C("warning")
-        GameTooltip:AddLine(string.format("%s%s%d%sx %s %s(%d/%d)", icon, Text(), need, Dim(), reagent.name or tostring(reagent.itemID), haveHex, have, need), 1, 1, 1)
+        local haveText = reagent.countKnown == false and "?" or tostring(have)
+        GameTooltip:AddLine(string.format("%s%s%d%sx %s %s(%s/%d)", icon, Text(), need, Dim(), reagent.name or tostring(reagent.itemID), haveHex, haveText, need), 1, 1, 1)
     end
     if #reagents == 0 then
         GameTooltip:AddLine(Dim() .. "No reagent data for this step.", 0.6, 0.6, 0.6)
@@ -1223,7 +1224,11 @@ RenderDetail = function(self)
     if okS and summary and summary.items > 0 then
         local color = summary.missing == 0 and C("success") or C("warning")
         summaryText = Dim() .. string.format(RGXProf.L.MATS_TO_MAX_SUMMARY, summary.skillCap, summary.items)
-            .. " " .. color .. string.format(RGXProf.L.MATS_STILL_NEEDED, summary.missing)
+        if summary.countsKnown == false then
+            summaryText = summaryText .. " " .. Dim() .. RGXProf.L.LOADING
+        else
+            summaryText = summaryText .. " " .. color .. string.format(RGXProf.L.MATS_STILL_NEEDED, summary.missing)
+        end
     end
     local entries = RGXProf.BookWindow.BuildMaterialEntries(reagents, summaryText ~= nil)
     for i = 1, 8 do
@@ -1249,7 +1254,11 @@ RenderDetail = function(self)
             local haveHex = (have >= need) and C("success") or C("warning")
             row.itemID, row.need, row.have = reagent.itemID, need, have
             row.name:SetText(Text() .. need .. Dim() .. "x " .. Text() .. (reagent.name or tostring(reagent.itemID)))
-            row.count:SetText(haveHex .. string.format("%d/%d", have, need))
+            if reagent.countKnown == false then
+                row.count:SetText(Dim() .. "?/" .. need)
+            else
+                row.count:SetText(haveHex .. string.format("%d/%d", have, need))
+            end
             row:Show()
         elseif entry and entry.kind == "empty" then
             row.icon:Hide()

@@ -444,7 +444,7 @@ function W:RenderRows(tier)
             row.icon:SetDesaturated(false)
             row.have:SetTextColor(AMBER[1], AMBER[2], AMBER[3])
         end
-        row.have:SetText(tostring(item.have))
+        row.have:SetText(item.have ~= nil and tostring(item.have) or "?")
         row.need:SetText(tostring(item.need))
         row.need:SetTextColor(0.95, 0.95, 0.95)
         row:Show()
@@ -476,7 +476,6 @@ function W:Refresh()
     self._tiers = tiers
     self:LayoutTabs(tiers)
 
-    local missingNames = false
     if not selected then
         f.tierHeader:SetText("")
         f.totals:SetText("")
@@ -486,14 +485,19 @@ function W:Refresh()
         self:RenderRows(nil)
     else
         f.tierHeader:SetText(string.format(L("MATS_TIER_HEADER", "To reach %s (%d)"), selected.label, selected.skillCap))
-        f.totals:SetText(string.format(L("MATS_TOTALS", "%d items, %d ready, %d to get"),
-            #selected.items, selected.ready, selected.missing))
+        if selected.countsKnown == false then
+            f.totals:SetText(L("LOADING", "Loading"))
+        else
+            f.totals:SetText(string.format(L("MATS_TOTALS", "%d items, %d ready, %d to get"),
+                #selected.items, selected.ready, selected.missing))
+        end
         if selected.missing == 0 and #selected.items > 0 then
             f.totals:SetTextColor(GREEN[1], GREEN[2], GREEN[3])
         else
             f.totals:SetTextColor(0.85, 0.85, 0.85)
         end
-        f.bar:SetValue(selected.needed > 0 and (selected.have / selected.needed) or 1)
+        f.bar:SetValue(selected.countsKnown == false and 0
+            or (selected.needed > 0 and (selected.have / selected.needed) or 1))
         if #selected.items == 0 then
             f.empty:SetText(L("MATS_NO_DATA", "No material data for this route."))
             f.empty:Show()
@@ -501,16 +505,10 @@ function W:Refresh()
             f.empty:Hide()
         end
         self:RenderRows(selected)
-        for _, item in ipairs(selected.items) do if not item.name then missingNames = true end end
     end
 
-    -- Item names stream in from the server; re-render a few times until they have all arrived.
-    if missingNames and (self._nameRetries or 0) < 5 and _G.RGXFramework then
-        self._nameRetries = (self._nameRetries or 0) + 1
-        _G.RGXFramework:After(0.5, function() W:Refresh() end)
-    elseif not missingNames then
-        self._nameRetries = 0
-    end
+    -- Successful item-data responses and bag changes refresh through Inventory.
+    -- No retry timers or polling are needed for names/counts.
 end
 
 --- Show the window for a profession: { icon, name, professionID, currentSkill, path }.
@@ -519,7 +517,6 @@ function W:Show(info)
     self:Build()
     if self.info and self.info.path ~= info.path then self.selectedCap = nil end
     self.info = info
-    self._nameRetries = 0
     self:SetLocked(self:IsLocked())
     if not self.frame:IsShown() then self:Place() end
     self.frame:Show()
