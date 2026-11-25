@@ -104,6 +104,12 @@ RGXProf.Events = {
             if RGXProf_Settings.followProfessionWindow == nil then
                 RGXProf_Settings.followProfessionWindow = true
             end
+            if RGXProf_Settings.bookAutoOpen == nil then
+                RGXProf_Settings.bookAutoOpen = true
+            end
+            if RGXProf_Settings.bookAutoClose == nil then
+                RGXProf_Settings.bookAutoClose = true
+            end
             if RGXProf_Settings.loginMessage == nil then
                 RGXProf_Settings.loginMessage = true
             end
