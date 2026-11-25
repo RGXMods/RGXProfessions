@@ -19,6 +19,19 @@ function B:GetCurrentProfession() return RGXProf_Settings.bookProfessionID end
 local shown = 0
 function B:Show() shown = shown + 1 end
 
+-- Forever's modern profession API wins over stale legacy names and adapters.
+rawset(_G, "C_TradeSkillUI", {
+    GetChildProfessionInfo = function() return { professionID = 197 } end,
+    GetBaseProfessionInfo = function() return { professionID = 333 } end,
+})
+check(B:GetOpenProfessionID() == 197, "the modern child profession ID resolves Tailoring directly")
+rawset(_G, "C_TradeSkillUI", {
+    GetChildProfessionInfo = function() return { professionID = 9999 } end,
+    GetBaseProfessionInfo = function() return { professionID = 197 } end,
+})
+check(B:GetOpenProfessionID() == 197, "an unmapped expansion child falls back to its base profession")
+rawset(_G, "C_TradeSkillUI", nil)
+
 RGXProf._lastProfessionEvent = "TRADE_SKILL_SHOW"
 local function StubTradeSkillLine(name)
     rawset(_G, "GetTradeSkillLine", function()

@@ -1693,6 +1693,22 @@ local function GuideID(name)
 end
 
 function RGXProf.BookWindow:GetOpenProfessionID()
+    -- Forever 1.60.1.71091, Gethe c01a87b549bbc19e0f284c1616d18654c91297de:
+    -- TradeSkillUIDocumentation.lua:130-145 and TradeSkillUITypesDocumentation.lua:361-376.
+    -- The modern window reports a numeric profession ID; the expansion-specific child can differ
+    -- from the base profession, so accept whichever ID has a guide in this expansion.
+    local trade = _G.C_TradeSkillUI
+    if type(trade) == "table" then
+        for _, method in ipairs({ "GetChildProfessionInfo", "GetBaseProfessionInfo" }) do
+            local query = trade[method]
+            if type(query) == "function" then
+                local ok, info = pcall(query)
+                local id = ok and type(info) == "table" and info.professionID
+                if type(id) == "number" and RGXProf.currentExpansion.paths[id] then return id end
+            end
+        end
+    end
+
     local event = RGXProf._lastProfessionEvent
     local direct = (event == "CRAFT_SHOW" and _G.GetCraftDisplaySkillLine)
         or (event == "TRADE_SKILL_SHOW" and _G.GetTradeSkillLine) or nil
