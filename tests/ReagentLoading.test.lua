@@ -20,6 +20,7 @@ C_Item = {
     GetItemCount = function() return nil end,
 }
 GetItemInfo = nil
+assert(loadfile("tests/InventoryFixture.lua"))()
 local api, dm = RGXProf.WowAPI, RGXProf.DataManager
 local rows = dm:GetReagentListWithDetails(7183, 3)
 check(requests == 1, "a cold lookup requests data once, not twice")

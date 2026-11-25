@@ -20,13 +20,15 @@ function RGXProf.Reagents:RenderReagentSlot(reagent)
     local text = RGXProf.LayoutManager:GetChildFrame(frame, "_ItemName")
     local icon = RGXProf.LayoutManager:GetChildFrame(frame, "_Icon_Frame")
     local countText = RGXProf.LayoutManager:GetChildFrame(frame, "_Count")
+    local displayText = reagent.countKnown == false
+        and ("?/" .. reagent.requiredCount) or (reagent.displayText or "")
 
     if text and text.fontString then
         RGXProf.Utils:SetText(text.fontString, reagent.name or "")
     end
 
     if icon and icon.fontString then
-        RGXProf.Utils:SetText(icon.fontString, reagent.displayText or "")
+        RGXProf.Utils:SetText(icon.fontString, displayText)
     end
 
     if icon and icon.texture then
@@ -35,7 +37,7 @@ function RGXProf.Reagents:RenderReagentSlot(reagent)
     end
 
     if countText and countText.fontString then
-        RGXProf.Utils:SetText(countText.fontString, reagent.displayText or "")
+        RGXProf.Utils:SetText(countText.fontString, displayText)
     end
 
     RGXProf.FrameRegistry:Register(icon, {itemID = reagent.itemID, link = reagent.link})

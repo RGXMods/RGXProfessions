@@ -152,7 +152,17 @@ end
 
 function RGXProf:RegisterEvents()
     for eventName, _ in pairs(self.Events) do
-        RegisterEventSafe(eventName)
+        -- These display handlers are fed by the shared inventory owner, not
+        -- a second native bag/item subscription in the consumer.
+        if eventName ~= "BAG_UPDATE_DELAYED" and eventName ~= "GET_ITEM_INFO_RECEIVED" then
+            RegisterEventSafe(eventName)
+        end
+    end
+    if not self._inventoryUnsubscribe then
+        self._inventoryUnsubscribe = _G.RGXFramework:GetInventory():OnChanged(function(event, ...)
+            local handler = event == "GET_ITEM_INFO_RECEIVED" and event or "BAG_UPDATE_DELAYED"
+            self:HandleEvent(handler, ...)
+        end)
     end
 end
 
