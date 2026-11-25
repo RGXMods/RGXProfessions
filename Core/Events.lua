@@ -43,9 +43,15 @@ RGXProf.Events = {
         end, "RGXProf_CRAFT_CLOSE")
     end,
     TRADE_SKILL_UPDATE = function(self)
+        if RGXProf.BookWindow and RGXProf.BookWindow.OnProfessionWindowOpened then
+            RGXProf.BookWindow:OnProfessionWindowOpened()
+        end
         RGXProf.StateManager:RequestRefresh()
     end,
     CRAFT_UPDATE = function(self)
+        if RGXProf.BookWindow and RGXProf.BookWindow.OnProfessionWindowOpened then
+            RGXProf.BookWindow:OnProfessionWindowOpened()
+        end
         RGXProf.StateManager:RequestRefresh()
     end,
     SKILL_LINES_CHANGED = RefreshRecipeKnowledge,
@@ -54,6 +60,9 @@ RGXProf.Events = {
     SPELLS_CHANGED = RefreshRecipeKnowledge,
     NEW_RECIPE_LEARNED = RefreshRecipeKnowledge,
     TRADE_SKILL_LIST_UPDATE = function(self)
+        if RGXProf.BookWindow and RGXProf.BookWindow.OnProfessionWindowOpened then
+            RGXProf.BookWindow:OnProfessionWindowOpened()
+        end
         RGXProf.StateManager:RequestRefresh()
     end,
     -- Bag contents changed: keep the guide page and the Materials to Max window counts live (one
