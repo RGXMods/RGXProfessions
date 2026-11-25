@@ -1704,7 +1704,13 @@ function RGXProf.BookWindow:GetOpenProfessionID()
     local manager = RGXProf.AdapterManager
     local adapter = manager and manager.GetCurrent and manager:GetCurrent()
     if not (adapter and adapter.getProfessionInfo) then return nil end
-    local ok, name = pcall(adapter.getProfessionInfo, adapter)
+    local ok, name = pcall(function()
+        -- During a profession switch the previous adapter can still be current
+        -- after its frame has closed. Never let that hidden adapter restore the
+        -- old profession while the new window's direct API is not ready yet.
+        if type(adapter.isShown) == "function" and not adapter:isShown() then return nil end
+        return adapter:getProfessionInfo()
+    end)
     return ok and GuideID(name) or nil
 end
 

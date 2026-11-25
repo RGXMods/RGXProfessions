@@ -1,3 +1,10 @@
+## v0.4.13 - 2026-11-25
+
+Requires **RGX-Framework 2.20.0 or later**.
+
+- The book re-resolves the open profession on trade-skill and craft data updates, so opening Tailoring after Enchanting switches to Tailoring even if the initial show event still reports the previous profession.
+- A hidden stale adapter can no longer restore the previous profession while the newly opened window's data is unavailable.
+
 ## v0.4.11 - 2026-11-24
 
 Requires **RGX-Framework 2.20.0 or later**.
