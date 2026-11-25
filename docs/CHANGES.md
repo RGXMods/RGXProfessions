@@ -1,3 +1,10 @@
+## v0.4.14 - 2026-11-25
+
+Requires **RGX-Framework 2.20.0 or later**.
+
+- The book uses Forever's modern `C_TradeSkillUI` profession information to resolve the open window by numeric profession ID, so Tailoring resolves to 197 instead of falling back to the previous profession.
+- Expansion-specific child professions fall back to their base profession ID when the guide has no separate child path. Legacy craft/trade-skill name lookups remain supported.
+
 ## v0.4.13 - 2026-11-25
 
 Requires **RGX-Framework 2.20.0 or later**.
